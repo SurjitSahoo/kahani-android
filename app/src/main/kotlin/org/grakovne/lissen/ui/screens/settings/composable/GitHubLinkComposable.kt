@@ -28,7 +28,7 @@ fun GitHubLinkComposable() {
         .fillMaxWidth()
         .clickable {
           try {
-            uriHandler.openUri("https://github.com/GrakovNe/lissen-android")
+            uriHandler.openUri("https://github.com/SurjitSahoo/kahani-android")
           } catch (ex: Exception) {
             Timber.d("Unable to open Github Link due to ${ex.message}")
           }
