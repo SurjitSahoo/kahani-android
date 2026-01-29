@@ -77,7 +77,7 @@ If you find Kahani useful, consider supporting the project:
 
 <p align="center">
   <a href="https://ko-fi.com/surjitsahoo">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" height="50">
+    <img height='50' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' alt='Buy Me a Coffee at ko-fi.com' />
   </a>
 </p>
 
@@ -85,7 +85,7 @@ If you find Kahani useful, consider supporting the project:
 
 <p align="center">
   <img src="metadata/brandassets/upi/UPI_S.png" alt="UPI" height="40"><br><br>
-  <img src="metadata/UPI.QR.png" alt="UPI QR Code" width="200">
+  <img src="metadata/UPI.QR.png" alt="UPI QR Code" width="200" style="background-color: white; padding: 10px; border-radius: 8px;">
 </p>
 
 ## 📜 License
