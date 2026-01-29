@@ -2,15 +2,20 @@ package org.grakovne.lissen.ui.screens.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,10 +37,13 @@ import org.grakovne.lissen.R
 import org.grakovne.lissen.ui.navigation.AppNavigationService
 import org.grakovne.lissen.ui.screens.settings.advanced.AdvancedSettingsNavigationItemComposable
 import org.grakovne.lissen.ui.screens.settings.composable.ColorSchemeSettingsComposable
+import org.grakovne.lissen.ui.screens.settings.composable.DonateComposable
 import org.grakovne.lissen.ui.screens.settings.composable.GitHubLinkComposable
 import org.grakovne.lissen.ui.screens.settings.composable.LibraryOrderingSettingsComposable
 import org.grakovne.lissen.ui.screens.settings.composable.LicenseFooterComposable
 import org.grakovne.lissen.ui.screens.settings.composable.ServerSettingsComposable
+import org.grakovne.lissen.ui.screens.settings.composable.SettingsSection
+import org.grakovne.lissen.ui.theme.Spacing
 import org.grakovne.lissen.viewmodel.SettingsViewModel
 
 @Composable
@@ -81,46 +89,55 @@ fun SettingsScreen(
         modifier =
           Modifier
             .fillMaxSize()
-            .padding(innerPadding),
-        verticalArrangement = Arrangement.SpaceBetween,
+            .padding(innerPadding)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        Column(
-          modifier =
-            Modifier
-              .fillMaxWidth()
-              .verticalScroll(rememberScrollState()),
-          horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-          if (host?.url?.isNotEmpty() == true) {
+        // Connection Section
+        if (host?.url?.isNotEmpty() == true) {
+          SettingsSection(title = stringResource(R.string.settings_section_connection)) {
             ServerSettingsComposable(navController, viewModel)
           }
+        }
 
+        // Appearance Section
+        SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
           ColorSchemeSettingsComposable(viewModel)
-
           LibraryOrderingSettingsComposable(viewModel)
+        }
 
+        // Playback & Downloads Section
+        SettingsSection(title = stringResource(R.string.settings_section_playback)) {
           AdvancedSettingsNavigationItemComposable(
             title = stringResource(R.string.playback_settings_title),
             description = stringResource(R.string.playback_settings_description),
             onclick = { navController.showPlaybackSettings() },
+            icon = Icons.Outlined.PlayCircle,
           )
 
           AdvancedSettingsNavigationItemComposable(
             title = stringResource(R.string.download_settings_title),
             description = stringResource(R.string.download_settings_description),
             onclick = { navController.showCacheSettings() },
+            icon = Icons.Outlined.Download,
           )
 
           AdvancedSettingsNavigationItemComposable(
             title = stringResource(R.string.settings_screen_advanced_preferences_title),
             description = stringResource(R.string.settings_screen_advanced_preferences_description),
             onclick = { navController.showAdvancedSettings() },
+            icon = Icons.Outlined.Settings,
           )
-
-          GitHubLinkComposable()
         }
 
+        // About Section
+        SettingsSection(title = stringResource(R.string.settings_section_about)) {
+          GitHubLinkComposable()
+          DonateComposable()
+        }
+
+        // Footer (scrolls with content)
+        Spacer(modifier = Modifier.height(Spacing.xl))
         LicenseFooterComposable()
       }
     },

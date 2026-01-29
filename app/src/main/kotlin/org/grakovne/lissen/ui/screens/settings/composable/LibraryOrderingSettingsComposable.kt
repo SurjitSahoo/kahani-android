@@ -4,11 +4,16 @@ import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Sort
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
@@ -18,6 +23,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -29,6 +35,7 @@ import org.grakovne.lissen.common.LibraryOrderingDirection
 import org.grakovne.lissen.common.LibraryOrderingDirection.ASCENDING
 import org.grakovne.lissen.common.LibraryOrderingDirection.DESCENDING
 import org.grakovne.lissen.common.LibraryOrderingOption
+import org.grakovne.lissen.ui.theme.Spacing
 import org.grakovne.lissen.viewmodel.SettingsViewModel
 
 @Composable
@@ -45,8 +52,16 @@ fun LibraryOrderingSettingsComposable(viewModel: SettingsViewModel) {
       Modifier
         .fillMaxWidth()
         .clickable { libraryOrderingExpanded = true }
-        .padding(horizontal = 24.dp, vertical = 12.dp),
+        .padding(horizontal = Spacing.md, vertical = 12.dp),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
+    Icon(
+      imageVector = Icons.Outlined.Sort,
+      contentDescription = null,
+      modifier = Modifier.size(24.dp),
+      tint = colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.width(Spacing.md))
     Column(
       modifier = Modifier.weight(1f),
     ) {

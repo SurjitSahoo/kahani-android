@@ -4,8 +4,14 @@ import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Text
@@ -15,6 +21,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -22,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.grakovne.lissen.R
 import org.grakovne.lissen.common.ColorScheme
+import org.grakovne.lissen.ui.theme.Spacing
 import org.grakovne.lissen.viewmodel.SettingsViewModel
 
 @Composable
@@ -35,8 +43,16 @@ fun ColorSchemeSettingsComposable(viewModel: SettingsViewModel) {
       Modifier
         .fillMaxWidth()
         .clickable { colorSchemeExpanded = true }
-        .padding(horizontal = 24.dp, vertical = 12.dp),
+        .padding(horizontal = Spacing.md, vertical = 12.dp),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
+    Icon(
+      imageVector = Icons.Outlined.Palette,
+      contentDescription = null,
+      modifier = Modifier.size(24.dp),
+      tint = colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.width(Spacing.md))
     Column(
       modifier = Modifier.weight(1f),
     ) {

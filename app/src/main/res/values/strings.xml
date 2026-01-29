@@ -206,4 +206,13 @@
     <string name="settings_screen_footer_copyright_original">© 2024–2026 Max Grakov</string>
     <string name="settings_screen_footer_copyright_fork">© 2026 Surjit Sahoo</string>
     <string name="settings_screen_footer_license">MIT License</string>
+    <string name="donate_title">Donate to support us</string>
+    <string name="donate_subtitle">Help keep this project alive</string>
+    <string name="donate_sheet_title">Support Us</string>
+    <string name="donate_kofi_button">Buy me a coffee</string>
+    <string name="donate_upi_button">Support via UPI</string>
+    <string name="settings_section_connection">Connection</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_playback">Playback &amp; Downloads</string>
+    <string name="settings_section_about">About</string>
 </resources>

@@ -1,19 +1,26 @@
 package org.grakovne.lissen.ui.screens.settings.composable
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -33,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import org.grakovne.lissen.R
 import org.grakovne.lissen.channel.audiobookshelf.HostType
 import org.grakovne.lissen.ui.navigation.AppNavigationService
+import org.grakovne.lissen.ui.theme.Spacing
 import org.grakovne.lissen.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,9 +63,16 @@ fun ServerSettingsComposable(
       Modifier
         .fillMaxWidth()
         .clickable { connectionInfoExpanded = true }
-        .padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+        .padding(start = Spacing.md, end = 12.dp, top = 12.dp, bottom = 12.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
+    Icon(
+      imageVector = Icons.Outlined.Cloud,
+      contentDescription = null,
+      modifier = Modifier.size(24.dp),
+      tint = colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.width(Spacing.md))
     Column(modifier = Modifier.weight(1f)) {
       Text(
         text = stringResource(R.string.settings_screen_server_connection),
@@ -69,6 +84,7 @@ fun ServerSettingsComposable(
         Text(
           text = it.url,
           style = typography.bodyMedium,
+          color = colorScheme.onSurfaceVariant,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )
@@ -79,10 +95,18 @@ fun ServerSettingsComposable(
         navController.showLogin()
         viewModel.logout()
       },
+      modifier =
+        Modifier
+          .background(
+            color = colorScheme.errorContainer,
+            shape = RoundedCornerShape(8.dp),
+          ).size(36.dp),
     ) {
       Icon(
-        imageVector = Icons.Outlined.Delete,
+        imageVector = Icons.Outlined.DeleteOutline,
         contentDescription = "Logout",
+        tint = colorScheme.onErrorContainer,
+        modifier = Modifier.size(20.dp),
       )
     }
   }
