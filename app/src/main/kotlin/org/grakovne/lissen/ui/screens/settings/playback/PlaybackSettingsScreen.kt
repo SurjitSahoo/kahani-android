@@ -43,6 +43,7 @@ fun PlaybackSettingsScreen(
   val viewModel: SettingsViewModel = hiltViewModel()
   val showPlayerNavButtons by viewModel.showPlayerNavButtons.observeAsState(true)
   val shakeToResetTimer by viewModel.shakeToResetTimer.observeAsState(false)
+  val skipSilenceEnabled by viewModel.skipSilenceEnabled.observeAsState(false)
 
   Scaffold(
     topBar = {
@@ -97,6 +98,13 @@ fun PlaybackSettingsScreen(
             description = stringResource(R.string.playback_shake_reset_description),
             initialState = shakeToResetTimer,
             onCheckedChange = { viewModel.preferShakeToResetTimer(it) },
+          )
+
+          SettingsToggleItem(
+            title = stringResource(R.string.playback_skip_silence_title),
+            description = stringResource(R.string.playback_skip_silence_description),
+            initialState = skipSilenceEnabled,
+            onCheckedChange = { viewModel.preferSkipSilenceEnabled(it) },
           )
 
           AdvancedSettingsNavigationItemComposable(

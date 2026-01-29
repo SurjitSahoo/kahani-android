@@ -449,6 +449,13 @@ class LissenSharedPreferences
 
     fun getShakeToResetTimer(): Boolean = sharedPreferences.getBoolean(KEY_SHAKE_TO_RESET_TIMER, true)
 
+    fun saveSkipSilenceEnabled(enabled: Boolean) =
+      sharedPreferences.edit {
+        putBoolean(KEY_SKIP_SILENCE_ENABLED, enabled)
+      }
+
+    fun getSkipSilenceEnabled(): Boolean = sharedPreferences.getBoolean(KEY_SKIP_SILENCE_ENABLED, false)
+
     fun saveSmartRewindEnabled(enabled: Boolean) =
       sharedPreferences.edit {
         putBoolean(KEY_SMART_REWIND_ENABLED, enabled)
@@ -511,6 +518,19 @@ class LissenSharedPreferences
           }
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
         trySend(getShakeToResetTimer())
+        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
+      }.distinctUntilChanged()
+
+    val skipSilenceEnabledFlow: Flow<Boolean> =
+      callbackFlow {
+        val listener =
+          SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_SKIP_SILENCE_ENABLED) {
+              trySend(getSkipSilenceEnabled())
+            }
+          }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+        trySend(getSkipSilenceEnabled())
         awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
       }.distinctUntilChanged()
 
@@ -629,6 +649,7 @@ class LissenSharedPreferences
 
       private const val KEY_SHOW_PLAYER_NAV_BUTTONS = "show_player_nav_buttons"
       private const val KEY_SHAKE_TO_RESET_TIMER = "shake_to_reset_timer"
+      private const val KEY_SKIP_SILENCE_ENABLED = "skip_silence_enabled"
 
       private const val KEY_PLAYING_BOOK = "playing_book"
       private const val KEY_VOLUME_BOOST = "volume_boost"

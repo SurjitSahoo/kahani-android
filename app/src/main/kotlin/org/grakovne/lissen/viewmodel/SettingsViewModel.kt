@@ -89,6 +89,8 @@ class SettingsViewModel
 
     val shakeToResetTimer = preferences.shakeToResetTimerFlow.asLiveData()
 
+    val skipSilenceEnabled = preferences.skipSilenceEnabledFlow.asLiveData()
+
     val smartRewindEnabled = preferences.smartRewindEnabledFlow.asLiveData()
     val smartRewindThreshold = preferences.smartRewindThresholdFlow.asLiveData()
     val smartRewindDuration = preferences.smartRewindDurationFlow.asLiveData()
@@ -114,6 +116,10 @@ class SettingsViewModel
 
     fun preferShakeToResetTimer(value: Boolean) {
       preferences.saveShakeToResetTimer(value)
+    }
+
+    fun preferSkipSilenceEnabled(value: Boolean) {
+      preferences.saveSkipSilenceEnabled(value)
     }
 
     fun preferSmartRewindEnabled(value: Boolean) {

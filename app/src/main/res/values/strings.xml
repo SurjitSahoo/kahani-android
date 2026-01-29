@@ -201,6 +201,8 @@
     <string name="playback_next_previous_description">Show next and previous track buttons in the player</string>
     <string name="playback_shake_reset_title">Shake to reset sleep timer</string>
     <string name="playback_shake_reset_description">Shake device to reset the sleep timer</string>
+    <string name="playback_skip_silence_title">Skip silence</string>
+    <string name="playback_skip_silence_description">Automatically skip silent parts of audio</string>
     <string name="playback_preferences">Playback preferences</string>
     <string name="settings_screen_footer_app_name_pattern">%1$s %2$s</string>
     <string name="settings_screen_footer_copyright_original">© 2024–2026 Max Grakov</string>

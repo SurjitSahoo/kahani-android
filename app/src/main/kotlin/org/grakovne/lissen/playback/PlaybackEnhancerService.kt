@@ -46,6 +46,13 @@ class PlaybackEnhancerService
         sharedPreferences.playbackVolumeBoostFlow.collectLatest { updateGain(it) }
       }
 
+      scope.launch(Dispatchers.Main) {
+        sharedPreferences.skipSilenceEnabledFlow.collectLatest { enabled ->
+          player.skipSilenceEnabled = enabled
+          Timber.d("Skip silence ${if (enabled) "enabled" else "disabled"}")
+        }
+      }
+
       updateGain(sharedPreferences.getPlaybackVolumeBoost())
     }
 
