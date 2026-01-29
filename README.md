@@ -85,7 +85,7 @@ If you find Kahani useful, consider supporting the project:
 
 <p align="center">
   <img src="metadata/brandassets/upi/UPI_S.png" alt="UPI" height="40"><br><br>
-  <img src="metadata/UPI.QR.png" alt="UPI QR Code" width="200" style="background-color: white; padding: 10px; border-radius: 8px;">
+  <img src="metadata/UPI.QR.white.png" alt="UPI QR Code" width="200">
 </p>
 
 ## 📜 License
