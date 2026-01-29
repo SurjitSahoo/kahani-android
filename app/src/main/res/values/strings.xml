@@ -210,7 +210,10 @@
     <string name="donate_subtitle">Help keep this project alive</string>
     <string name="donate_sheet_title">Support Us</string>
     <string name="donate_kofi_button">Buy me a coffee</string>
-    <string name="donate_upi_button">Support via UPI</string>
+    <string name="donate_upi_qr_description">UPI QR Code for donations</string>
+    <string name="donate_upi_scan_instruction">Scan with any UPI app or copy UPI ID below</string>
+    <string name="donate_copy_upi_id">Copy UPI ID</string>
+    <string name="donate_upi_copied">UPI ID copied to clipboard</string>
     <string name="settings_section_connection">Connection</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_playback">Playback &amp; Downloads</string>
