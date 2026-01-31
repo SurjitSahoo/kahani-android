@@ -183,9 +183,9 @@ fun MiniPlayerComposable(
         )
 
         Column(modifier = Modifier.fillMaxWidth()) {
+          val livePosition by playerViewModel.totalPosition.observeAsState(book.progress?.currentTime ?: 0.0)
           val totalDuration = remember(book) { book.chapters.sumOf { it.duration } }
-          val currentTime = book.progress?.currentTime ?: 0.0
-          val progress = if (totalDuration > 0) (currentTime / totalDuration).toFloat() else 0f
+          val progress = if (totalDuration > 0) ((livePosition ?: 0.0) / totalDuration).toFloat() else 0f
 
           Box(
             modifier =
@@ -207,7 +207,7 @@ fun MiniPlayerComposable(
           }
 
           Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             AsyncShimmeringImage(
@@ -264,7 +264,7 @@ fun MiniPlayerComposable(
                     imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
                     contentDescription = if (isPlaying) "Pause" else "Play",
                     tint = Color.White,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(38.dp),
                   )
                 }
               }
