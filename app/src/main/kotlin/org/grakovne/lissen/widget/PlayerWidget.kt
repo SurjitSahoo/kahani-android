@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -44,9 +45,9 @@ import androidx.glance.material3.ColorProviders
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontFamily.Companion.SansSerif
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.media3.session.R
 import dagger.hilt.android.EntryPointAccessors
 import org.grakovne.lissen.R.drawable
 import org.grakovne.lissen.ui.theme.LightBackground
@@ -131,28 +132,30 @@ class PlayerWidget : GlanceAppWidget() {
             Column(
               modifier =
                 GlanceModifier
-                  .fillMaxWidth()
-                  .padding(start = 20.dp),
+                  .defaultWeight()
+                  .padding(start = 24.dp),
+              verticalAlignment = Alignment.CenterVertically,
             ) {
-              Text(
-                text = chapterTitle,
-                style =
-                  TextStyle(
-                    fontFamily = SansSerif,
-                    fontSize = 20.sp,
-                    color = GlanceTheme.colors.onBackground,
-                  ),
-                maxLines = 2,
-                modifier = GlanceModifier.padding(bottom = 8.dp),
-              )
-
               Text(
                 text = bookTitle,
                 style =
                   TextStyle(
                     fontFamily = SansSerif,
-                    fontSize = 14.sp,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     color = GlanceTheme.colors.onBackground,
+                  ),
+                maxLines = 2,
+                modifier = GlanceModifier.padding(bottom = 2.dp),
+              )
+
+              Text(
+                text = chapterTitle,
+                style =
+                  TextStyle(
+                    fontFamily = SansSerif,
+                    fontSize = 14.sp,
+                    color = GlanceTheme.colors.onSurfaceVariant,
                   ),
                 maxLines = 1,
               )
@@ -164,7 +167,7 @@ class PlayerWidget : GlanceAppWidget() {
               GlanceModifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(MediumBackground),
+                .background(GlanceTheme.colors.onSurfaceVariant),
           )
 
           Row(
@@ -176,18 +179,7 @@ class PlayerWidget : GlanceAppWidget() {
           ) {
             WidgetControlButton(
               size = 36.dp,
-              icon = ImageProvider(R.drawable.media3_icon_previous),
-              contentColor = GlanceTheme.colors.onBackground,
-              onClick =
-                actionRunCallback<PreviousChapterActionCallback>(
-                  actionParametersOf(bookIdKey to bookId),
-                ),
-              modifier = GlanceModifier.defaultWeight(),
-            )
-
-            WidgetControlButton(
-              size = 36.dp,
-              icon = ImageProvider(rewindIcon),
+              icon = ImageProvider(state[rewindIconRes] ?: rewindIcon),
               contentColor = GlanceTheme.colors.onBackground,
               onClick =
                 actionRunCallback<RewindActionCallback>(
@@ -197,11 +189,22 @@ class PlayerWidget : GlanceAppWidget() {
             )
 
             WidgetControlButton(
+              size = 36.dp,
+              icon = ImageProvider(drawable.ic_n_nav_skip_previous),
+              contentColor = GlanceTheme.colors.onBackground,
+              onClick =
+                actionRunCallback<PreviousChapterActionCallback>(
+                  actionParametersOf(bookIdKey to bookId),
+                ),
+              modifier = GlanceModifier.defaultWeight(),
+            )
+
+            WidgetControlButton(
               icon =
                 if (isPlaying) {
-                  ImageProvider(R.drawable.media3_icon_pause)
+                  ImageProvider(drawable.ic_widget_pause)
                 } else {
-                  ImageProvider(R.drawable.media3_icon_play)
+                  ImageProvider(drawable.ic_widget_play)
                 },
               size = 48.dp,
               contentColor = GlanceTheme.colors.onBackground,
@@ -213,22 +216,22 @@ class PlayerWidget : GlanceAppWidget() {
             )
 
             WidgetControlButton(
-              icon = ImageProvider(forwardIcon),
+              icon = ImageProvider(drawable.ic_n_nav_skip_next),
               size = 36.dp,
               contentColor = GlanceTheme.colors.onBackground,
               onClick =
-                actionRunCallback<ForwardActionCallback>(
+                actionRunCallback<NextChapterActionCallback>(
                   actionParametersOf(bookIdKey to bookId),
                 ),
               modifier = GlanceModifier.defaultWeight(),
             )
 
             WidgetControlButton(
-              icon = ImageProvider(R.drawable.media3_icon_next),
+              icon = ImageProvider(state[forwardIconRes] ?: forwardIcon),
               size = 36.dp,
               contentColor = GlanceTheme.colors.onBackground,
               onClick =
-                actionRunCallback<NextChapterActionCallback>(
+                actionRunCallback<ForwardActionCallback>(
                   actionParametersOf(bookIdKey to bookId),
                 ),
               modifier = GlanceModifier.defaultWeight(),
@@ -245,8 +248,8 @@ class PlayerWidget : GlanceAppWidget() {
       ?: this
 
   companion object {
-    val rewindIcon = R.drawable.media3_icon_rewind
-    val forwardIcon = R.drawable.media3_icon_fast_forward
+    val rewindIcon = drawable.ic_notification_rewind_10
+    val forwardIcon = drawable.ic_notification_forward_30
 
     val bookIdKey = ActionParameters.Key<String>("book_id")
 
@@ -256,6 +259,9 @@ class PlayerWidget : GlanceAppWidget() {
     val chapterTitle = stringPreferencesKey("player_widget_key_chapter_title")
 
     val isPlaying = booleanPreferencesKey("player_widget_key_is_playing")
+
+    val rewindIconRes = intPreferencesKey("player_widget_key_rewind_icon")
+    val forwardIconRes = intPreferencesKey("player_widget_key_forward_icon")
   }
 }
 

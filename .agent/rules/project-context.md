@@ -34,6 +34,7 @@ This is an offline-first Android client app for the [audiobookshelf](https://git
 ## General Guidelines and Standards
 
 - **Colors**: Must be referenced from `Color.kt` / `Theme.kt`. Do not use raw hex values (e.g., `0xFF...`) in Composables.
+- **Colors**: Must be always theme aware, no hard coded colors, all designs should be done considering both light mode and dark mode behaviors.
 - **Dimensions**: Must use `Spacing.kt` (e.g., `Spacing.md`, `Spacing.lg`) for padding, margins, and layout dimensions.
 - **Design System**: Adhere effectively to the spacing system and color palette defined in the project.
 - **ABSOLUTELY NO** hardcoded user-facing strings in UI code. All strings must be extracted to `strings.xml` and accessed via `stringResource`.

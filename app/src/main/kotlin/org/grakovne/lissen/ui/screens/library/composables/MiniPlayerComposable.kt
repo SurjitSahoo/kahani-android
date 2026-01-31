@@ -263,7 +263,7 @@ fun MiniPlayerComposable(
                   Icon(
                     imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
                     contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White,
+                    tint = colorScheme.onSurface,
                     modifier = Modifier.size(38.dp),
                   )
                 }

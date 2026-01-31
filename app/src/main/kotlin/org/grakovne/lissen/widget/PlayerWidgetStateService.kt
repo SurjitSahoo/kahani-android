@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.grakovne.lissen.common.RunningComponent
 import org.grakovne.lissen.content.LissenMediaProvider
 import org.grakovne.lissen.lib.domain.DetailedItem
+import org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 import org.grakovne.lissen.playback.MediaRepository
 import java.io.File
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class PlayerWidgetStateService
     @param:ApplicationContext private val context: Context,
     private val mediaRepository: MediaRepository,
     private val mediaProvider: LissenMediaProvider,
+    private val preferences: LissenSharedPreferences,
   ) : RunningComponent {
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -41,7 +43,8 @@ class PlayerWidgetStateService
             .filterNotNull()
             .distinctUntilChanged(),
           mediaRepository.currentChapterIndex.asFlow().distinctUntilChanged(),
-        ) { playingItem: DetailedItem?, isPlaying, chapterIndex: Int? ->
+          preferences.seekTimeFlow.distinctUntilChanged(),
+        ) { playingItem, isPlaying, chapterIndex, seekTime ->
           val chapterTitle = provideChapterTitle(playingItem, chapterIndex)
 
           val maybeCover =
@@ -59,6 +62,8 @@ class PlayerWidgetStateService
             chapterTitle = chapterTitle,
             isPlaying = isPlaying,
             coverFile = maybeCover,
+            rewindIcon = provideRewindIcon(seekTime.rewind.seconds),
+            forwardIcon = provideForwardIcon(seekTime.forward.seconds),
           )
         }.collect { playingItemState ->
           updatePlayingItem(playingItemState)
@@ -92,10 +97,32 @@ class PlayerWidgetStateService
             prefs[PlayerWidget.title] = state.title
             prefs[PlayerWidget.chapterTitle] = state.chapterTitle ?: ""
             prefs[PlayerWidget.isPlaying] = state.isPlaying
+            prefs[PlayerWidget.rewindIconRes] = state.rewindIcon
+            prefs[PlayerWidget.forwardIconRes] = state.forwardIcon
           }
           PlayerWidget().update(context, glanceId)
         }
     }
+
+    private fun provideRewindIcon(duration: Int) =
+      when (duration) {
+        5 -> org.grakovne.lissen.R.drawable.ic_notification_rewind_5
+        10 -> org.grakovne.lissen.R.drawable.ic_notification_rewind_10
+        15 -> org.grakovne.lissen.R.drawable.ic_notification_rewind_15
+        30 -> org.grakovne.lissen.R.drawable.ic_notification_rewind_30
+        60 -> org.grakovne.lissen.R.drawable.ic_notification_rewind_60
+        else -> org.grakovne.lissen.R.drawable.ic_notification_rewind_10
+      }
+
+    private fun provideForwardIcon(duration: Int) =
+      when (duration) {
+        5 -> org.grakovne.lissen.R.drawable.ic_notification_forward_5
+        10 -> org.grakovne.lissen.R.drawable.ic_notification_forward_10
+        15 -> org.grakovne.lissen.R.drawable.ic_notification_forward_15
+        30 -> org.grakovne.lissen.R.drawable.ic_notification_forward_30
+        60 -> org.grakovne.lissen.R.drawable.ic_notification_forward_60
+        else -> org.grakovne.lissen.R.drawable.ic_notification_forward_30
+      }
   }
 
 data class PlayingItemState(
@@ -104,4 +131,6 @@ data class PlayingItemState(
   val chapterTitle: String?,
   val isPlaying: Boolean = false,
   val coverFile: File?,
+  val rewindIcon: Int,
+  val forwardIcon: Int,
 )
