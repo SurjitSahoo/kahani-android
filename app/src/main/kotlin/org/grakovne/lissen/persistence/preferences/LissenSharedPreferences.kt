@@ -285,6 +285,19 @@ class LissenSharedPreferences
         awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
       }.distinctUntilChanged()
 
+    val seekTimeFlow: Flow<SeekTime> =
+      callbackFlow {
+        val listener =
+          SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_PREFERRED_SEEK_TIME) {
+              trySend(getSeekTime())
+            }
+          }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+        trySend(getSeekTime())
+        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
+      }.distinctUntilChanged()
+
     private fun saveActiveLibraryId(host: String) = sharedPreferences.edit { putString(KEY_PREFERRED_LIBRARY_ID, host) }
 
     private fun getPreferredLibraryId(): String? = sharedPreferences.getString(KEY_PREFERRED_LIBRARY_ID, null)

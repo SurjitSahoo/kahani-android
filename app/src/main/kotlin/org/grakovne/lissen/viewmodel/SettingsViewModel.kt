@@ -73,8 +73,7 @@ class SettingsViewModel
     private val _localUrls = MutableLiveData(preferences.getLocalUrls())
     val localUrls = _localUrls
 
-    private val _seekTime = MutableLiveData(preferences.getSeekTime())
-    val seekTime = _seekTime
+    val seekTime = preferences.seekTimeFlow.asLiveData()
 
     private val _crashReporting = MutableLiveData(preferences.getAcraEnabled())
     val crashReporting = _crashReporting
@@ -233,19 +232,17 @@ class SettingsViewModel
     }
 
     fun preferForwardRewind(option: SeekTimeOption) {
-      val current = _seekTime.value ?: return
+      val current = preferences.getSeekTime()
       val updated = current.copy(forward = option)
 
       preferences.saveSeekTime(updated)
-      _seekTime.postValue(updated)
     }
 
     fun preferRewindRewind(option: SeekTimeOption) {
-      val current = _seekTime.value ?: return
+      val current = preferences.getSeekTime()
       val updated = current.copy(rewind = option)
 
       preferences.saveSeekTime(updated)
-      _seekTime.postValue(updated)
     }
 
     fun updateLocalUrls(urls: List<LocalUrl>) {

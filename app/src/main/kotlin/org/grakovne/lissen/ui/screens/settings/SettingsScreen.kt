@@ -1,12 +1,13 @@
 package org.grakovne.lissen.ui.screens.settings
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -85,60 +86,73 @@ fun SettingsScreen(
         .systemBarsPadding()
         .fillMaxHeight(),
     content = { innerPadding ->
-      Column(
+      BoxWithConstraints(
         modifier =
           Modifier
             .fillMaxSize()
-            .padding(innerPadding)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(innerPadding),
       ) {
-        // Connection Section
-        if (host?.url?.isNotEmpty() == true) {
-          SettingsSection(title = stringResource(R.string.settings_section_connection)) {
-            ServerSettingsComposable(navController, viewModel)
+        val screenHeight = maxHeight
+        Column(
+          modifier =
+            Modifier
+              .fillMaxSize()
+              .verticalScroll(rememberScrollState()),
+          horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+          Column(
+            modifier = Modifier.heightIn(min = screenHeight),
+            horizontalAlignment = Alignment.CenterHorizontally,
+          ) {
+            // Connection Section
+            if (host?.url?.isNotEmpty() == true) {
+              SettingsSection(title = stringResource(R.string.settings_section_connection)) {
+                ServerSettingsComposable(navController, viewModel)
+              }
+            }
+
+            // Appearance Section
+            SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
+              ColorSchemeSettingsComposable(viewModel)
+              LibraryOrderingSettingsComposable(viewModel)
+            }
+
+            // Playback & Downloads Section
+            SettingsSection(title = stringResource(R.string.settings_section_playback)) {
+              AdvancedSettingsNavigationItemComposable(
+                title = stringResource(R.string.playback_settings_title),
+                description = stringResource(R.string.playback_settings_description),
+                onclick = { navController.showPlaybackSettings() },
+                icon = Icons.Outlined.PlayCircle,
+              )
+
+              AdvancedSettingsNavigationItemComposable(
+                title = stringResource(R.string.download_settings_title),
+                description = stringResource(R.string.download_settings_description),
+                onclick = { navController.showCacheSettings() },
+                icon = Icons.Outlined.Download,
+              )
+
+              AdvancedSettingsNavigationItemComposable(
+                title = stringResource(R.string.settings_screen_advanced_preferences_title),
+                description = stringResource(R.string.settings_screen_advanced_preferences_description),
+                onclick = { navController.showAdvancedSettings() },
+                icon = Icons.Outlined.Settings,
+              )
+            }
+
+            // About Section
+            SettingsSection(title = stringResource(R.string.settings_section_about)) {
+              GitHubLinkComposable()
+              DonateComposable()
+            }
+
+            // Footer (scrolls with content)
+            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(Spacing.xl))
+            LicenseFooterComposable()
           }
         }
-
-        // Appearance Section
-        SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
-          ColorSchemeSettingsComposable(viewModel)
-          LibraryOrderingSettingsComposable(viewModel)
-        }
-
-        // Playback & Downloads Section
-        SettingsSection(title = stringResource(R.string.settings_section_playback)) {
-          AdvancedSettingsNavigationItemComposable(
-            title = stringResource(R.string.playback_settings_title),
-            description = stringResource(R.string.playback_settings_description),
-            onclick = { navController.showPlaybackSettings() },
-            icon = Icons.Outlined.PlayCircle,
-          )
-
-          AdvancedSettingsNavigationItemComposable(
-            title = stringResource(R.string.download_settings_title),
-            description = stringResource(R.string.download_settings_description),
-            onclick = { navController.showCacheSettings() },
-            icon = Icons.Outlined.Download,
-          )
-
-          AdvancedSettingsNavigationItemComposable(
-            title = stringResource(R.string.settings_screen_advanced_preferences_title),
-            description = stringResource(R.string.settings_screen_advanced_preferences_description),
-            onclick = { navController.showAdvancedSettings() },
-            icon = Icons.Outlined.Settings,
-          )
-        }
-
-        // About Section
-        SettingsSection(title = stringResource(R.string.settings_section_about)) {
-          GitHubLinkComposable()
-          DonateComposable()
-        }
-
-        // Footer (scrolls with content)
-        Spacer(modifier = Modifier.height(Spacing.xl))
-        LicenseFooterComposable()
       }
     },
   )

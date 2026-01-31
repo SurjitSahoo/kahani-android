@@ -128,6 +128,7 @@
     <string name="volume_boost_high">High</string>
     <string name="volume_boost_max">Maximum</string>
     <string name="volume_boost_title">Boost volume</string>
+    <string name="player_nav_chapters">Chapters</string>
     <string name="playing_item_details_time_remaining">Time remaining</string>
     <string name="settings_screen_advanced_preferences_title">Advanced preferences</string>
     <string name="settings_screen_advanced_preferences_description">Control seeking, proxy headers, or sound</string>
@@ -220,4 +221,13 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_playback">Playback &amp; Downloads</string>
     <string name="settings_section_about">About</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="player_nav_boost">Boost</string>
+    <string name="player_nav_speed">Speed</string>
+    <string name="player_nav_download">Download</string>
+    <string name="player_nav_timer">Timer</string>
+
+    <!-- Cached indicator -->
+    <string name="chapter_cached_indicator">Downloaded</string>
 </resources>

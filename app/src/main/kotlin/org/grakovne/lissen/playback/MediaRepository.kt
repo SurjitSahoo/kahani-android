@@ -158,6 +158,15 @@ class MediaRepository
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                   _isPlaying.value = isPlaying
                   updateShakeDetectorState(preferences.getShakeToResetTimer(), isPlaying)
+
+                  if (isPlaying) {
+                    _playingBook.value?.let { startUpdatingProgress(it) }
+                  } else {
+                    handler.removeCallbacksAndMessages(null)
+                    if (::mediaController.isInitialized) {
+                      _playingBook.value?.let { updateProgress(it) }
+                    }
+                  }
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
@@ -495,6 +504,10 @@ class MediaRepository
 
     private fun startUpdatingProgress(detailedItem: DetailedItem) {
       handler.removeCallbacksAndMessages(null)
+
+      if (_isPlaying.value != true) {
+        return
+      }
 
       handler.postDelayed(
         object : Runnable {
