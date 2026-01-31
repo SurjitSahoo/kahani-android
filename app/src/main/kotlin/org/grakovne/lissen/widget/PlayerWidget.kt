@@ -87,6 +87,7 @@ class PlayerWidget : GlanceAppWidget() {
             }
 
         val isPlaying = state[isPlaying] ?: false
+        val showNavButtons = state[showNavButtons] ?: false
 
         Column(
           modifier =
@@ -146,7 +147,7 @@ class PlayerWidget : GlanceAppWidget() {
                     color = GlanceTheme.colors.onBackground,
                   ),
                 maxLines = 2,
-                modifier = GlanceModifier.padding(bottom = 2.dp),
+                modifier = GlanceModifier.padding(bottom = 8.dp),
               )
 
               Text(
@@ -188,16 +189,18 @@ class PlayerWidget : GlanceAppWidget() {
               modifier = GlanceModifier.defaultWeight(),
             )
 
-            WidgetControlButton(
-              size = 36.dp,
-              icon = ImageProvider(drawable.ic_n_nav_skip_previous),
-              contentColor = GlanceTheme.colors.onBackground,
-              onClick =
-                actionRunCallback<PreviousChapterActionCallback>(
-                  actionParametersOf(bookIdKey to bookId),
-                ),
-              modifier = GlanceModifier.defaultWeight(),
-            )
+            if (showNavButtons) {
+              WidgetControlButton(
+                size = 36.dp,
+                icon = ImageProvider(drawable.ic_n_nav_skip_previous),
+                contentColor = GlanceTheme.colors.onBackground,
+                onClick =
+                  actionRunCallback<PreviousChapterActionCallback>(
+                    actionParametersOf(bookIdKey to bookId),
+                  ),
+                modifier = GlanceModifier.defaultWeight(),
+              )
+            }
 
             WidgetControlButton(
               icon =
@@ -215,16 +218,18 @@ class PlayerWidget : GlanceAppWidget() {
               modifier = GlanceModifier.defaultWeight(),
             )
 
-            WidgetControlButton(
-              icon = ImageProvider(drawable.ic_n_nav_skip_next),
-              size = 36.dp,
-              contentColor = GlanceTheme.colors.onBackground,
-              onClick =
-                actionRunCallback<NextChapterActionCallback>(
-                  actionParametersOf(bookIdKey to bookId),
-                ),
-              modifier = GlanceModifier.defaultWeight(),
-            )
+            if (showNavButtons) {
+              WidgetControlButton(
+                icon = ImageProvider(drawable.ic_n_nav_skip_next),
+                size = 36.dp,
+                contentColor = GlanceTheme.colors.onBackground,
+                onClick =
+                  actionRunCallback<NextChapterActionCallback>(
+                    actionParametersOf(bookIdKey to bookId),
+                  ),
+                modifier = GlanceModifier.defaultWeight(),
+              )
+            }
 
             WidgetControlButton(
               icon = ImageProvider(state[forwardIconRes] ?: forwardIcon),
@@ -262,6 +267,7 @@ class PlayerWidget : GlanceAppWidget() {
 
     val rewindIconRes = intPreferencesKey("player_widget_key_rewind_icon")
     val forwardIconRes = intPreferencesKey("player_widget_key_forward_icon")
+    val showNavButtons = booleanPreferencesKey("player_widget_key_show_nav_buttons")
   }
 }
 

@@ -44,7 +44,8 @@ class PlayerWidgetStateService
             .distinctUntilChanged(),
           mediaRepository.currentChapterIndex.asFlow().distinctUntilChanged(),
           preferences.seekTimeFlow.distinctUntilChanged(),
-        ) { playingItem, isPlaying, chapterIndex, seekTime ->
+          preferences.showPlayerNavButtonsFlow.distinctUntilChanged(),
+        ) { playingItem, isPlaying, chapterIndex, seekTime, showNavButtons ->
           val chapterTitle = provideChapterTitle(playingItem, chapterIndex)
 
           val maybeCover =
@@ -64,6 +65,7 @@ class PlayerWidgetStateService
             coverFile = maybeCover,
             rewindIcon = provideRewindIcon(seekTime.rewind.seconds),
             forwardIcon = provideForwardIcon(seekTime.forward.seconds),
+            showNavButtons = showNavButtons,
           )
         }.collect { playingItemState ->
           updatePlayingItem(playingItemState)
@@ -99,6 +101,7 @@ class PlayerWidgetStateService
             prefs[PlayerWidget.isPlaying] = state.isPlaying
             prefs[PlayerWidget.rewindIconRes] = state.rewindIcon
             prefs[PlayerWidget.forwardIconRes] = state.forwardIcon
+            prefs[PlayerWidget.showNavButtons] = state.showNavButtons
           }
           PlayerWidget().update(context, glanceId)
         }
@@ -133,4 +136,5 @@ data class PlayingItemState(
   val coverFile: File?,
   val rewindIcon: Int,
   val forwardIcon: Int,
+  val showNavButtons: Boolean,
 )

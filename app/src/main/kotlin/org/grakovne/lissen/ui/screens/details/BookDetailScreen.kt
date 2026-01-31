@@ -550,7 +550,6 @@ fun BookDetailScreen(
           bookDetail?.let {
             cachingModelView.cache(
               mediaItem = it,
-              currentPosition = playerViewModel.totalPosition.value ?: 0.0,
               option = option,
             )
           }

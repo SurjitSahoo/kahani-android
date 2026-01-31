@@ -89,14 +89,13 @@ class CachingModelView
 
     fun cache(
       mediaItem: DetailedItem,
-      currentPosition: Double,
       option: DownloadOption,
     ) {
       val task =
         ContentCachingTask(
           item = mediaItem,
           options = option,
-          currentPosition = currentPosition,
+          currentPosition = mediaItem.progress?.currentTime ?: 0.0,
         )
 
       val intent =
