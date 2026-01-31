@@ -115,6 +115,10 @@ class CachingModelView
       contentCachingManager.dropCache(bookId)
     }
 
+    suspend fun dropCompletedChapters(item: DetailedItem) {
+      contentCachingManager.dropCompletedChapters(item)
+    }
+
     fun stopCaching(item: DetailedItem) {
       val intent =
         Intent(context, ContentCachingService::class.java).apply {

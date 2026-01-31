@@ -561,6 +561,13 @@ fun BookDetailScreen(
             }
           }
         },
+        onRequestedDropCompleted = {
+          bookDetail?.let {
+            scope.launch {
+              cachingModelView.dropCompletedChapters(it)
+            }
+          }
+        },
         onRequestedStop = {
           bookDetail?.let {
             scope.launch {

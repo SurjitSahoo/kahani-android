@@ -16,11 +16,16 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import org.grakovne.lissen.R
 import org.grakovne.lissen.lib.domain.AllItemsDownloadOption
@@ -42,13 +47,16 @@ fun DownloadsComposable(
   onRequestedDownload: (DownloadOption) -> Unit,
   onRequestedStop: () -> Unit,
   onRequestedDrop: () -> Unit,
+  onRequestedDropCompleted: () -> Unit,
   onDismissRequest: () -> Unit,
 ) {
   val context = LocalContext.current
+  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
   WindowBlurEffect()
 
   ModalBottomSheet(
+    sheetState = sheetState,
     containerColor = colorScheme.background,
     scrimColor = colorScheme.scrim.copy(alpha = 0.65f),
     onDismissRequest = onDismissRequest,
@@ -131,6 +139,48 @@ fun DownloadsComposable(
 
           if (hasCachedEpisodes) {
             item {
+              HorizontalDivider()
+
+              ListItem(
+                headlineContent = {
+                  Row {
+                    val fullText =
+                      when (libraryType) {
+                        LibraryType.LIBRARY -> stringResource(R.string.downloads_menu_download_option_clear_completed_chapters)
+                        LibraryType.PODCAST -> stringResource(R.string.downloads_menu_download_option_clear_completed_episodes)
+                        LibraryType.UNKNOWN -> stringResource(R.string.downloads_menu_download_option_clear_completed_items)
+                      }
+
+                    val completedWord = "completed"
+                    val startIndex = fullText.indexOf(completedWord, ignoreCase = true)
+
+                    Text(
+                      text =
+                        buildAnnotatedString {
+                          if (startIndex != -1) {
+                            append(fullText.substring(0, startIndex))
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                              append(fullText.substring(startIndex, startIndex + completedWord.length))
+                            }
+                            append(fullText.substring(startIndex + completedWord.length))
+                          } else {
+                            append(fullText)
+                          }
+                        },
+                      color = colorScheme.error,
+                      style = typography.bodyMedium,
+                    )
+                  }
+                },
+                modifier =
+                  Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                      onRequestedDropCompleted()
+                      onDismissRequest()
+                    },
+              )
+
               HorizontalDivider()
 
               ListItem(

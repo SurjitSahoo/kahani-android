@@ -118,6 +118,17 @@ class ContentCachingManager
         }
     }
 
+    suspend fun dropCompletedChapters(item: DetailedItem) {
+      val currentTime = item.progress?.currentTime ?: 0.0
+      val completedChapters = item.chapters.filter { it.available && it.end <= currentTime }
+
+      if (completedChapters.isEmpty()) return
+
+      completedChapters.forEach { chapter ->
+        dropCache(item, chapter)
+      }
+    }
+
     suspend fun dropCache(itemId: String) {
       val book = bookRepository.fetchBook(itemId) ?: return
 

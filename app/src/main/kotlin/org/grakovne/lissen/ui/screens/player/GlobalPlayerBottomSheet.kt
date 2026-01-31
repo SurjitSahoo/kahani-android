@@ -467,6 +467,11 @@ fun PlayerContent(
                   cachingModelView.dropCache(it.id)
                 }
               },
+              onRequestedDropCompleted = {
+                scope.launch {
+                  cachingModelView.dropCompletedChapters(it)
+                }
+              },
               onRequestedStop = {
                 scope.launch {
                   cachingModelView.stopCaching(it)

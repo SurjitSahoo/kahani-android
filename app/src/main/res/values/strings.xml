@@ -81,6 +81,9 @@
     <string name="downloads_menu_download_option_clear_chapters">Clear downloaded chapters</string>
     <string name="downloads_menu_download_option_clear_episodes">Clear downloaded episodes</string>
     <string name="downloads_menu_download_option_clear_items">Clear downloaded items</string>
+    <string name="downloads_menu_download_option_clear_completed_chapters">Clear completed chapters</string>
+    <string name="downloads_menu_download_option_clear_completed_episodes">Clear completed episodes</string>
+    <string name="downloads_menu_download_option_clear_completed_items">Clear completed items</string>
     <string name="downloads_menu_download_option_stop_downloads">Stop downloading</string>
     <string name="mini_player_action_close">Close</string>
     <string name="playing_item_details_author">Author</string>

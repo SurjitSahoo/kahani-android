@@ -454,6 +454,13 @@ fun PlayerScreen(
             }
           }
         },
+        onRequestedDropCompleted = {
+          playingBook?.let {
+            scope.launch {
+              cachingModelView.dropCompletedChapters(it)
+            }
+          }
+        },
         onRequestedStop = {
           playingBook?.let {
             scope.launch {
