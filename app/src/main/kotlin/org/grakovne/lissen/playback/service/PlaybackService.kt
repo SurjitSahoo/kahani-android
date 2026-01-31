@@ -18,6 +18,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.grakovne.lissen.channel.audiobookshelf.common.api.RequestHeadersProvider
@@ -71,6 +72,18 @@ class PlaybackService : MediaSessionService() {
     super.onCreate()
 
     session = getSession()
+
+    playerServiceScope.launch {
+      combine(
+        sharedPreferences.showPlayerNavButtonsFlow,
+        sharedPreferences.seekTimeFlow,
+      ) { _, _ -> }
+        .collect {
+          session?.let { currentSession ->
+            mediaSessionProvider.updateSessionCommands(currentSession)
+          }
+        }
+    }
   }
 
   @Suppress("DEPRECATION")
