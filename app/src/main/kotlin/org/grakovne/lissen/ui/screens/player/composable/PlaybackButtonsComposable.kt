@@ -51,7 +51,11 @@ fun PlaybackButtonsComposable(
       modifier
         .fillMaxWidth()
         .padding(horizontal = 4.dp),
-    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+    horizontalArrangement =
+      Arrangement.spacedBy(
+        space = if (showNavButtons) 16.dp else 32.dp,
+        alignment = Alignment.CenterHorizontally,
+      ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     if (showNavButtons) {

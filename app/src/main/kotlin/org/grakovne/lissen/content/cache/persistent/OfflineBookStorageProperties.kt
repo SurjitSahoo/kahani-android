@@ -35,10 +35,17 @@ class OfflineBookStorageProperties
         .resolve(bookId)
         .resolve(fileId)
 
-    fun provideBookCoverPath(bookId: String): File =
+    fun provideBookCoverPath(bookId: String): File = provideBookCoverThumbPath(bookId)
+
+    fun provideBookCoverRawPath(bookId: String): File =
       baseFolder()
         .resolve(bookId)
-        .resolve("cover.img")
+        .resolve("cover_raw.img")
+
+    fun provideBookCoverThumbPath(bookId: String): File =
+      baseFolder()
+        .resolve(bookId)
+        .resolve("cover_thumb.img")
 
     companion object {
       const val MEDIA_CACHE_FOLDER = "media_cache"

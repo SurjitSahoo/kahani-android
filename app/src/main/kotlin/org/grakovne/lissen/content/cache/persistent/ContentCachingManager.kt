@@ -194,17 +194,23 @@ class ContentCachingManager
       book: DetailedItem,
       channel: MediaChannel,
     ): CacheState {
-      val file = properties.provideBookCoverPath(book.id)
+      val thumbFile = properties.provideBookCoverThumbPath(book.id)
+      val rawFile = properties.provideBookCoverRawPath(book.id)
 
       return withContext(Dispatchers.IO) {
         channel
-          .fetchBookCover(book.id)
+          .fetchBookCover(book.id, width = null)
           .fold(
             onSuccess = { cover ->
               try {
                 cover
+                  .peek()
                   .withBlur(context)
-                  .writeToFile(file)
+                  .writeToFile(rawFile)
+
+                cover
+                  .withBlur(context, width = 300) // Trigger thumbnail transformation
+                  .writeToFile(thumbFile)
               } catch (ex: Exception) {
                 return@fold CacheState(CacheStatus.Error)
               }

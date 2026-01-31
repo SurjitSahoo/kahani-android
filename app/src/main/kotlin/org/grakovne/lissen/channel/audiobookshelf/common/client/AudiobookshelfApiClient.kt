@@ -128,15 +128,16 @@ interface AudiobookshelfApiClient {
     @Header("x-refresh-token") refreshToken: String,
   ): Response<LoggedUserResponse>
 
-  @GET("/api/items/{itemId}/cover?raw=1")
+  @GET("/api/items/{itemId}/cover")
   @Streaming
-  suspend fun getItemCover(
+  suspend fun getItemCoverRaw(
     @Path("itemId") itemId: String,
+    @Query("raw") raw: Int = 1,
   ): Response<ResponseBody>
 
   @GET("/api/items/{itemId}/cover")
   @Streaming
-  suspend fun getItemCover(
+  suspend fun getItemCoverScaled(
     @Path("itemId") itemId: String,
     @Query("width") width: Int?,
   ): Response<ResponseBody>

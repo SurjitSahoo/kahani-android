@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.PauseCircleOutline
-import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -58,6 +56,7 @@ import org.grakovne.lissen.R
 import org.grakovne.lissen.common.withHaptic
 import org.grakovne.lissen.lib.domain.DetailedItem
 import org.grakovne.lissen.ui.components.AsyncShimmeringImage
+import org.grakovne.lissen.ui.icons.AppIcons
 import org.grakovne.lissen.ui.navigation.AppNavigationService
 import org.grakovne.lissen.viewmodel.PlayerViewModel
 
@@ -139,6 +138,7 @@ fun MiniPlayerComposable(
           ImageRequest
             .Builder(context)
             .data(book.id)
+            .size(200)
             .build()
         }
 
@@ -235,7 +235,7 @@ fun MiniPlayerComposable(
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
                   ),
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
               )
 
@@ -261,9 +261,10 @@ fun MiniPlayerComposable(
                   onClick = { withHaptic(view) { playerViewModel.togglePlayPause() } },
                 ) {
                   Icon(
-                    imageVector = if (isPlaying) Icons.Outlined.PauseCircleOutline else Icons.Outlined.PlayCircle,
+                    imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
                     contentDescription = if (isPlaying) "Pause" else "Play",
-                    modifier = Modifier.size(34.dp),
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp),
                   )
                 }
               }

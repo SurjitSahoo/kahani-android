@@ -164,12 +164,14 @@ fun PlayerScreen(
 
   // Image request for dynamic background
   val backgroundImageRequest =
-    remember(playingBook?.id) {
+    remember<ImageRequest?>(playingBook?.id) {
       playingBook?.id?.let {
         ImageRequest
           .Builder(context)
           .data(it)
-          .size(Size.ORIGINAL)
+          .size(300)
+          .memoryCacheKey("${playingBook?.id}_thumb")
+          .diskCacheKey("${playingBook?.id}_thumb")
           .build()
       }
     }

@@ -45,6 +45,7 @@ fun BookComposable(
       ImageRequest
         .Builder(context)
         .data(book.id)
+        .size(200)
         .build()
     }
 

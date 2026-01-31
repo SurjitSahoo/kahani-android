@@ -43,7 +43,14 @@ class CachedBookRepository
         .provideMediaCachePath(bookId, fileId)
         .toUri()
 
-    fun provideBookCover(bookId: String): File = properties.provideBookCoverPath(bookId)
+    fun provideBookCover(
+      bookId: String,
+      width: Int? = null,
+    ): File =
+      when (width == null) {
+        true -> properties.provideBookCoverRawPath(bookId)
+        false -> properties.provideBookCoverThumbPath(bookId)
+      }
 
     suspend fun removeBook(bookId: String) {
       bookDao

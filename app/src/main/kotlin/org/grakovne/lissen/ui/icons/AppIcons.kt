@@ -1,6 +1,7 @@
 package org.grakovne.lissen.ui.icons
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -177,6 +178,87 @@ object AppIcons {
             arcTo(2f, 2f, 0f, isMoreThanHalf = false, isPositiveArc = true, 20.008f, 13.728f)
             lineTo(8.008f, 20.728f)
             arcTo(2f, 2f, 0f, isMoreThanHalf = false, isPositiveArc = true, 5f, 19f)
+            close()
+          }
+        }.build()
+
+  // Negative Space: Circle (Filled) with Triangle (Cutout) - Ultra Refined 55% Scale
+  val PlayCircleNegative: ImageVector
+    get() =
+      ImageVector
+        .Builder(
+          name = "PlayCircleNegative",
+          defaultWidth = 24.dp,
+          defaultHeight = 24.dp,
+          viewportWidth = 24f,
+          viewportHeight = 24f,
+        ).apply {
+          path(
+            fill = SolidColor(Color.White),
+            pathFillType = PathFillType.EvenOdd,
+          ) {
+            // Circle (Base)
+            moveTo(12f, 1f)
+            arcTo(11f, 11f, 0f, isMoreThanHalf = true, isPositiveArc = true, 12f, 23f)
+            arcTo(11f, 11f, 0f, isMoreThanHalf = true, isPositiveArc = true, 12f, 1f)
+            close()
+
+            // Triangle (Cutout) - Ultra Refined 1dp Nudge Right
+            // Base x: 8.9, Tip x: 17.1 (Width 8.2)
+            // Centroid x: (8.9+8.9+17.1)/3 = 11.63 (Optical Sweet Spot)
+            // Height y: 7.2 to 16.8 (Height 9.6)
+            moveTo(8.9f, 8.1f)
+            arcTo(1.1f, 1.1f, 0f, isMoreThanHalf = false, isPositiveArc = true, 10.5f, 7.2f)
+            lineTo(17.1f, 11.2f)
+            arcTo(1.1f, 1.1f, 0f, isMoreThanHalf = false, isPositiveArc = true, 17.1f, 12.8f)
+            lineTo(10.5f, 16.8f)
+            arcTo(1.1f, 1.1f, 0f, isMoreThanHalf = false, isPositiveArc = true, 8.9f, 15.9f)
+            close()
+          }
+        }.build()
+
+  // Negative Space: Circle (Filled) with Pause Bars (Cutout) - Ultra Refined 55% Scale
+  val PauseCircleNegative: ImageVector
+    get() =
+      ImageVector
+        .Builder(
+          name = "PauseCircleNegative",
+          defaultWidth = 24.dp,
+          defaultHeight = 24.dp,
+          viewportWidth = 24f,
+          viewportHeight = 24f,
+        ).apply {
+          path(
+            fill = SolidColor(Color.White),
+            pathFillType = PathFillType.EvenOdd,
+          ) {
+            // Circle (Base)
+            moveTo(12f, 1f)
+            arcTo(11f, 11f, 0f, isMoreThanHalf = true, isPositiveArc = true, 12f, 23f)
+            arcTo(11f, 11f, 0f, isMoreThanHalf = true, isPositiveArc = true, 12f, 1f)
+            close()
+
+            // Pause Bars (Cutout) - scaled to 55%
+            // Bar 1
+            moveTo(8.8f, 7.7f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 9.3f, 7.2f)
+            horizontalLineTo(10.3f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 10.8f, 7.7f)
+            verticalLineTo(16.3f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 10.3f, 16.8f)
+            horizontalLineTo(9.3f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 8.8f, 16.3f)
+            close()
+
+            // Bar 2
+            moveTo(13.2f, 7.7f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 13.7f, 7.2f)
+            horizontalLineTo(14.7f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 15.2f, 7.7f)
+            verticalLineTo(16.3f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 14.7f, 16.8f)
+            horizontalLineTo(13.7f)
+            arcTo(0.5f, 0.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 13.2f, 16.3f)
             close()
           }
         }.build()

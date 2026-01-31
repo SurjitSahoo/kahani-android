@@ -75,11 +75,13 @@ fun TrackDetailsComposable(
   val context = LocalContext.current
 
   val imageRequest =
-    remember(book?.id) {
+    remember<ImageRequest>(book?.id) {
       ImageRequest
         .Builder(context)
         .data(book?.id)
         .size(coil3.size.Size.ORIGINAL)
+        .memoryCacheKey("${book?.id}_original")
+        .diskCacheKey("${book?.id}_original")
         .build()
     }
 
@@ -95,13 +97,13 @@ fun TrackDetailsComposable(
       imageRequest = imageRequest,
       imageLoader = imageLoader,
       contentDescription = "${book?.title} cover",
-      contentScale = ContentScale.FillBounds,
+      contentScale = ContentScale.Crop,
       modifier =
         Modifier
           .heightIn(max = maxImageHeight)
           .aspectRatio(1f)
           .clip(RoundedCornerShape(8.dp))
-          .shadow(12.dp, RoundedCornerShape(8.dp)),
+          .shadow(24.dp, RoundedCornerShape(8.dp)),
       error = painterResource(R.drawable.cover_fallback),
     )
 

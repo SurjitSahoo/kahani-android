@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -249,6 +250,9 @@ fun BookDetailScreen(
                   ImageRequest
                     .Builder(context)
                     .data(book.id)
+                    .size(Size.ORIGINAL)
+                    .memoryCacheKey("${book.id}_original")
+                    .diskCacheKey("${book.id}_original")
                     .build()
                 }
 
@@ -256,16 +260,16 @@ fun BookDetailScreen(
                 modifier =
                   Modifier
                     .padding(top = 16.dp, bottom = 16.dp)
-                    .height(260.dp) // Large cover
+                    .height(260.dp)
                     .aspectRatio(1f)
-                    .shadow(12.dp, RoundedCornerShape(12.dp))
+                    .shadow(24.dp, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp)),
               ) {
                 AsyncShimmeringImage(
                   imageRequest = imageRequest,
                   imageLoader = imageLoader,
                   contentDescription = "${book.title} cover",
-                  contentScale = ContentScale.FillBounds,
+                  contentScale = ContentScale.Crop,
                   modifier = Modifier.fillMaxSize(),
                   error = painterResource(R.drawable.cover_fallback),
                 )

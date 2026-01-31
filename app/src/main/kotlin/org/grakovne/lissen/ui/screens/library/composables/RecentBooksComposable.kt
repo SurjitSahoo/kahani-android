@@ -106,6 +106,7 @@ fun RecentBookItemComposable(
         ImageRequest
           .Builder(context)
           .data(book.id)
+          .size(300)
           .crossfade(300)
           .build()
       }

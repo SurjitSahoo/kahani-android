@@ -50,8 +50,15 @@ class LocalCacheRepository
       return OperationResult.Success(Unit)
     }
 
-    fun fetchBookCover(bookId: String): OperationResult<File> {
-      val coverFile = cachedBookRepository.provideBookCover(bookId)
+    fun fetchBookCover(
+      bookId: String,
+      width: Int? = null,
+    ): OperationResult<File> {
+      val coverFile =
+        cachedBookRepository.provideBookCover(
+          bookId = bookId,
+          width = width,
+        )
 
       return when (coverFile.exists()) {
         true -> OperationResult.Success(coverFile)

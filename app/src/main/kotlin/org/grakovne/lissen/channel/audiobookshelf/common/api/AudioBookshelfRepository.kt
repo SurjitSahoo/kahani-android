@@ -183,8 +183,8 @@ class AudioBookshelfRepository
       audioBookShelfApiService
         .makeRequest {
           when (width == null) {
-            true -> it.getItemCover(itemId = itemId)
-            false -> it.getItemCover(itemId = itemId, width)
+            true -> it.getItemCoverRaw(itemId = itemId)
+            false -> it.getItemCoverScaled(itemId = itemId, width = width)
           }
         }.map { response ->
           withContext(Dispatchers.IO) {

@@ -88,7 +88,7 @@ class LissenMediaProvider
       bookId: String,
       width: Int? = null,
     ): OperationResult<File> {
-      val localResult = localCacheRepository.fetchBookCover(bookId)
+      val localResult = localCacheRepository.fetchBookCover(bookId, width)
       if (localResult is OperationResult.Success) {
         return localResult
       }
