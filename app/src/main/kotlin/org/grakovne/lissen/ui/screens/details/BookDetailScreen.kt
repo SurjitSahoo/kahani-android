@@ -235,7 +235,8 @@ fun BookDetailScreen(
         }
       } else {
         val book = bookDetail!!
-        val chapters = book.chapters
+        val isPodcast = book.libraryType == LibraryType.PODCAST
+        val chapters = if (isPodcast) book.chapters.reversed() else book.chapters
         val maxDuration = chapters.maxOfOrNull { it.duration } ?: 0.0
 
         LazyColumn(
@@ -364,96 +365,98 @@ fun BookDetailScreen(
                 val currentPosition = book.progress?.currentTime ?: 0.0
                 val isStarted = currentPosition > 0 && book.progress?.isFinished != true
 
-                Row(
-                  modifier =
-                    Modifier
-                      .fillMaxWidth()
-                      .height(IntrinsicSize.Max),
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                  // Published Tile
-                  BookInfoTile(
-                    label = stringResource(R.string.book_detail_published),
+                if (!isPodcast) {
+                  Row(
                     modifier =
                       Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                   ) {
-                    Text(
-                      text = book.year?.takeIf { it.isNotBlank() } ?: stringResource(R.string.book_detail_unknown_year),
-                      style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
-                      color = MaterialTheme.colorScheme.onSurface,
-                      textAlign = TextAlign.Center,
-                    )
-                  }
-
-                  // Length/Remaining Tile
-                  val durationLabel =
-                    if (isStarted) {
-                      stringResource(
-                        R.string.book_detail_remaining,
-                      )
-                    } else {
-                      stringResource(R.string.book_detail_length)
-                    }
-                  var durationSeconds =
-                    if (isStarted) {
-                      (totalDuration - currentPosition).toLong()
-                    } else {
-                      totalDuration.toLong()
-                    }
-
-                  val hours = durationSeconds / 3600
-                  val minutes = (durationSeconds % 3600) / 60
-
-                  BookInfoTile(
-                    label = durationLabel,
-                    modifier =
-                      Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                  ) {
-                    if (hours > 0) {
+                    // Published Tile
+                    BookInfoTile(
+                      label = stringResource(R.string.book_detail_published),
+                      modifier =
+                        Modifier
+                          .weight(1f)
+                          .fillMaxHeight(),
+                    ) {
                       Text(
-                        text = context.resources.getQuantityString(R.plurals.duration_hours, hours.toInt(), hours.toInt()),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                        text = book.year?.takeIf { it.isNotBlank() } ?: stringResource(R.string.book_detail_unknown_year),
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black),
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                       )
-                      if (minutes > 0) {
+                    }
+
+                    // Length/Remaining Tile
+                    val durationLabel =
+                      if (isStarted) {
+                        stringResource(
+                          R.string.book_detail_remaining,
+                        )
+                      } else {
+                        stringResource(R.string.book_detail_length)
+                      }
+                    var durationSeconds =
+                      if (isStarted) {
+                        (totalDuration - currentPosition).toLong()
+                      } else {
+                        totalDuration.toLong()
+                      }
+
+                    val hours = durationSeconds / 3600
+                    val minutes = (durationSeconds % 3600) / 60
+
+                    BookInfoTile(
+                      label = durationLabel,
+                      modifier =
+                        Modifier
+                          .weight(1f)
+                          .fillMaxHeight(),
+                    ) {
+                      if (hours > 0) {
+                        Text(
+                          text = context.resources.getQuantityString(R.plurals.duration_hours, hours.toInt(), hours.toInt()),
+                          style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                          color = MaterialTheme.colorScheme.onSurface,
+                          textAlign = TextAlign.Center,
+                        )
+                        if (minutes > 0) {
+                          Text(
+                            text = context.resources.getQuantityString(R.plurals.duration_minutes, minutes.toInt(), minutes.toInt()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                          )
+                        }
+                      } else {
                         Text(
                           text = context.resources.getQuantityString(R.plurals.duration_minutes, minutes.toInt(), minutes.toInt()),
-                          style = MaterialTheme.typography.bodySmall,
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
+                          style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                          color = MaterialTheme.colorScheme.onSurface,
                           textAlign = TextAlign.Center,
                         )
                       }
-                    } else {
+                    }
+
+                    // Publisher Tile
+                    BookInfoTile(
+                      label = stringResource(R.string.playing_item_details_publisher),
+                      modifier =
+                        Modifier
+                          .weight(1f)
+                          .fillMaxHeight(),
+                    ) {
                       Text(
-                        text = context.resources.getQuantityString(R.plurals.duration_minutes, minutes.toInt(), minutes.toInt()),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                        text = book.publisher?.takeIf { it.isNotBlank() } ?: stringResource(R.string.book_detail_unknown_publisher),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                       )
                     }
-                  }
-
-                  // Publisher Tile
-                  BookInfoTile(
-                    label = stringResource(R.string.playing_item_details_publisher),
-                    modifier =
-                      Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                  ) {
-                    Text(
-                      text = book.publisher?.takeIf { it.isNotBlank() } ?: stringResource(R.string.book_detail_unknown_publisher),
-                      style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
-                      color = MaterialTheme.colorScheme.onSurface,
-                      textAlign = TextAlign.Center,
-                      maxLines = 2,
-                      overflow = TextOverflow.Ellipsis,
-                    )
                   }
                 }
 
@@ -475,7 +478,7 @@ fun BookDetailScreen(
 
           itemsIndexed(chapters) { index, chapter ->
             val isCached by cachingModelView.provideCacheState(book.id, chapter.id).observeAsState(false)
-            val isPlayingChapter = playingBook?.id == bookId && currentChapterIndex == index
+            val isPlayingChapter = playingBook?.id == bookId && currentChapterIndex == book.chapters.indexOfFirst { it.id == chapter.id }
 
             val overallPosition =
               when {
@@ -500,7 +503,8 @@ fun BookDetailScreen(
                 val isSameBook = playingBook?.id == bookId
 
                 if (isSameBook) {
-                  if (currentChapterIndex == index) {
+                  val chapterIndexInOriginal = book.chapters.indexOfFirst { it.id == chapter.id }
+                  if (currentChapterIndex == chapterIndexInOriginal) {
                     playerViewModel.togglePlayPause()
                   } else {
                     playerViewModel.setChapter(chapter)
@@ -513,7 +517,8 @@ fun BookDetailScreen(
                   if (isLastOngoing) {
                     playerViewModel.playBook(book) // Resume logic
                   } else {
-                    playerViewModel.playBook(book, index)
+                    val chapterIndexInOriginal = book.chapters.indexOfFirst { it.id == chapter.id }
+                    playerViewModel.playBook(book, chapterIndexInOriginal)
                   }
                 }
               },

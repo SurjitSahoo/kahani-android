@@ -90,6 +90,7 @@ class BookResponseConverter
             ?: emptyList(),
         chapters = maybeChapters ?: filesAsChapters(),
         libraryId = item.libraryId,
+        libraryType = org.grakovne.lissen.lib.domain.LibraryType.LIBRARY,
         localProvided = false,
         year = extractYear(item.media.metadata.publishedYear),
         abstract = item.media.metadata.description,

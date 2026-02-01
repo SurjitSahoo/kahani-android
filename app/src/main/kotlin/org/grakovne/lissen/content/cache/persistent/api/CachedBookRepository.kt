@@ -88,6 +88,7 @@ class CachedBookRepository
               subtitle = book.subtitle,
               seriesNames = book.series,
               duration = book.duration.toInt(),
+              libraryType = null, // currently not available here
             ) ?: BookEntity(
               id = book.id,
               title = book.title,
@@ -99,6 +100,7 @@ class CachedBookRepository
               abstract = null,
               duration = book.duration.toInt(),
               libraryId = book.libraryId,
+              libraryType = null,
               createdAt = 0,
               updatedAt = 0,
               seriesNames = book.series,

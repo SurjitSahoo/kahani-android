@@ -76,6 +76,7 @@ class PodcastResponseConverter
         libraryId = item.libraryId,
         author = item.media.metadata.author,
         narrator = null,
+        libraryType = org.grakovne.lissen.lib.domain.LibraryType.PODCAST,
         localProvided = false,
         files =
           orderedEpisodes
