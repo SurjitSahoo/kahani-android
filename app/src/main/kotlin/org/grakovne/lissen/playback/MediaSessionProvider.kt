@@ -143,7 +143,7 @@ class MediaSessionProvider
 
               val rewindButton =
                 CommandButton
-                  .Builder(Player.COMMAND_INVALID)
+                  .Builder(CommandButton.ICON_UNDEFINED)
                   .setSessionCommand(rewindCommand)
                   .setDisplayName("Rewind")
                   .setIconResId(resolveSeekIcon(seekTime.rewind.seconds, false))
@@ -152,7 +152,7 @@ class MediaSessionProvider
 
               val forwardButton =
                 CommandButton
-                  .Builder(Player.COMMAND_INVALID)
+                  .Builder(CommandButton.ICON_UNDEFINED)
                   .setSessionCommand(forwardCommand)
                   .setDisplayName("Forward")
                   .setIconResId(resolveSeekIcon(seekTime.forward.seconds, true))
@@ -161,7 +161,7 @@ class MediaSessionProvider
 
               val skipPreviousButton =
                 CommandButton
-                  .Builder(Player.COMMAND_INVALID)
+                  .Builder(CommandButton.ICON_UNDEFINED)
                   .setSessionCommand(skipPreviousCommand)
                   .setDisplayName("Previous")
                   .setIconResId(R.drawable.ic_n_nav_skip_previous)
@@ -170,7 +170,7 @@ class MediaSessionProvider
 
               val skipNextButton =
                 CommandButton
-                  .Builder(Player.COMMAND_INVALID)
+                  .Builder(CommandButton.ICON_UNDEFINED)
                   .setSessionCommand(skipNextCommand)
                   .setDisplayName("Next")
                   .setIconResId(R.drawable.ic_n_nav_skip_next)
@@ -289,7 +289,7 @@ class MediaSessionProvider
 
       val rewindButton =
         CommandButton
-          .Builder(Player.COMMAND_INVALID)
+          .Builder(CommandButton.ICON_UNDEFINED)
           .setSessionCommand(rewindCommand)
           .setDisplayName("Rewind")
           .setIconResId(resolveSeekIcon(seekTime.rewind.seconds, false))
@@ -298,7 +298,7 @@ class MediaSessionProvider
 
       val forwardButton =
         CommandButton
-          .Builder(Player.COMMAND_INVALID)
+          .Builder(CommandButton.ICON_UNDEFINED)
           .setSessionCommand(forwardCommand)
           .setDisplayName("Forward")
           .setIconResId(resolveSeekIcon(seekTime.forward.seconds, true))
@@ -307,7 +307,7 @@ class MediaSessionProvider
 
       val skipPreviousButton =
         CommandButton
-          .Builder(Player.COMMAND_INVALID)
+          .Builder(CommandButton.ICON_UNDEFINED)
           .setSessionCommand(skipPreviousCommand)
           .setDisplayName("Previous")
           .setIconResId(R.drawable.ic_n_nav_skip_previous)
@@ -316,7 +316,7 @@ class MediaSessionProvider
 
       val skipNextButton =
         CommandButton
-          .Builder(Player.COMMAND_INVALID)
+          .Builder(CommandButton.ICON_UNDEFINED)
           .setSessionCommand(skipNextCommand)
           .setDisplayName("Next")
           .setIconResId(R.drawable.ic_n_nav_skip_next)
