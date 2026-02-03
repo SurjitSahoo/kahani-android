@@ -172,6 +172,7 @@ interface CachedBookDao {
   @Query(
     """
     SELECT * FROM detailed_books
+    WHERE EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)
     ORDER BY title ASC, libraryId ASC
     LIMIT :pageSize
     OFFSET (:pageNumber * :pageSize)
@@ -182,7 +183,12 @@ interface CachedBookDao {
     pageNumber: Int,
   ): List<CachedBookEntity>
 
-  @Query("SELECT COUNT(*) FROM detailed_books")
+  @Query(
+    """
+    SELECT COUNT(*) FROM detailed_books 
+    WHERE EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)
+    """,
+  )
   suspend fun fetchCachedItemsCount(): Int
 
   @Query(
