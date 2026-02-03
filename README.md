@@ -1,6 +1,8 @@
 # <img src="metadata/brandassets/app.icon.v2.with.shadow.png" width="40" height="40" align="center"> Kahani - Audiobook Player for Audiobookshelf
 
 [![Build App](https://github.com/SurjitSahoo/kahani-android/actions/workflows/build_app.yml/badge.svg)](https://github.com/SurjitSahoo/kahani-android/actions/workflows/build_app.yml)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/SurjitSahoo/kahani-android/total?label=Downloads&link=https%3A%2F%2Fgithub.com%2FSurjitSahoo%2Fkahani-android%2Freleases)
+
 
 **Kahani** (meaning "story" in Hindi) is an offline-first Android audiobook player for [Audiobookshelf](https://github.com/advplyr/audiobookshelf) servers.
 
