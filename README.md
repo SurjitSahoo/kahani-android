@@ -1,4 +1,4 @@
-# Kahani - Audiobook Player for Audiobookshelf
+# <img src="metadata/brandassets/app.icon.v2.with.shadow.png" width="40" height="40" align="center"> Kahani - Audiobook Player for Audiobookshelf
 
 [![Build App](https://github.com/SurjitSahoo/kahani-android/actions/workflows/build_app.yml/badge.svg)](https://github.com/SurjitSahoo/kahani-android/actions/workflows/build_app.yml)
 
