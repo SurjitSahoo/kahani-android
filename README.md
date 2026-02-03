@@ -21,9 +21,20 @@
 
 ## 📱 Screenshots
 
-<p align="center">
-  <i>Screenshots coming soon</i>
-</p>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/library.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Library</div></td>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/book.details.with.player.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Book Details</div></td>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/book.details.with.payer.2.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Chapter List</div></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/player.1.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Player</div></td>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/player.2.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Customizable Controls</div></td>
+      <td align="center"><img src="metadata/en-US/images/phoneScreenshots/settings.png" width="200" style="display: block; margin: 0 auto;"><div style="margin-top: -10px">Settings</div></td>
+    </tr>
+  </table>
+</div>
 
 ## 🚀 Building
 
