@@ -50,9 +50,9 @@ fun LicenseFooterComposable() {
       modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.sm),
     ) {
       Icon(
-        painter = painterResource(id = R.drawable.media3_notification_small_icon),
+        painter = painterResource(id = R.drawable.ic_notification_silhouette),
         contentDescription = null,
-        modifier = Modifier.size(14.dp),
+        modifier = Modifier.size(12.dp),
         tint = colorScheme.onSurfaceVariant,
       )
 

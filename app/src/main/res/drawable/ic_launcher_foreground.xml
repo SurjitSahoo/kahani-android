@@ -1,7 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_launcher_logo"
-    android:insetLeft="8dp"
-    android:insetTop="8dp"
-    android:insetRight="8dp"
-    android:insetBottom="8dp" />
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Main Icon Layer (Lifted) -->
+    <!-- Shifted UP so the tip is clearly visible and balanced -->
+    <item
+        android:drawable="@drawable/ic_launcher_logo"
+        android:insetLeft="5dp"
+        android:insetTop="2dp"
+        android:insetRight="15dp"
+        android:insetBottom="18dp" />
+</layer-list>
