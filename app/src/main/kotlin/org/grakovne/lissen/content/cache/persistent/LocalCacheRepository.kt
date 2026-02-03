@@ -194,4 +194,6 @@ class LocalCacheRepository
     }
 
     fun fetchBookFlow(bookId: String): Flow<DetailedItem?> = cachedBookRepository.fetchBookFlow(bookId)
+
+    suspend fun clearMetadataCache() = cachedBookRepository.deleteNonDownloadedBooks()
   }

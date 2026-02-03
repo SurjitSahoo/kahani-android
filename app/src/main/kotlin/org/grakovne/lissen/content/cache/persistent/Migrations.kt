@@ -263,3 +263,19 @@ val MIGRATION_14_15 =
       db.execSQL("ALTER TABLE detailed_books ADD COLUMN libraryType TEXT")
     }
   }
+
+fun produceMigration15_16(
+  host: String,
+  username: String,
+) = object : Migration(15, 16) {
+  override fun migrate(db: SupportSQLiteDatabase) {
+    db.execSQL("ALTER TABLE detailed_books ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
+    db.execSQL("ALTER TABLE detailed_books ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+
+    db.execSQL("ALTER TABLE media_progress ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
+    db.execSQL("ALTER TABLE media_progress ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+
+    db.execSQL("ALTER TABLE libraries ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
+    db.execSQL("ALTER TABLE libraries ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+  }
+}

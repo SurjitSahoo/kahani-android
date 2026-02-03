@@ -102,6 +102,21 @@ fun CacheSettingsScreen(
             description = stringResource(R.string.settings_screen_cached_items_hint),
             onclick = { navController.showCachedItemsSettings() },
           )
+
+          val context = androidx.compose.ui.platform.LocalContext.current
+          val successMessage = stringResource(R.string.settings_screen_clear_metadata_cache_success)
+
+          AdvancedSettingsNavigationItemComposable(
+            title = stringResource(R.string.settings_screen_clear_metadata_cache_title),
+            description = stringResource(R.string.settings_screen_clear_metadata_cache_hint),
+            onclick = {
+              viewModel.clearMetadataCache {
+                android.widget.Toast
+                  .makeText(context, successMessage, android.widget.Toast.LENGTH_SHORT)
+                  .show()
+              }
+            },
+          )
         }
       }
     },

@@ -7,6 +7,8 @@ class RecentRequestBuilder {
   private var libraryId: String? = null
   private var downloadedOnly: Boolean = false
   private var limit: Int = 10
+  private var host: String = ""
+  private var username: String = ""
 
   fun libraryId(id: String?) = apply { this.libraryId = id }
 
@@ -14,30 +16,38 @@ class RecentRequestBuilder {
 
   fun limit(limit: Int) = apply { this.limit = limit }
 
+  fun host(host: String) = apply { this.host = host }
+
+  fun username(username: String) = apply { this.username = username }
+
   fun build(): SupportSQLiteQuery {
     val args = mutableListOf<Any>()
 
-    val whereClause =
+    val libraryClause =
       when (val libraryId = libraryId) {
-        null -> "libraryId IS NULL"
+        null -> "detailed_books.libraryId IS NULL"
         else -> {
           args.add(libraryId)
-          "(libraryId = ? OR libraryId IS NULL)"
+          "(detailed_books.libraryId = ? OR detailed_books.libraryId IS NULL)"
         }
       }
 
-    val joinClause =
+    val isolationClause =
       when (downloadedOnly) {
-        true -> "INNER JOIN book_chapters ON detailed_books.id = book_chapters.bookId AND book_chapters.isCached = 1"
-        false -> ""
+        true -> "EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)"
+        false -> {
+          args.add(host)
+          args.add(username)
+          "((detailed_books.host = ? AND detailed_books.username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+        }
       }
 
     val sql =
       """
       SELECT DISTINCT detailed_books.* FROM detailed_books
       INNER JOIN media_progress ON detailed_books.id = media_progress.bookId
-      $joinClause
-      WHERE $whereClause
+      WHERE $libraryClause 
+      AND $isolationClause
       AND media_progress.currentTime > 1.0
       AND media_progress.isFinished = 0
       ORDER BY media_progress.lastUpdate DESC

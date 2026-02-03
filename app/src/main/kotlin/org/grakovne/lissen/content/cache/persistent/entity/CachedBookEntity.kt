@@ -51,6 +51,8 @@ data class BookEntity(
   val seriesNames: String?,
   val createdAt: Long,
   val updatedAt: Long,
+  val host: String = "",
+  val username: String = "",
 ) : Serializable
 
 @Keep
@@ -120,6 +122,8 @@ data class MediaProgressEntity(
   val currentTime: Double,
   val isFinished: Boolean,
   val lastUpdate: Long,
+  val host: String = "",
+  val username: String = "",
 ) : Serializable
 
 @Keep

@@ -29,6 +29,8 @@ interface CachedBookDao {
   @Transaction
   suspend fun upsertCachedBook(
     book: DetailedItem,
+    host: String,
+    username: String,
     fetchedChapters: List<PlayingChapter>,
     droppedChapters: List<PlayingChapter>,
   ) {
@@ -47,6 +49,8 @@ interface CachedBookDao {
         publisher = book.publisher,
         createdAt = book.createdAt,
         updatedAt = book.updatedAt,
+        host = host,
+        username = username,
         seriesNames =
           book
             .series
@@ -112,6 +116,8 @@ interface CachedBookDao {
             currentTime = progress.currentTime,
             isFinished = progress.isFinished,
             lastUpdate = progress.lastUpdate,
+            host = host,
+            username = username,
           )
         }
 
@@ -128,11 +134,16 @@ interface CachedBookDao {
   @Query(
     """
     SELECT COUNT(*) FROM detailed_books
-    WHERE (:libraryId IS NULL AND libraryId IS NULL)
-       OR (libraryId = :libraryId)
+    WHERE ((:libraryId IS NULL AND libraryId IS NULL) OR (libraryId = :libraryId))
+      AND host = :host
+      AND username = :username
     """,
   )
-  suspend fun countCachedBooks(libraryId: String?): Int
+  suspend fun countCachedBooks(
+    libraryId: String?,
+    host: String,
+    username: String,
+  ): Int
 
   @Transaction
   @RawQuery
@@ -239,6 +250,19 @@ interface CachedBookDao {
 
   @Delete
   suspend fun deleteBook(book: BookEntity)
+
+  @Transaction
+  @Query(
+    """
+    DELETE FROM detailed_books
+    WHERE id NOT IN (SELECT DISTINCT bookId FROM book_chapters WHERE isCached = 1)
+      AND (host != :currentHost OR username != :currentUsername)
+    """,
+  )
+  suspend fun deleteNonDownloadedBooks(
+    currentHost: String,
+    currentUsername: String,
+  )
 
   companion object {
     val type = Types.newParameterizedType(List::class.java, BookSeriesDto::class.java)

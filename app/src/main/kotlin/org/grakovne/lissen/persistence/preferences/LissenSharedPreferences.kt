@@ -110,6 +110,10 @@ class LissenSharedPreferences
       }
     }
 
+    fun getDatabaseVersion() = sharedPreferences.getInt(KEY_DATABASE_VERSION, 0)
+
+    fun setDatabaseVersion(version: Int) = sharedPreferences.edit().putInt(KEY_DATABASE_VERSION, version).apply()
+
     fun getSslBypass() = sharedPreferences.getBoolean(KEY_BYPASS_SSL, false)
 
     fun saveSslBypass(enabled: Boolean) {
@@ -639,6 +643,7 @@ class LissenSharedPreferences
       private const val KEY_SMART_REWIND_DURATION = "smart_rewind_duration"
 
       private const val KEY_SERVER_VERSION = "server_version"
+      private const val KEY_DATABASE_VERSION = "database_version"
 
       private const val KEY_DEVICE_ID = "device_id"
 

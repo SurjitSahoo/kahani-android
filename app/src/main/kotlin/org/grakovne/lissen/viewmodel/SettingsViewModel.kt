@@ -33,6 +33,8 @@ class SettingsViewModel
   constructor(
     private val mediaChannel: LissenMediaProvider,
     private val preferences: LissenSharedPreferences,
+    private val bookRepository: org.grakovne.lissen.content.BookRepository,
+    private val cachedCoverProvider: org.grakovne.lissen.content.cache.temporary.CachedCoverProvider,
   ) : ViewModel() {
     private val _host: MutableLiveData<Host> = MutableLiveData(preferences.getHost()?.let { Host.external(it) })
     val host = _host
@@ -288,5 +290,13 @@ class SettingsViewModel
         }
 
       host?.let { _host.postValue(it) }
+    }
+
+    fun clearMetadataCache(onComplete: () -> Unit) {
+      viewModelScope.launch {
+        bookRepository.clearMetadataCache()
+        cachedCoverProvider.clearCache()
+        onComplete()
+      }
     }
   }

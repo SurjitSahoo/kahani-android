@@ -127,6 +127,10 @@ class BookRepository
         )
     }
 
+    suspend fun fetchLatestUpdate(libraryId: String) = localCacheRepository.fetchLatestUpdate(libraryId)
+
+    suspend fun clearMetadataCache() = localCacheRepository.clearMetadataCache()
+
     suspend fun fetchBooks(
       libraryId: String,
       pageSize: Int,

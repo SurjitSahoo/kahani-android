@@ -8,6 +8,8 @@ class SearchRequestBuilder {
   private var searchQuery: String = ""
   private var orderField: String = "title"
   private var orderDirection: String = "ASC"
+  private var host: String = ""
+  private var username: String = ""
 
   fun libraryId(id: String?) = apply { this.libraryId = id }
 
@@ -17,24 +19,32 @@ class SearchRequestBuilder {
 
   fun orderDirection(direction: String) = apply { this.orderDirection = direction }
 
+  fun host(host: String) = apply { this.host = host }
+
+  fun username(username: String) = apply { this.username = username }
+
   fun build(): SupportSQLiteQuery {
     val args = mutableListOf<Any>()
 
-    val whereClause =
-      buildString {
-        when (val libraryId = libraryId) {
-          null -> append("(libraryId IS NULL)")
-          else -> {
-            append("(libraryId = ? OR libraryId IS NULL)")
-            args.add(libraryId)
-          }
+    val libraryClause =
+      when (val libraryId = libraryId) {
+        null -> "(libraryId IS NULL)"
+        else -> {
+          args.add(libraryId)
+          "(libraryId = ? OR libraryId IS NULL)"
         }
-        append(" AND (title LIKE ? OR author LIKE ? OR seriesNames LIKE ?)")
-        val pattern = "%$searchQuery%"
-        args.add(pattern)
-        args.add(pattern)
-        args.add(pattern)
       }
+
+    val searchClause = "(title LIKE ? OR author LIKE ? OR seriesNames LIKE ?)"
+    val pattern = "%$searchQuery%"
+    args.add(pattern)
+    args.add(pattern)
+    args.add(pattern)
+
+    val isolationClause =
+      "((host = ? AND username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+    args.add(host)
+    args.add(username)
 
     val field =
       when (orderField) {
@@ -51,7 +61,7 @@ class SearchRequestBuilder {
     val sql =
       """
       SELECT * FROM detailed_books
-      WHERE $whereClause
+      WHERE $libraryClause AND $searchClause AND $isolationClause
       ORDER BY $field $direction
       """.trimIndent()
 
