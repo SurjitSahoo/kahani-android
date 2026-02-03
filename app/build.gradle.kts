@@ -50,7 +50,7 @@ android {
   defaultConfig {
     val commitHash = gitCommitHash()
     
-    applicationId = "org.surjit.kahani"
+    applicationId = "com.kahani.app"
     minSdk = 28
     targetSdk = 36
     versionCode = project.property("appVersionCode").toString().toInt()

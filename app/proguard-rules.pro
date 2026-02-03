@@ -1,15 +1,20 @@
-# Gson uses generic type information stored in a class file when working with
-# fields. Proguard removes such information by default, keep it.
--keepattributes Signature
+# Moshi
+-keepclassmembers class * {
+    @com.squareup.moshi.Json <fields>;
+}
 
-# This is also needed for R8 in compat mode since multiple
-# optimizations will remove the generic signature such as class
-# merging and argument removal. See:
-# https://r8.googlesource.com/r8/+/refs/heads/main/compatibility-faq.md#troubleshooting-gson-gson
--keep class com.google.gson.reflect.TypeToken { *; }
--keep class * extends com.google.gson.reflect.TypeToken
+# Keep the generated JSON adapters.
+-keep class *JsonAdapter { *; }
+-keep class org.grakovne.lissen.lib.domain.** { *; }
 
-# Optional. For using GSON @Expose annotation
--keepattributes AnnotationDefault,RuntimeVisibleAnnotations
--keep class com.google.gson.reflect.TypeToken { <fields>; }
--keepclassmembers class **$TypeAdapterFactory { <fields>; }
+# Keep Moshi's internal classes that use reflection.
+-keep class com.squareup.moshi.** { *; }
+-keep interface com.squareup.moshi.** { *; }
+
+# Attributes for Moshi's reflection.
+-keepattributes Signature, AnnotationDefault, RuntimeVisibleAnnotations, InnerClasses, EnclosingMethod
+
+# Hilt and Dagger rules (usually bundled, but good to ensure)
+-keep class dagger.hilt.android.internal.** { *; }
+-keep class *__HiltBindingModule { *; }
+-keep class org.grakovne.lissen.**_HiltComponents$* { *; }
