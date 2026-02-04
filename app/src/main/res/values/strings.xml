@@ -246,8 +246,8 @@
     <string name="settings_screen_cached_items_empty_action">Go to Library</string>
 
     <!-- Storage Truth Strings -->
-    <string name="download_modal_monolith_title">Download entire book (%1$s)</string>
-    <string name="download_modal_monolith_description">This book is optimized as a single archive. Individual chapter downloads are not available.</string>
+    <string name="download_modal_monolith_title">Download book (%1$s)</string>
+    <string name="download_modal_monolith_description">High-fidelity single archive. Individual chapter downloads are not available.</string>
     <string name="download_modal_remove_book">Remove book from downloads</string>
 
     <string name="download_modal_segmented_part_title">Download Part %1$d (%2$s)</string>
