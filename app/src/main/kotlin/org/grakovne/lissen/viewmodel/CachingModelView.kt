@@ -105,11 +105,15 @@ class CachingModelView
 
     fun getBookSize(book: DetailedItem) = localCacheRepository.calculateBookSize(book)
 
-    fun getChapterSize(
+    fun calculateChapterSize(
       bookId: String,
-      chapter: PlayingChapter,
+      chapter: org.grakovne.lissen.lib.domain.PlayingChapter,
       files: List<org.grakovne.lissen.lib.domain.BookFile>,
     ) = localCacheRepository.calculateChapterSize(bookId, chapter, files)
+
+    fun getBookStorageType(book: DetailedItem) = localCacheRepository.getBookStorageType(book)
+
+    fun getVolumes(book: DetailedItem) = localCacheRepository.mapChaptersToVolumes(book)
 
     suspend fun clearShortTermCache() {
       withContext(Dispatchers.IO) {

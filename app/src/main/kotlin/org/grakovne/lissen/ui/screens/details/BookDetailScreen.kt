@@ -8,6 +8,12 @@ import android.text.style.StyleSpan
 import android.text.style.URLSpan
 import android.text.style.UnderlineSpan
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -235,6 +241,9 @@ fun BookDetailScreen(
         }
       } else {
         val book = bookDetail!!
+        val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
+        val volumes = remember(book.id) { cachingModelView.getVolumes(book) }
+
         val isPodcast = book.libraryType == LibraryType.PODCAST
         val chapters = if (isPodcast) book.chapters.reversed() else book.chapters
         val maxDuration = chapters.maxOfOrNull { it.duration } ?: 0.0
@@ -274,6 +283,12 @@ fun BookDetailScreen(
                   modifier = Modifier.fillMaxSize(),
                   error = painterResource(R.drawable.cover_fallback),
                 )
+              }
+
+              // Downloaded Badge
+              if (volumes.all { it.isDownloaded }) {
+                ShimmeringDownloadedBadge()
+                Spacer(modifier = Modifier.height(12.dp))
               }
 
               // Title & Author
@@ -545,44 +560,96 @@ fun BookDetailScreen(
       }
     }
 
-    if (downloadsExpanded) {
+    if (downloadsExpanded && bookDetail != null) {
+      val book = bookDetail!!
+      val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
+      val volumes = remember(book.id) { cachingModelView.getVolumes(book) }
+
       DownloadsComposable(
-        libraryType = preferredLibrary?.type ?: LibraryType.UNKNOWN,
-        hasCachedEpisodes = hasDownloadedChapters,
+        book = book,
+        storageType = storageType,
+        volumes = volumes,
         isOnline = isOnline,
         cachingInProgress = cacheProgress.status is CacheStatus.Caching,
         onRequestedDownload = { option ->
-          bookDetail?.let {
-            cachingModelView.cache(
-              mediaItem = it,
-              option = option,
-            )
-          }
+          cachingModelView.cache(
+            mediaItem = book,
+            option = option,
+          )
         },
         onRequestedDrop = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.dropCache(it.id)
-            }
+          scope.launch {
+            cachingModelView.dropCache(book.id)
           }
         },
         onRequestedDropCompleted = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.dropCompletedChapters(it)
-            }
+          scope.launch {
+            cachingModelView.dropCompletedChapters(book)
           }
         },
         onRequestedStop = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.stopCaching(it)
-            }
+          scope.launch {
+            cachingModelView.stopCaching(book)
           }
         },
         onDismissRequest = { downloadsExpanded = false },
       )
     }
+  }
+}
+
+@Composable
+fun ShimmeringDownloadedBadge() {
+  val infiniteTransition =
+    androidx.compose.animation.core
+      .rememberInfiniteTransition(label = "shimmer")
+  val xShimmer by infiniteTransition.animateFloat(
+    initialValue = 0f,
+    targetValue = 1000f,
+    animationSpec =
+      androidx.compose.animation.core.infiniteRepeatable(
+        animation =
+          androidx.compose.animation.core
+            .tween(durationMillis = 1500, easing = androidx.compose.animation.core.LinearEasing),
+      ),
+    label = "shimmer",
+  )
+
+  val shimmerColors =
+    listOf(
+      MaterialTheme.colorScheme.primary,
+      MaterialTheme.colorScheme.primaryContainer,
+      MaterialTheme.colorScheme.primary,
+    )
+
+  val brush =
+    Brush.linearGradient(
+      colors = shimmerColors,
+      start =
+        androidx.compose.ui.geometry
+          .Offset(xShimmer - 300f, xShimmer - 300f),
+      end =
+        androidx.compose.ui.geometry
+          .Offset(xShimmer, xShimmer),
+    )
+
+  Box(
+    modifier =
+      Modifier
+        .clip(RoundedCornerShape(16.dp))
+        .background(brush)
+        .padding(horizontal = 12.dp, vertical = 6.dp),
+    contentAlignment = Alignment.Center,
+  ) {
+    Text(
+      text = stringResource(R.string.chapter_cached_indicator).uppercase(),
+      style =
+        typography.labelLarge.copy(
+          fontWeight = FontWeight.Black,
+          letterSpacing = 1.2.sp,
+        ),
+      color = MaterialTheme.colorScheme.onPrimary,
+    )
   }
 }
 

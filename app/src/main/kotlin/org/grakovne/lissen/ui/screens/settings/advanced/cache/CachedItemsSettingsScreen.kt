@@ -58,6 +58,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -94,6 +95,11 @@ import org.grakovne.lissen.ui.extensions.withMinimumTime
 import org.grakovne.lissen.viewmodel.CachingModelView
 import org.grakovne.lissen.viewmodel.PlayerViewModel
 
+data class VolumeIdentifier(
+  val bookId: String,
+  val fileId: String,
+)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun CachedItemsSettingsScreen(
@@ -108,6 +114,9 @@ fun CachedItemsSettingsScreen(
 
   var pullRefreshing by remember { mutableStateOf(false) }
   val cachedItems = viewModel.libraryPager.collectAsLazyPagingItems()
+
+  var selectionMode by remember { mutableStateOf(false) }
+  val selectedVolumes = remember { mutableStateListOf<VolumeIdentifier>() }
 
   fun refreshContent(showPullRefreshing: Boolean) {
     scope.launch {
@@ -151,7 +160,7 @@ fun CachedItemsSettingsScreen(
           )
         },
         navigationIcon = {
-          IconButton(onClick = { onBack() }) {
+          IconButton(onClick = { if (selectionMode) selectionMode = false else onBack() }) {
             Icon(
               imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
               contentDescription = "Back",
@@ -159,7 +168,52 @@ fun CachedItemsSettingsScreen(
             )
           }
         },
+        actions = {
+          if (cachedItems.itemCount > 0) {
+            IconButton(onClick = {
+              selectionMode = !selectionMode
+              if (!selectionMode) selectedVolumes.clear()
+            }) {
+              Text(
+                text = if (selectionMode) "Cancel" else "Edit", // Localization later
+                style = typography.labelLarge,
+                color = colorScheme.primary,
+              )
+            }
+          }
+        },
       )
+    },
+    bottomBar = {
+      if (selectionMode && selectedVolumes.isNotEmpty()) {
+        val totalSizeToReclaim = calculateReclaimSize(selectedVolumes, cachedItems, viewModel)
+        val formattedSize = Formatter.formatFileSize(context, totalSizeToReclaim)
+
+        Box(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .background(colorScheme.surface)
+              .padding(16.dp),
+        ) {
+          Button(
+            onClick = {
+              scope.launch {
+                deleteSelectedVolumes(selectedVolumes, cachedItems, viewModel, playerViewModel)
+                withHaptic(view) {
+                  selectionMode = false
+                  selectedVolumes.clear()
+                  refreshContent(false)
+                }
+              }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error),
+          ) {
+            Text(stringResource(R.string.manage_downloads_free_up, formattedSize))
+          }
+        }
+      }
     },
   ) { innerPadding ->
     Box(
@@ -181,6 +235,8 @@ fun CachedItemsSettingsScreen(
               imageLoader = imageLoader,
               viewModel = viewModel,
               playerViewModel = playerViewModel,
+              selectionMode = selectionMode,
+              selectedVolumes = selectedVolumes,
               onItemRemoved = { refreshContent(showPullRefreshing = false) },
             )
         }
@@ -311,6 +367,8 @@ private fun CachedItemsComposable(
   imageLoader: ImageLoader,
   viewModel: CachingModelView,
   playerViewModel: PlayerViewModel,
+  selectionMode: Boolean,
+  selectedVolumes: MutableList<VolumeIdentifier>,
   onItemRemoved: () -> Unit,
 ) {
   val state = rememberLazyListState()
@@ -345,6 +403,8 @@ private fun CachedItemsComposable(
         imageLoader = imageLoader,
         viewModel = viewModel,
         playerViewModel = playerViewModel,
+        selectionMode = selectionMode,
+        selectedVolumes = selectedVolumes,
         onItemRemoved = onItemRemoved,
       )
     }
@@ -357,6 +417,8 @@ private fun CachedItemComposable(
   imageLoader: ImageLoader,
   viewModel: CachingModelView,
   playerViewModel: PlayerViewModel,
+  selectionMode: Boolean,
+  selectedVolumes: MutableList<VolumeIdentifier>,
   onItemRemoved: () -> Unit,
 ) {
   val scope = rememberCoroutineScope()
@@ -465,10 +527,10 @@ private fun CachedItemComposable(
 
       Spacer(Modifier.width(8.dp))
 
-      IconButton(onClick = {
-        withHaptic(view) {
-          scope
-            .launch {
+      if (!selectionMode) {
+        IconButton(onClick = {
+          withHaptic(view) {
+            scope.launch {
               dropCache(
                 item = book,
                 cachingModelView = viewModel,
@@ -477,13 +539,14 @@ private fun CachedItemComposable(
 
               onItemRemoved()
             }
+          }
+        }) {
+          Icon(
+            imageVector = Icons.Outlined.Delete,
+            contentDescription = null,
+            tint = colorScheme.error.copy(alpha = 0.8f),
+          )
         }
-      }) {
-        Icon(
-          imageVector = Icons.Outlined.Delete,
-          contentDescription = null,
-          tint = colorScheme.error.copy(alpha = 0.8f),
-        )
       }
     }
 
@@ -500,64 +563,79 @@ private fun CachedItemComposable(
             .background(colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp),
       ) {
-        CachedItemChapterComposable(book, onItemRemoved, viewModel, playerViewModel, isSingleFileBook)
+        CachedItemVolumeComposable(
+          item = book,
+          onItemRemoved = onItemRemoved,
+          viewModel = viewModel,
+          playerViewModel = playerViewModel,
+          selectionMode = selectionMode,
+          selectedVolumes = selectedVolumes,
+        )
       }
     }
   }
 }
 
 @Composable
-private fun CachedItemChapterComposable(
+private fun CachedItemVolumeComposable(
   item: DetailedItem,
   onItemRemoved: () -> Unit,
   viewModel: CachingModelView,
   playerViewModel: PlayerViewModel,
-  isSingleFileBook: Boolean,
+  selectionMode: Boolean,
+  selectedVolumes: MutableList<VolumeIdentifier>,
 ) {
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
   val view = LocalView.current
 
-  val availableChapters =
-    item
-      .chapters
-      .filter { it.available }
+  val volumes = remember(item) { viewModel.getVolumes(item).filter { it.isDownloaded } }
 
-  availableChapters.forEachIndexed { index, chapter ->
-    val chapterSize =
-      remember(chapter) {
-        Formatter.formatFileSize(context, viewModel.getChapterSize(item.id, chapter, item.files))
-      }
+  volumes.forEachIndexed { index, volume ->
+    val volumeSize = remember(volume) { Formatter.formatFileSize(context, volume.size) }
+    val isSelected = selectedVolumes.contains(VolumeIdentifier(item.id, volume.id))
 
-    key(chapter.id) {
+    key(volume.id) {
       Row(
         modifier =
           Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 8.dp),
+            .clickable(enabled = selectionMode) {
+              val identifier = VolumeIdentifier(item.id, volume.id)
+              if (isSelected) selectedVolumes.remove(identifier) else selectedVolumes.add(identifier)
+            }.padding(vertical = 8.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(text = chapter.title, style = typography.bodyMedium)
-          if (!isSingleFileBook) {
-            Text(
-              text = chapterSize,
-              style = typography.labelMedium.copy(color = colorScheme.onSurface.copy(alpha = 0.5f)),
-            )
-          }
+        if (selectionMode) {
+          androidx.compose.material3.Checkbox(
+            checked = isSelected,
+            onCheckedChange = {
+              val identifier = VolumeIdentifier(item.id, volume.id)
+              if (it) selectedVolumes.add(identifier) else selectedVolumes.remove(identifier)
+            },
+            modifier = Modifier.padding(end = 8.dp),
+          )
         }
 
-        if (!isSingleFileBook) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(text = volume.name, style = typography.bodyMedium)
+          Text(
+            text = volumeSize,
+            style = typography.labelMedium.copy(color = colorScheme.onSurface.copy(alpha = 0.5f)),
+          )
+        }
+
+        if (!selectionMode && volumes.size > 1) {
           IconButton(
             onClick = {
               withHaptic(view) {
                 scope.launch {
-                  dropCache(
-                    item = item,
-                    chapter = chapter,
-                    cachingModelView = viewModel,
-                    playerViewModel = playerViewModel,
-                  )
+                  playerViewModel.book.value?.let { playingBook ->
+                    if (playingBook.id == item.id) {
+                      playerViewModel.clearPlayingBook()
+                    }
+                  }
+                  viewModel.dropCache(item, volume.chapters.first()) // dropCache by chapter handles file deletion
                   onItemRemoved()
                 }
               }
@@ -574,12 +652,52 @@ private fun CachedItemChapterComposable(
         }
       }
 
-      if (index < availableChapters.lastIndex) {
+      if (index < volumes.lastIndex) {
         HorizontalDivider(
           thickness = 0.5.dp,
           modifier = Modifier.padding(horizontal = 8.dp),
           color = colorScheme.onSurface.copy(alpha = 0.1f),
         )
+      }
+    }
+  }
+}
+
+private fun calculateReclaimSize(
+  selectedIds: List<VolumeIdentifier>,
+  cachedItems: LazyPagingItems<DetailedItem>,
+  viewModel: CachingModelView,
+): Long {
+  var total = 0L
+  selectedIds.forEach { selection ->
+    val book = (0 until cachedItems.itemCount).mapNotNull { cachedItems[it] }.find { it.id == selection.bookId }
+    book?.let {
+      val volumes = viewModel.getVolumes(it)
+      val volume = volumes.find { v -> v.id == selection.fileId }
+      total += volume?.size ?: 0L
+    }
+  }
+  return total
+}
+
+private suspend fun deleteSelectedVolumes(
+  selectedIds: List<VolumeIdentifier>,
+  cachedItems: LazyPagingItems<DetailedItem>,
+  viewModel: CachingModelView,
+  playerViewModel: PlayerViewModel,
+) {
+  selectedIds.forEach { selection ->
+    val book = (0 until cachedItems.itemCount).mapNotNull { cachedItems[it] }.find { it.id == selection.bookId }
+    book?.let {
+      val volumes = viewModel.getVolumes(it)
+      val volume = volumes.find { v -> v.id == selection.fileId }
+      volume?.chapters?.firstOrNull()?.let { chapter ->
+        playerViewModel.book.value?.let { playingBook ->
+          if (playingBook.id == it.id) {
+            playerViewModel.clearPlayingBook()
+          }
+        }
+        viewModel.dropCache(it, chapter)
       }
     }
   }

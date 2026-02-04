@@ -38,6 +38,7 @@ data class PodcastEpisodeResponse(
   val episode: String?,
   val pubDate: String?,
   val title: String,
+  val size: Long?,
   val audioFile: PodcastAudioFileResponse,
 )
 
@@ -46,5 +47,6 @@ data class PodcastEpisodeResponse(
 data class PodcastAudioFileResponse(
   val ino: String,
   val duration: Double,
+  val size: Long?,
   val mimeType: String,
 )

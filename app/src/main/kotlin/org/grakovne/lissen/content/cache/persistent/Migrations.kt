@@ -279,3 +279,10 @@ fun produceMigration15_16(
     db.execSQL("ALTER TABLE libraries ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
   }
 }
+
+val MIGRATION_16_17 =
+  object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+      db.execSQL("ALTER TABLE book_files ADD COLUMN size INTEGER NOT NULL DEFAULT 0")
+    }
+  }

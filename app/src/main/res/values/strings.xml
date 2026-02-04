@@ -244,4 +244,23 @@
     <string name="settings_screen_cached_items_empty_title">No downloads yet</string>
     <string name="settings_screen_cached_items_empty_description">Your downloaded books and chapters will appear here.</string>
     <string name="settings_screen_cached_items_empty_action">Go to Library</string>
+
+    <!-- Storage Truth Strings -->
+    <string name="download_modal_monolith_title">Download entire book (%1$s)</string>
+    <string name="download_modal_monolith_description">This book is optimized as a single archive. Individual chapter downloads are not available.</string>
+    <string name="download_modal_remove_book">Remove book from downloads</string>
+
+    <string name="download_modal_segmented_part_title">Download Part %1$d (%2$s)</string>
+    <string name="download_modal_segmented_part_subtext">Chapters %1$s</string>
+    <string name="download_modal_segmented_remaining">Download remaining parts (%1$s)</string>
+    <string name="download_modal_segmented_remaining_subtext">Parts %1$s</string>
+
+    <string name="download_modal_atomic_remaining">Download remaining chapters (%1$s)</string>
+    <string name="download_modal_atomic_entire">Download entire book (%1$s)</string>
+
+    <string name="download_volume_name">Volume %1$d</string>
+    <string name="download_volume_full_archive">Full Archive</string>
+    <string name="download_volume_chapters_range">Chapters %1$s</string>
+
+    <string name="manage_downloads_free_up">Free up %1$s?</string>
 </resources>

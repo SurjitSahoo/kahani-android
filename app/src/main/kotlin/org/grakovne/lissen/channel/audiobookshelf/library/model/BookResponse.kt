@@ -66,7 +66,7 @@ data class BookAudioFileResponse(
 data class AudioFileMetadata(
   val filename: String,
   val ext: String,
-  val size: Long,
+  val size: Long?,
 )
 
 @Keep

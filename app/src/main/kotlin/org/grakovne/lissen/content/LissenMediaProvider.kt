@@ -237,7 +237,7 @@ class LissenMediaProvider
       val localResult = localCacheRepository.fetchBook(bookId)
       val isDetailed =
         localResult
-          ?.let { it.chapters.isNotEmpty() || it.files.isNotEmpty() }
+          ?.let { (it.chapters.isNotEmpty() || it.files.isNotEmpty()) && (it.files.isEmpty() || it.files.all { f -> f.size > 0 }) }
           ?: false
 
       if (localResult != null && isDetailed) {

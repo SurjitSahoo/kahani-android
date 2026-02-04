@@ -74,6 +74,7 @@ data class BookFileEntity(
   val bookFileId: String,
   val name: String,
   val duration: Double,
+  val size: Long,
   val mimeType: String,
   val bookId: String,
 ) : Serializable

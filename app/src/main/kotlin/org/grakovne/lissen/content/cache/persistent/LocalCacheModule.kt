@@ -50,7 +50,8 @@ object LocalCacheModule {
           host = preferences.getHost() ?: "",
           username = preferences.getUsername() ?: "",
         ),
-      ).build()
+      ).addMigrations(MIGRATION_16_17)
+      .build()
   }
 
   @Provides

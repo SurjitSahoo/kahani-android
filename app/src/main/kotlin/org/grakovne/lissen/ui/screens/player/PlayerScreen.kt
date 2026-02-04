@@ -434,42 +434,37 @@ fun PlayerScreen(
         )
       val hasDownloadedChapters by cachingModelView.hasDownloadedChapters(playingBook?.id.orEmpty()).observeAsState(false)
 
-      DownloadsComposable(
-        libraryType = libraryViewModel.fetchPreferredLibraryType(),
-        hasCachedEpisodes = hasDownloadedChapters,
-        isOnline = isOnline,
-        cachingInProgress = cacheProgress.status is org.grakovne.lissen.lib.domain.CacheStatus.Caching,
-        onRequestedDownload = { option ->
-          playingBook?.let {
+      playingBook?.let { book ->
+        DownloadsComposable(
+          book = book,
+          storageType = cachingModelView.getBookStorageType(book),
+          volumes = cachingModelView.getVolumes(book),
+          isOnline = isOnline,
+          cachingInProgress = cacheProgress.status is org.grakovne.lissen.lib.domain.CacheStatus.Caching,
+          onRequestedDownload = { option ->
             cachingModelView.cache(
-              mediaItem = it,
+              mediaItem = book,
               option = option,
             )
-          }
-        },
-        onRequestedDrop = {
-          playingBook?.let {
+          },
+          onRequestedDrop = {
             scope.launch {
-              cachingModelView.dropCache(it.id)
+              cachingModelView.dropCache(book.id)
             }
-          }
-        },
-        onRequestedDropCompleted = {
-          playingBook?.let {
+          },
+          onRequestedDropCompleted = {
             scope.launch {
-              cachingModelView.dropCompletedChapters(it)
+              cachingModelView.dropCompletedChapters(book)
             }
-          }
-        },
-        onRequestedStop = {
-          playingBook?.let {
+          },
+          onRequestedStop = {
             scope.launch {
-              cachingModelView.stopCaching(it)
+              cachingModelView.stopCaching(book)
             }
-          }
-        },
-        onDismissRequest = { downloadsExpanded = false },
-      )
+          },
+          onDismissRequest = { downloadsExpanded = false },
+        )
+      }
     }
   }
 }
