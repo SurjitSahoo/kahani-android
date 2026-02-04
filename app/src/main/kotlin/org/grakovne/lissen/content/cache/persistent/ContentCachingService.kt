@@ -131,7 +131,7 @@ class ContentCachingService : LifecycleService() {
     finish()
   }
 
-  private fun inProgress(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Caching }
+  private fun inProgress(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Caching || it.status == CacheStatus.Queued }
 
   private fun hasErrors(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Error }
 

@@ -8,9 +8,7 @@ import android.text.style.StyleSpan
 import android.text.style.URLSpan
 import android.text.style.UnderlineSpan
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -43,6 +41,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AvTimer
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -148,6 +147,14 @@ fun BookDetailScreen(
   var downloadsExpanded by remember { mutableStateOf(false) }
   val scope = androidx.compose.runtime.rememberCoroutineScope()
 
+  val cacheVersion by cachingModelView.cacheVersion.collectAsState(initial = 0L)
+  val volumes =
+    remember(bookDetail, cacheProgress.status, cacheVersion) {
+      bookDetail?.let { cachingModelView.getVolumes(it) }
+        ?: emptyList()
+    }
+  val isFullyDownloaded = volumes.isNotEmpty() && volumes.all { it.isDownloaded }
+
   LaunchedEffect(bookId) {
     timber.log.Timber.d("BookDetailScreen: Launched with bookId $bookId")
   }
@@ -227,6 +234,7 @@ fun BookDetailScreen(
             IconButton(onClick = { downloadsExpanded = true }) {
               DownloadProgressIcon(
                 cacheState = cacheProgress,
+                isFullyDownloaded = isFullyDownloaded,
                 color = colorScheme.onSurface,
               )
             }
@@ -242,7 +250,6 @@ fun BookDetailScreen(
       } else {
         val book = bookDetail!!
         val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
-        val volumes = remember(book.id) { cachingModelView.getVolumes(book) }
 
         val isPodcast = book.libraryType == LibraryType.PODCAST
         val chapters = if (isPodcast) book.chapters.reversed() else book.chapters
@@ -285,20 +292,32 @@ fun BookDetailScreen(
                 )
               }
 
-              // Downloaded Badge
-              if (volumes.all { it.isDownloaded }) {
-                ShimmeringDownloadedBadge()
-                Spacer(modifier = Modifier.height(12.dp))
-              }
-
               // Title & Author
-              Text(
-                text = book.title,
-                style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = colorScheme.onSurface,
-                textAlign = TextAlign.Center,
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(horizontal = 24.dp),
-              )
+              ) {
+                Text(
+                  text = book.title,
+                  style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                  color = colorScheme.onSurface,
+                  textAlign = TextAlign.Center,
+                  modifier = Modifier.weight(1f, fill = false),
+                  maxLines = 2,
+                  overflow = TextOverflow.Ellipsis,
+                )
+
+                if (isFullyDownloaded) {
+                  Spacer(modifier = Modifier.width(8.dp))
+                  Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                  )
+                }
+              }
 
               book.author?.takeIf { it.isNotBlank() }?.let {
                 Text(
@@ -595,61 +614,6 @@ fun BookDetailScreen(
         onDismissRequest = { downloadsExpanded = false },
       )
     }
-  }
-}
-
-@Composable
-fun ShimmeringDownloadedBadge() {
-  val infiniteTransition =
-    androidx.compose.animation.core
-      .rememberInfiniteTransition(label = "shimmer")
-  val xShimmer by infiniteTransition.animateFloat(
-    initialValue = 0f,
-    targetValue = 1000f,
-    animationSpec =
-      androidx.compose.animation.core.infiniteRepeatable(
-        animation =
-          androidx.compose.animation.core
-            .tween(durationMillis = 1500, easing = androidx.compose.animation.core.LinearEasing),
-      ),
-    label = "shimmer",
-  )
-
-  val shimmerColors =
-    listOf(
-      MaterialTheme.colorScheme.primary,
-      MaterialTheme.colorScheme.primaryContainer,
-      MaterialTheme.colorScheme.primary,
-    )
-
-  val brush =
-    Brush.linearGradient(
-      colors = shimmerColors,
-      start =
-        androidx.compose.ui.geometry
-          .Offset(xShimmer - 300f, xShimmer - 300f),
-      end =
-        androidx.compose.ui.geometry
-          .Offset(xShimmer, xShimmer),
-    )
-
-  Box(
-    modifier =
-      Modifier
-        .clip(RoundedCornerShape(16.dp))
-        .background(brush)
-        .padding(horizontal = 12.dp, vertical = 6.dp),
-    contentAlignment = Alignment.Center,
-  ) {
-    Text(
-      text = stringResource(R.string.chapter_cached_indicator).uppercase(),
-      style =
-        typography.labelLarge.copy(
-          fontWeight = FontWeight.Black,
-          letterSpacing = 1.2.sp,
-        ),
-      color = MaterialTheme.colorScheme.onPrimary,
-    )
   }
 }
 

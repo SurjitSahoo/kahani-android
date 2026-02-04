@@ -52,6 +52,9 @@ class CachingModelView
     private val _storageStats = MutableStateFlow<StorageStats?>(null)
     val storageStats: Flow<StorageStats?> = _storageStats
 
+    private val _cacheVersion = MutableStateFlow(0L)
+    val cacheVersion: Flow<Long> = _cacheVersion
+
     data class StorageStats(
       val usedBytes: Long,
       val freeBytes: Long,
@@ -86,6 +89,10 @@ class CachingModelView
               MutableStateFlow(progress)
             }
           flow.value = progress
+
+          if (progress.status is CacheStatus.Completed || progress.status is CacheStatus.Error) {
+            _cacheVersion.value += 1
+          }
         }
       }
 
@@ -147,11 +154,13 @@ class CachingModelView
 
     suspend fun dropCache(bookId: String) {
       contentCachingManager.dropCache(bookId)
+      _cacheVersion.value += 1
       refreshStorageStats()
     }
 
     suspend fun dropCompletedChapters(item: DetailedItem) {
       contentCachingManager.dropCompletedChapters(item)
+      _cacheVersion.value += 1
     }
 
     fun stopCaching(item: DetailedItem) {
@@ -169,6 +178,7 @@ class CachingModelView
       chapter: PlayingChapter,
     ) {
       contentCachingManager.dropCache(item, chapter)
+      _cacheVersion.value += 1
       refreshStorageStats()
     }
 

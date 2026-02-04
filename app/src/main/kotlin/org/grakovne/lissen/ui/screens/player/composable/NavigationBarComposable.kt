@@ -99,6 +99,10 @@ fun NavigationBarComposable(
           .CacheState(org.grakovne.lissen.lib.domain.CacheStatus.Idle),
     )
 
+  val cacheVersion by contentCachingModelView.cacheVersion.collectAsState(initial = 0L)
+  val volumes = remember(book, cacheProgress.status, cacheVersion) { contentCachingModelView.getVolumes(book) }
+  val isFullyDownloaded = volumes.isNotEmpty() && volumes.all { it.isDownloaded }
+
   // Get volume boost label
   val volumeBoostIsActive = preferredPlaybackVolumeBoost != null && preferredPlaybackVolumeBoost != PlaybackVolumeBoost.DISABLED
 
@@ -134,6 +138,7 @@ fun NavigationBarComposable(
           icon = {
             DownloadProgressIcon(
               cacheState = cacheProgress,
+              isFullyDownloaded = isFullyDownloaded,
               size = iconSize,
               color = colorScheme.onSurface,
             )

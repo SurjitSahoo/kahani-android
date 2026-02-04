@@ -3,13 +3,15 @@ package org.grakovne.lissen.content.cache.persistent
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.grakovne.lissen.channel.audiobookshelf.common.api.RequestHeadersProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.createOkHttpClient
 import org.grakovne.lissen.content.cache.common.findRelatedFiles
+import org.grakovne.lissen.content.cache.common.findRelatedFilesByStartTimes
 import org.grakovne.lissen.content.cache.common.withBlur
 import org.grakovne.lissen.content.cache.common.writeToFile
 import org.grakovne.lissen.content.cache.persistent.api.CachedBookRepository
@@ -42,58 +44,91 @@ class ContentCachingManager
       option: DownloadOption,
       channel: MediaChannel,
       currentTotalPosition: Double,
-    ) = flow {
-      val context = coroutineContext
+    ) = channelFlow {
+      try {
+        send(CacheState(CacheStatus.Queued))
 
-      val requestedChapters =
-        calculateRequestedChapters(
-          book = mediaItem,
-          option = option,
-          currentTotalPosition = currentTotalPosition,
-        )
+        val fileStartTimes =
+          withContext(Dispatchers.Default) {
+            val startTimes =
+              mediaItem.files
+                .runningFold(0.0) { acc, file -> acc + file.duration }
+                .dropLast(1)
+            mediaItem.files.zip(startTimes)
+          }
 
-      val existingChapters =
-        bookRepository
-          .fetchBook(bookId = mediaItem.id)
-          ?.chapters
-          ?.filter { it.available }
-          ?: emptyList()
+        val requestedChapters =
+          calculateRequestedChapters(
+            book = mediaItem,
+            option = option,
+            currentTotalPosition = currentTotalPosition,
+            fileStartTimes = fileStartTimes,
+          )
 
-      val cachingChapters = requestedChapters - existingChapters.toSet()
+        val existingChapters =
+          withContext(Dispatchers.IO) {
+            bookRepository
+              .fetchBook(bookId = mediaItem.id)
+              ?.chapters
+              ?.filter { it.available }
+              ?: emptyList()
+          }
 
-      val requestedFiles = findRequestedFiles(mediaItem, cachingChapters)
+        val cachingChapters = requestedChapters - existingChapters.toSet()
 
-      if (requestedFiles.isEmpty()) {
-        emit(CacheState(CacheStatus.Completed))
-        return@flow
-      }
+        val requestedFiles =
+          withContext(Dispatchers.Default) {
+            cachingChapters
+              .flatMap { findRelatedFilesByStartTimes(it, fileStartTimes) }
+              .distinctBy { it.id }
+          }
 
-      emit(CacheState(CacheStatus.Caching))
-
-      val mediaCachingResult =
-        cacheBookMedia(
-          mediaItem.id,
-          requestedFiles,
-          channel,
-        ) { withContext(context) { emit(CacheState(CacheStatus.Caching, it)) } }
-
-      val coverCachingResult = cacheBookCover(mediaItem, channel)
-      val librariesCachingResult = cacheLibraries(channel)
-
-      when {
-        listOf(
-          mediaCachingResult,
-          coverCachingResult,
-          librariesCachingResult,
-        ).all { it.status == CacheStatus.Completed } -> {
-          cacheBookInfo(mediaItem, requestedChapters)
-          emit(CacheState(CacheStatus.Completed))
+        if (requestedFiles.isEmpty()) {
+          send(CacheState(CacheStatus.Completed))
+          return@channelFlow
         }
 
-        else -> {
-          cachingChapters.map { dropCache(mediaItem, it) }
-          emit(CacheState(CacheStatus.Error))
+        send(CacheState(CacheStatus.Caching, 0.0))
+
+        val mediaCachingDeferred =
+          async {
+            cacheBookMedia(
+              mediaItem.id,
+              requestedFiles,
+              channel,
+            ) { send(CacheState(CacheStatus.Caching, it)) }
+          }
+
+        val coverCachingDeferred = async { cacheBookCover(mediaItem, channel) }
+        val librariesCachingDeferred = async { cacheLibraries(channel) }
+
+        val mediaCachingResult = mediaCachingDeferred.await()
+        val coverCachingResult = coverCachingDeferred.await()
+        val librariesCachingResult = librariesCachingDeferred.await()
+
+        when {
+          listOf(
+            mediaCachingResult,
+            coverCachingResult,
+            librariesCachingResult,
+          ).all { it.status == CacheStatus.Completed } -> {
+            cacheBookInfo(mediaItem, requestedChapters)
+            send(CacheState(CacheStatus.Completed))
+          }
+
+          else -> {
+            cachingChapters.map { dropCache(mediaItem, it) }
+            send(CacheState(CacheStatus.Error))
+          }
         }
+      } catch (e: Exception) {
+        if (e !is kotlinx.coroutines.CancellationException) {
+          Timber.e(e, "Failed to cache media item")
+          send(CacheState(CacheStatus.Error))
+        }
+        throw e
+      } finally {
+        // No additional terminal state needed if completed/error already sent
       }
     }
 
@@ -202,14 +237,31 @@ class ContentCachingManager
           try {
             dest.outputStream().use { output ->
               body.byteStream().use { input ->
-                input.copyTo(output)
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                var bytesRead: Int
+                var totalBytesRead = 0L
+                val contentLength = body.contentLength().takeIf { it > 0 } ?: file.size
+
+                var lastReportedProgress = -1.0
+                val reportThreshold = 0.01 // 1%
+
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                  output.write(buffer, 0, bytesRead)
+                  totalBytesRead += bytesRead
+
+                  val fileProgress = totalBytesRead.toDouble() / contentLength.toDouble()
+                  val overallProgress = (index.toDouble() + fileProgress) / files.size.toDouble()
+
+                  if (overallProgress - lastReportedProgress >= reportThreshold || overallProgress >= 1.0) {
+                    onProgress(overallProgress)
+                    lastReportedProgress = overallProgress
+                  }
+                }
               }
             }
           } catch (ex: Exception) {
             return@withContext CacheState(CacheStatus.Error)
           }
-
-          onProgress(files.size.takeIf { it != 0 }?.let { index / it.toDouble() } ?: 0.0)
         }
 
         CacheState(CacheStatus.Completed)
