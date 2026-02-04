@@ -37,6 +37,9 @@ class ContentCachingService : LifecycleService() {
   private val executionStatuses = mutableMapOf<DetailedItem, CacheState>()
   private val executingCaching = mutableMapOf<DetailedItem, Job>()
 
+  private var lastNotificationUpdate = 0L
+  private val notificationUpdateThrottle = 500L
+
   override fun onStartCommand(
     intent: Intent?,
     flags: Int,
@@ -110,16 +113,22 @@ class ContentCachingService : LifecycleService() {
             executionStatuses[item] = progress
             cacheProgressBus.emit(item, progress)
 
-            Timber.d("Caching progress updated: $progress")
+            val isTerminalState =
+              progress.status is CacheStatus.Completed || progress.status is CacheStatus.Error || progress.status is CacheStatus.Idle
+            val currentTime = System.currentTimeMillis()
+            val shouldUpdateNotification = isTerminalState || (currentTime - lastNotificationUpdate >= notificationUpdateThrottle)
 
-            when (inProgress() && hasErrors().not()) {
-              true ->
-                executionStatuses
-                  .entries
-                  .map { (item, status) -> item to status }
-                  .let { notificationService.updateCachingNotification(it) }
+            if (shouldUpdateNotification && inProgress() && hasErrors().not()) {
+              executionStatuses
+                .entries
+                .map { (item, status) -> item to status }
+                .let { notificationService.updateCachingNotification(it) }
 
-              false -> finish()
+              lastNotificationUpdate = currentTime
+            }
+
+            if (!inProgress() && !hasErrors()) {
+              finish()
             }
           }
       }

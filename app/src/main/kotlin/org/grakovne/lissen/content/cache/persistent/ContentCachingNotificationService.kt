@@ -28,12 +28,16 @@ class ContentCachingNotificationService
     fun updateCachingNotification(items: List<Pair<DetailedItem, CacheState>>): Notification {
       val cachingItems =
         items
-          .filter { (_, state) -> listOf(CacheStatus.Caching, CacheStatus.Completed).contains(state.status) }
+          .filter { (_, state) -> listOf(CacheStatus.Caching, CacheStatus.Completed, CacheStatus.Queued).contains(state.status) }
 
       val itemProgress =
         cachingItems.sumOf { (_, state) ->
           when (state.status) {
-            CacheStatus.Caching -> state.progress
+            CacheStatus.Caching -> {
+              val x = state.progress.coerceIn(0.0, 1.0)
+              1.0 - (1.0 - x) * (1.0 - x)
+            }
+
             CacheStatus.Completed -> 1.0
             else -> 0.0
           }
@@ -80,7 +84,7 @@ class ContentCachingNotificationService
     companion object {
       private fun List<Pair<DetailedItem, CacheState>>.provideCachingTitles() =
         this
-          .filter { (_, state) -> CacheStatus.Caching == state.status }
+          .filter { (_, state) -> listOf(CacheStatus.Caching, CacheStatus.Queued).contains(state.status) }
           .joinToString(", ") { (key, _) -> key.title }
 
       const val NOTIFICATION_ID = 2042025

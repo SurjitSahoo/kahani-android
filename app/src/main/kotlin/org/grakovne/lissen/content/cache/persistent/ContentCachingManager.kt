@@ -249,7 +249,7 @@ class ContentCachingManager
                   output.write(buffer, 0, bytesRead)
                   totalBytesRead += bytesRead
 
-                  val fileProgress = totalBytesRead.toDouble() / contentLength.toDouble()
+                  val fileProgress = if (contentLength > 0) totalBytesRead.toDouble() / contentLength.toDouble() else 0.0
                   val overallProgress = (index.toDouble() + fileProgress) / files.size.toDouble()
 
                   if (overallProgress - lastReportedProgress >= reportThreshold || overallProgress >= 1.0) {

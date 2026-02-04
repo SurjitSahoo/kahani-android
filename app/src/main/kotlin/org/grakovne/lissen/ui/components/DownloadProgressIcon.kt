@@ -1,5 +1,6 @@
 package org.grakovne.lissen.ui.components
 
+import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -52,7 +53,11 @@ fun DownloadProgressIcon(
         val targetProgress = cacheState.progress.coerceIn(0.0, 1.0).toFloat()
         val animatedProgress by animateFloatAsState(
           targetValue = targetProgress,
-          animationSpec = tween(durationMillis = 500),
+          animationSpec =
+            tween(
+              durationMillis = 800,
+              easing = EaseOutQuart,
+            ),
           label = "progress",
         )
 
