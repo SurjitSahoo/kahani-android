@@ -387,7 +387,11 @@ class LissenSharedPreferences
         null -> null
         else -> {
           val adapter = moshi.adapter(DetailedItem::class.java)
-          adapter.fromJson(json)
+          try {
+            adapter.fromJson(json)
+          } catch (e: Exception) {
+            null
+          }
         }
       }
     }

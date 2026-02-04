@@ -21,9 +21,9 @@ data class DetailedItem(
   val progress: MediaProgress?,
   val libraryId: String?,
   val libraryType: LibraryType?,
-  val localProvided: Boolean,
-  val createdAt: Long,
-  val updatedAt: Long,
+  val localProvided: Boolean = false,
+  val createdAt: Long = 0,
+  val updatedAt: Long = 0,
 ) : Serializable
 
 @Keep

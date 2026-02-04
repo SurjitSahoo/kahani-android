@@ -150,9 +150,6 @@
     <string name="local_url_hint_ssid_name">Nama jaringan Wi-Fi</string>
     <string name="location_permission_request_hint">Akses lokasi diperlukan agar dapat mendeteksi nama Wi-Fi</string>
     <string name="permission_request_grant_button">Izinkan</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Hapus cache thumbnail</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Hapus cache thumbnail untuk membebaskan ruang.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Cache thumbnail berhasil dibersihkan</string>
     <string name="settings_screen_delay_autodownload_title">Tunda unduhan otomatis</string>
     <string name="settings_screen_delay_autodownload_description">Jeda singkat sebelum memulai unduhan</string>
     <string name="settings_screen_bypass_ssl_title">Nonaktifkan verifikasi SSL</string>

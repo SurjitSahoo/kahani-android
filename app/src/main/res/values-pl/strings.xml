@@ -150,9 +150,6 @@
     <string name="local_url_hint_ssid_name">Nazwa sieci WiFi</string>
     <string name="location_permission_request_hint">Aplikacja potrzebuje dostępu do lokalizacji aby wykryć nazwę WiFi</string>
     <string name="permission_request_grant_button">Zezwól</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Usuń pamięć podręczną miniatur</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Usuń pamięć podręczną miniatur aby zwolnić miejsce.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Usunięto pamięć podręczną miniatur</string>
     <string name="settings_screen_delay_autodownload_title">Opóźnij automatyczne pobieranie</string>
     <string name="settings_screen_delay_autodownload_description">Zaczekaj krótki czas przed pobraniem</string>
     <string name="settings_screen_bypass_ssl_title">Wyłącz weryfikację certyfikatu SSL</string>

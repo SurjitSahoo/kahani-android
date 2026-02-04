@@ -148,9 +148,6 @@
     <string name="local_url_hint_ssid_name">Wi-Fi-netværksnavn</string>
     <string name="location_permission_request_hint">Appen behøver placeringsadgang for at kunne identificere Wi-Fi-netværket</string>
     <string name="permission_request_grant_button">Tillad</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Ryd billedmellemlager for forsidebillede</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Ryd billedmellemlager for forsidebilleder for at frigøre lagerplads.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Forsidebilledermellemlager ryddet</string>
     <string name="settings_screen_delay_autodownload_title">Udskyd automatisk hentning</string>
     <string name="settings_screen_delay_autodownload_description">Vent et kort stykke tid, før hentningen påbegyndes</string>
     <string name="login_error_host_is_down">Serveren er utilgængelig</string>

@@ -144,9 +144,6 @@
     <string name="location_permission_request_hint">Aplikaciji je potreban pristup lokaciji kako bi otkrila naziv Wi-Fi mreže</string>
     <string name="local_url_hint_ssid_name">Naziv WiFi mreže</string>
     <string name="permission_request_grant_button">Dozvoli</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Izbriši predmemoriju sličica</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Uklonite predmemorirane sličice kako biste oslobodili prostor.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Predmemorija sličica izbrisana</string>
     <string name="settings_screen_delay_autodownload_title">Odgodi automatsko preuzimanje</string>
     <string name="settings_screen_delay_autodownload_description">Kratko pričekaj prije početka preuzimanja</string>
     <string name="settings_screen_bypass_ssl_title">Onemogući SSL provjeru</string>
