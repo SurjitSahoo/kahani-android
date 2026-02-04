@@ -1,10 +1,19 @@
 package org.grakovne.lissen.ui.screens.settings.advanced.cache
 
+import android.text.format.Formatter
 import android.view.View
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
@@ -25,19 +35,25 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.FileDownloadOff
+import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -56,6 +72,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -87,6 +104,7 @@ fun CachedItemsSettingsScreen(
 ) {
   val view: View = LocalView.current
   val scope = rememberCoroutineScope()
+  val context = LocalContext.current
 
   var pullRefreshing by remember { mutableStateOf(false) }
   val cachedItems = viewModel.libraryPager.collectAsLazyPagingItems()
@@ -106,6 +124,7 @@ fun CachedItemsSettingsScreen(
       withMinimumTime(minimumTime) {
         listOf(
           async { viewModel.fetchCachedItems() },
+          async { viewModel.refreshStorageStats() },
         ).awaitAll()
       }
 
@@ -151,16 +170,20 @@ fun CachedItemsSettingsScreen(
           .pullRefresh(pullRefreshState)
           .fillMaxSize(),
     ) {
-      when (cachedItems.itemCount == 0) {
-        true -> CachedItemsFallbackComposable()
-        false ->
-          CachedItemsComposable(
-            cachedItems = cachedItems,
-            imageLoader = imageLoader,
-            viewModel = viewModel,
-            playerViewModel = playerViewModel,
-            onItemRemoved = { refreshContent(showPullRefreshing = false) },
-          )
+      Column(modifier = Modifier.fillMaxSize()) {
+        StorageHeader(viewModel)
+
+        when (cachedItems.itemCount == 0) {
+          true -> PolishedCachedItemsEmptyState(onBack)
+          false ->
+            CachedItemsComposable(
+              cachedItems = cachedItems,
+              imageLoader = imageLoader,
+              viewModel = viewModel,
+              playerViewModel = playerViewModel,
+              onItemRemoved = { refreshContent(showPullRefreshing = false) },
+            )
+        }
       }
 
       PullRefreshIndicator(
@@ -168,6 +191,115 @@ fun CachedItemsSettingsScreen(
         state = pullRefreshState,
         contentColor = colorScheme.primary,
         modifier = Modifier.align(Alignment.TopCenter),
+      )
+    }
+  }
+}
+
+@Composable
+private fun StorageHeader(viewModel: CachingModelView) {
+  val stats by viewModel.storageStats.collectAsState(null)
+  val context = LocalContext.current
+
+  stats?.let {
+    val usedFormatted = Formatter.formatFileSize(context, it.usedBytes)
+    val freeFormatted = Formatter.formatFileSize(context, it.freeBytes)
+    val progress = it.usedBytes.toFloat() / (it.usedBytes + it.freeBytes).coerceAtLeast(1L)
+
+    Column(
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
+          .background(colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+          .padding(16.dp),
+    ) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Icon(
+            imageVector = Icons.Outlined.SdStorage,
+            contentDescription = null,
+            tint = colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+          )
+          Spacer(Modifier.width(8.dp))
+          Text(
+            text = stringResource(R.string.settings_screen_cached_items_storage_stats, usedFormatted, freeFormatted),
+            style = typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            color = colorScheme.onSurface,
+          )
+        }
+      }
+
+      Spacer(Modifier.height(12.dp))
+
+      LinearProgressIndicator(
+        progress = { progress },
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .height(8.dp)
+            .clip(CircleShape),
+        color = colorScheme.primary,
+        trackColor = colorScheme.onSurface.copy(alpha = 0.1f),
+      )
+    }
+  }
+}
+
+@Composable
+private fun PolishedCachedItemsEmptyState(onBack: () -> Unit) {
+  Column(
+    modifier =
+      Modifier
+        .fillMaxSize()
+        .padding(32.dp),
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    Icon(
+      imageVector = Icons.Outlined.FileDownloadOff,
+      contentDescription = null,
+      modifier = Modifier.size(80.dp),
+      tint = colorScheme.onSurface.copy(alpha = 0.2f),
+    )
+
+    Spacer(Modifier.height(24.dp))
+
+    Text(
+      text = stringResource(R.string.settings_screen_cached_items_empty_title),
+      style = typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+      color = colorScheme.onSurface,
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    Text(
+      text = stringResource(R.string.settings_screen_cached_items_empty_description),
+      style = typography.bodyLarge,
+      color = colorScheme.onSurface.copy(alpha = 0.6f),
+      textAlign = TextAlign.Center,
+    )
+
+    Spacer(Modifier.height(32.dp))
+
+    Button(
+      onClick = onBack,
+      colors =
+        ButtonDefaults.buttonColors(
+          containerColor = colorScheme.primary,
+          contentColor = colorScheme.onPrimary,
+        ),
+      shape = RoundedCornerShape(12.dp),
+      modifier = Modifier.height(48.dp),
+    ) {
+      Text(
+        text = stringResource(R.string.settings_screen_cached_items_empty_action),
+        style = typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
       )
     }
   }
@@ -229,7 +361,15 @@ private fun CachedItemComposable(
 ) {
   val scope = rememberCoroutineScope()
   val context = LocalContext.current
+  val view = LocalView.current
   var expanded by remember { mutableStateOf(false) }
+
+  val isSingleFileBook = remember(book) { book.files.size <= 1 }
+
+  val bookSize =
+    remember(book) {
+      Formatter.formatFileSize(context, viewModel.getBookSize(book))
+    }
 
   val imageRequest =
     remember(book.id) {
@@ -244,59 +384,66 @@ private fun CachedItemComposable(
     modifier =
       Modifier
         .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 6.dp)
+        .background(
+          color = if (expanded) colorScheme.surfaceVariant.copy(alpha = 0.2f) else colorScheme.surface,
+          shape = RoundedCornerShape(12.dp),
+        ).animateContentSize()
         .clickable { expanded = expanded.not() }
-        .padding(horizontal = 16.dp, vertical = 8.dp),
+        .padding(8.dp),
   ) {
-    Column {
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        AsyncShimmeringImage(
-          imageRequest = imageRequest,
-          imageLoader = imageLoader,
-          contentDescription = "${book.title} cover",
-          contentScale = ContentScale.FillBounds,
-          modifier =
-            Modifier
-              .size(64.dp)
-              .aspectRatio(1f)
-              .clip(RoundedCornerShape(4.dp)),
-          error = painterResource(R.drawable.cover_fallback),
-        )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      AsyncShimmeringImage(
+        imageRequest = imageRequest,
+        imageLoader = imageLoader,
+        contentDescription = "${book.title} cover",
+        contentScale = ContentScale.FillBounds,
+        modifier =
+          Modifier
+            .size(64.dp)
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp)),
+        error = painterResource(R.drawable.cover_fallback),
+      )
 
-        Spacer(Modifier.width(spacing))
+      Spacer(Modifier.width(16.dp))
 
-        Column(modifier = Modifier.weight(1f)) {
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Text(
-              text = book.title,
-              style =
-                typography.bodyMedium.copy(
-                  fontWeight = FontWeight.SemiBold,
-                  color = colorScheme.onBackground,
-                ),
-              maxLines = 2,
-              overflow = TextOverflow.Ellipsis,
-              modifier = Modifier.weight(1f, fill = false),
-            )
+      Column(modifier = Modifier.weight(1f)) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+          Text(
+            text = book.title,
+            style =
+              typography.bodyLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = colorScheme.onBackground,
+              ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+          )
 
-            Spacer(Modifier.width(4.dp))
+          Text(
+            text = bookSize,
+            style =
+              typography.labelLarge.copy(
+                color = colorScheme.primary,
+                fontWeight = FontWeight.Medium,
+              ),
+            modifier = Modifier.padding(start = 8.dp),
+          )
+        }
 
-            Icon(
-              imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-              contentDescription = null,
-              modifier = Modifier.size(18.dp),
-              tint = colorScheme.onBackground,
-            )
-          }
-
+        Row(verticalAlignment = Alignment.CenterVertically) {
           book
             .author
             ?.takeIf { it.isNotBlank() }
             ?.let {
               Text(
-                modifier = Modifier.padding(vertical = 2.dp),
+                modifier = Modifier.weight(1f),
                 text = it,
                 style =
                   typography.bodyMedium.copy(
@@ -306,11 +453,20 @@ private fun CachedItemComposable(
                 overflow = TextOverflow.Ellipsis,
               )
             }
+
+          Icon(
+            imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = colorScheme.onBackground.copy(alpha = 0.4f),
+          )
         }
+      }
 
-        Spacer(Modifier.width(spacing))
+      Spacer(Modifier.width(8.dp))
 
-        IconButton(onClick = {
+      IconButton(onClick = {
+        withHaptic(view) {
           scope
             .launch {
               dropCache(
@@ -321,17 +477,30 @@ private fun CachedItemComposable(
 
               onItemRemoved()
             }
-        }) {
-          Icon(
-            imageVector = Icons.Outlined.Delete,
-            contentDescription = null,
-            tint = colorScheme.onSurface,
-          )
         }
+      }) {
+        Icon(
+          imageVector = Icons.Outlined.Delete,
+          contentDescription = null,
+          tint = colorScheme.error.copy(alpha = 0.8f),
+        )
       }
+    }
 
-      if (expanded) {
-        CachedItemChapterComposable(book, onItemRemoved, viewModel, playerViewModel)
+    AnimatedVisibility(
+      visible = expanded,
+      enter = expandVertically() + fadeIn(),
+      exit = shrinkVertically() + fadeOut(),
+    ) {
+      Column(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .background(colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+      ) {
+        CachedItemChapterComposable(book, onItemRemoved, viewModel, playerViewModel, isSingleFileBook)
       }
     }
   }
@@ -343,10 +512,11 @@ private fun CachedItemChapterComposable(
   onItemRemoved: () -> Unit,
   viewModel: CachingModelView,
   playerViewModel: PlayerViewModel,
+  isSingleFileBook: Boolean,
 ) {
   val scope = rememberCoroutineScope()
-
-  Spacer(modifier = Modifier.height(spacing))
+  val context = LocalContext.current
+  val view = LocalView.current
 
   val availableChapters =
     item
@@ -354,57 +524,61 @@ private fun CachedItemChapterComposable(
       .filter { it.available }
 
   availableChapters.forEachIndexed { index, chapter ->
+    val chapterSize =
+      remember(chapter) {
+        Formatter.formatFileSize(context, viewModel.getChapterSize(item.id, chapter, item.files))
+      }
+
     key(chapter.id) {
       Row(
         modifier =
           Modifier
             .fillMaxWidth()
-            .padding(vertical = spacing / 2)
-            .padding(start = chapterIndent),
+            .padding(vertical = 8.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(text = chapter.title, style = typography.bodyMedium)
+          if (!isSingleFileBook) {
+            Text(
+              text = chapterSize,
+              style = typography.labelMedium.copy(color = colorScheme.onSurface.copy(alpha = 0.5f)),
+            )
+          }
         }
 
-        Box(
-          modifier =
-            Modifier
-              .size(48.dp)
-              .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                  scope.launch {
-                    dropCache(
-                      item = item,
-                      chapter = chapter,
-                      cachingModelView = viewModel,
-                      playerViewModel = playerViewModel,
-                    )
-                    onItemRemoved()
-                  }
-                },
-              ),
-          contentAlignment = Alignment.Center,
-        ) {
-          Icon(
-            imageVector = Icons.Outlined.Delete,
-            contentDescription = null,
-            tint = colorScheme.onSurface,
-            modifier = Modifier.size(24.dp),
-          )
+        if (!isSingleFileBook) {
+          IconButton(
+            onClick = {
+              withHaptic(view) {
+                scope.launch {
+                  dropCache(
+                    item = item,
+                    chapter = chapter,
+                    cachingModelView = viewModel,
+                    playerViewModel = playerViewModel,
+                  )
+                  onItemRemoved()
+                }
+              }
+            },
+            modifier = Modifier.size(32.dp),
+          ) {
+            Icon(
+              imageVector = Icons.Outlined.Delete,
+              contentDescription = null,
+              tint = colorScheme.onSurface.copy(alpha = 0.6f),
+              modifier = Modifier.size(20.dp),
+            )
+          }
         }
       }
 
       if (index < availableChapters.lastIndex) {
         HorizontalDivider(
-          thickness = 1.dp,
-          modifier =
-            Modifier.padding(
-              start = chapterIndent,
-              end = spacing,
-            ),
+          thickness = 0.5.dp,
+          modifier = Modifier.padding(horizontal = 8.dp),
+          color = colorScheme.onSurface.copy(alpha = 0.1f),
         )
       }
     }
@@ -449,7 +623,3 @@ private suspend fun dropCache(
 
   cachingModelView.dropCache(item.id)
 }
-
-private val thumbnailSize = 64.dp
-private val spacing = 16.dp
-private val chapterIndent = thumbnailSize + spacing

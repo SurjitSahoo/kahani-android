@@ -15,6 +15,7 @@ import org.grakovne.lissen.lib.domain.Library
 import org.grakovne.lissen.lib.domain.MediaProgress
 import org.grakovne.lissen.lib.domain.PagedItems
 import org.grakovne.lissen.lib.domain.PlaybackProgress
+import org.grakovne.lissen.lib.domain.PlayingChapter
 import org.grakovne.lissen.lib.domain.RecentBook
 import org.grakovne.lissen.playback.service.calculateChapterIndex
 import timber.log.Timber
@@ -147,6 +148,53 @@ class LocalCacheRepository
         )
 
     suspend fun fetchLatestUpdate(libraryId: String) = cachedBookRepository.fetchLatestUpdate(libraryId)
+
+    fun calculateBookSize(book: DetailedItem): Long =
+      book.files.sumOf { file ->
+        storageProperties.provideMediaCachePath(book.id, file.id).length()
+      }
+
+    fun calculateChapterSize(
+      bookId: String,
+      chapter: PlayingChapter,
+      files: List<org.grakovne.lissen.lib.domain.BookFile>,
+    ): Long =
+      org.grakovne.lissen.content.cache.common.findRelatedFiles(chapter, files).sumOf { file ->
+        storageProperties.provideMediaCachePath(bookId, file.id).length()
+      }
+
+    fun calculateTotalCacheSize(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return calculateFolderSize(mediaFolder)
+    }
+
+    private fun calculateFolderSize(folder: File): Long {
+      var size: Long = 0
+      if (folder.exists()) {
+        val files = folder.listFiles()
+        if (files != null) {
+          for (file in files) {
+            size +=
+              if (file.isDirectory) {
+                calculateFolderSize(file)
+              } else {
+                file.length()
+              }
+          }
+        }
+      }
+      return size
+    }
+
+    fun getAvailableDiskSpace(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return mediaFolder.freeSpace
+    }
+
+    fun getTotalDiskSpace(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return mediaFolder.totalSpace
+    }
 
     /**
      * Fetches a detailed book item by its ID from the cached repository.

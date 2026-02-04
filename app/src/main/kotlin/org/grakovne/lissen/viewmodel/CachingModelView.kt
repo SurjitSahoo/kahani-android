@@ -49,6 +49,15 @@ class CachingModelView
     val totalCount: LiveData<Int> = _totalCount
     private val _bookCachingProgress = mutableMapOf<String, MutableStateFlow<CacheState>>()
 
+    private val _storageStats = MutableStateFlow<StorageStats?>(null)
+    val storageStats: Flow<StorageStats?> = _storageStats
+
+    data class StorageStats(
+      val usedBytes: Long,
+      val freeBytes: Long,
+      val totalBytes: Long,
+    )
+
     private val pageConfig =
       PagingConfig(
         pageSize = PAGE_SIZE,
@@ -79,7 +88,28 @@ class CachingModelView
           flow.value = progress
         }
       }
+
+      refreshStorageStats()
     }
+
+    fun refreshStorageStats() {
+      viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+          val used = localCacheRepository.calculateTotalCacheSize()
+          val free = localCacheRepository.getAvailableDiskSpace()
+          val total = localCacheRepository.getTotalDiskSpace()
+          _storageStats.value = StorageStats(used, free, total)
+        }
+      }
+    }
+
+    fun getBookSize(book: DetailedItem) = localCacheRepository.calculateBookSize(book)
+
+    fun getChapterSize(
+      bookId: String,
+      chapter: PlayingChapter,
+      files: List<org.grakovne.lissen.lib.domain.BookFile>,
+    ) = localCacheRepository.calculateChapterSize(bookId, chapter, files)
 
     suspend fun clearShortTermCache() {
       withContext(Dispatchers.IO) {
@@ -113,6 +143,7 @@ class CachingModelView
 
     suspend fun dropCache(bookId: String) {
       contentCachingManager.dropCache(bookId)
+      refreshStorageStats()
     }
 
     suspend fun dropCompletedChapters(item: DetailedItem) {
@@ -134,6 +165,7 @@ class CachingModelView
       chapter: PlayingChapter,
     ) {
       contentCachingManager.dropCache(item, chapter)
+      refreshStorageStats()
     }
 
     fun toggleCacheForce() {

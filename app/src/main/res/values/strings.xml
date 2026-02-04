@@ -238,4 +238,10 @@
     <string name="settings_screen_clear_metadata_cache_title">Clear metadata cache</string>
     <string name="settings_screen_clear_metadata_cache_hint">Remove metadata for non-downloaded books from other servers to free up space.</string>
     <string name="settings_screen_clear_metadata_cache_success">Metadata cache cleared</string>
+    <string name="settings_screen_cached_items_delete_all">Delete All</string>
+    <string name="settings_screen_cached_items_delete_all_confirmation">Are you sure you want to delete all downloaded content?</string>
+    <string name="settings_screen_cached_items_storage_stats">Used: %1$s • Free: %2$s</string>
+    <string name="settings_screen_cached_items_empty_title">No downloads yet</string>
+    <string name="settings_screen_cached_items_empty_description">Your downloaded books and chapters will appear here.</string>
+    <string name="settings_screen_cached_items_empty_action">Go to Library</string>
 </resources>

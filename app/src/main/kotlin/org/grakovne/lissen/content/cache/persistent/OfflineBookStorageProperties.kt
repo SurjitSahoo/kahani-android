@@ -12,7 +12,7 @@ class OfflineBookStorageProperties
   constructor(
     @ApplicationContext private val context: Context,
   ) {
-    private fun baseFolder(): File =
+    fun baseFolder(): File =
       context
         .getExternalFilesDir(MEDIA_CACHE_FOLDER)
         ?.takeIf { it.exists() || it.mkdirs() && it.canWrite() }

@@ -108,7 +108,21 @@ class ContentCachingManager
           droppedChapters = listOf(chapter),
         )
 
+      val stillCachedChapters =
+        bookRepository
+          .fetchBook(item.id)
+          ?.chapters
+          ?.filter { it.available }
+          ?: emptyList()
+
+      val stillNeededFiles =
+        stillCachedChapters
+          .flatMap { findRelatedFiles(it, item.files) }
+          .map { it.id }
+          .toSet()
+
       findRequestedFiles(item, listOf(chapter))
+        .filter { it.id !in stillNeededFiles }
         .forEach { file ->
           val binaryContent = properties.provideMediaCachePath(item.id, file.id)
 
