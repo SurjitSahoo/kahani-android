@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.common.LibraryOrderingConfiguration
 import org.grakovne.lissen.common.NetworkService
 import org.grakovne.lissen.content.BookRepository
@@ -44,6 +45,7 @@ class LibraryViewModel
     private val bookRepository: BookRepository,
     private val preferences: LissenSharedPreferences,
     private val networkService: NetworkService,
+    private val clarityTracker: ClarityTracker,
   ) : ViewModel() {
     private val _recentBooks = MutableLiveData<List<RecentBook>>(emptyList())
     val recentBooks: LiveData<List<RecentBook>> = _recentBooks
@@ -215,7 +217,10 @@ class LibraryViewModel
     }
 
     fun updateSearch(token: String) {
-      viewModelScope.launch { _searchToken.emit(token) }
+      _searchToken.value = token
+      if (token.isNotEmpty()) {
+        clarityTracker.trackEvent("search_performed")
+      }
     }
 
     fun fetchPreferredLibraryTitle(): String? =
@@ -230,6 +235,7 @@ class LibraryViewModel
         ?: LibraryType.UNKNOWN
 
     fun refreshRecentListening() {
+      clarityTracker.trackEvent("library_refresh")
       viewModelScope.launch {
         withContext(Dispatchers.IO) {
           fetchRecentListening()

@@ -1,5 +1,6 @@
 package org.grakovne.lissen.content
 
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.ChannelAuthService
 import org.grakovne.lissen.channel.common.OperationError
@@ -19,6 +20,7 @@ class AuthRepository
     private val preferences: LissenSharedPreferences,
     private val audiobookshelfChannelProvider: AudiobookshelfChannelProvider,
     private val bookRepository: BookRepository,
+    private val clarityTracker: ClarityTracker,
   ) {
     suspend fun authorize(
       host: String,
@@ -56,6 +58,9 @@ class AuthRepository
           accessToken = account.accessToken,
           refreshToken = account.refreshToken,
         )
+
+      clarityTracker.setUser("${account.username}@$host")
+      clarityTracker.trackEvent("login_success")
 
       // Trigger library fetch
       bookRepository

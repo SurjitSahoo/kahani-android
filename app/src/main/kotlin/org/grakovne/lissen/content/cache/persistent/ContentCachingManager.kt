@@ -7,6 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.common.api.RequestHeadersProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.createOkHttpClient
@@ -38,6 +39,7 @@ class ContentCachingManager
     private val properties: OfflineBookStorageProperties,
     private val requestHeadersProvider: RequestHeadersProvider,
     private val preferences: LissenSharedPreferences,
+    private val clarityTracker: ClarityTracker,
   ) {
     fun cacheMediaItem(
       mediaItem: DetailedItem,
@@ -47,6 +49,7 @@ class ContentCachingManager
     ) = channelFlow {
       try {
         send(CacheState(CacheStatus.Queued))
+        clarityTracker.trackEvent("download_started")
 
         val fileStartTimes =
           withContext(Dispatchers.Default) {
@@ -114,6 +117,7 @@ class ContentCachingManager
           ).all { it.status == CacheStatus.Completed } -> {
             cacheBookInfo(mediaItem, requestedChapters)
             send(CacheState(CacheStatus.Completed))
+            clarityTracker.trackEvent("download_finished")
           }
 
           else -> {

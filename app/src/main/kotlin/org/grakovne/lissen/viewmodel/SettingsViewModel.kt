@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.Host
 import org.grakovne.lissen.channel.common.OperationResult
 import org.grakovne.lissen.common.ColorScheme
@@ -35,6 +36,7 @@ class SettingsViewModel
     private val preferences: LissenSharedPreferences,
     private val bookRepository: org.grakovne.lissen.content.BookRepository,
     private val cachedCoverProvider: org.grakovne.lissen.content.cache.temporary.CachedCoverProvider,
+    private val clarityTracker: ClarityTracker,
   ) : ViewModel() {
     private val _host: MutableLiveData<Host> = MutableLiveData(preferences.getHost()?.let { Host.external(it) })
     val host = _host
@@ -186,6 +188,7 @@ class SettingsViewModel
     fun preferLibrary(library: Library) {
       _preferredLibrary.postValue(library)
       preferences.savePreferredLibrary(library)
+      clarityTracker.trackEvent("library_switched", library.title)
     }
 
     fun preferAutoDownloadNetworkType(type: NetworkTypeAutoCache) {

@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.microsoft.clarity.modifiers.clarityMask
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import org.grakovne.lissen.R
@@ -156,6 +157,7 @@ fun LoginScreen(
               Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
+                .clarityMask()
                 .testTag("hostInput"),
           )
 
@@ -169,6 +171,7 @@ fun LoginScreen(
               Modifier
                 .fillMaxWidth()
                 .padding(vertical = 12.dp)
+                .clarityMask()
                 .testTag("usernameInput"),
           )
 
@@ -194,6 +197,7 @@ fun LoginScreen(
               Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
+                .clarityMask()
                 .testTag("passwordInput"),
           )
 

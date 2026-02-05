@@ -31,6 +31,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.content.LissenMediaProvider
 import org.grakovne.lissen.lib.domain.CurrentEpisodeTimerOption
 import org.grakovne.lissen.lib.domain.DetailedItem
@@ -64,6 +65,7 @@ class MediaRepository
     private val preferences: LissenSharedPreferences,
     private val mediaChannel: LissenMediaProvider,
     private val shakeDetector: ShakeDetector,
+    private val clarityTracker: ClarityTracker,
   ) {
     fun getBookFlow(bookId: String): Flow<DetailedItem?> = mediaChannel.fetchBookFlow(bookId)
 
@@ -181,6 +183,7 @@ class MediaRepository
 
           override fun onFailure(t: Throwable) {
             Timber.e("Unable to add callback to player")
+            clarityTracker.trackEvent("playback_error", t.message ?: "Unknown error")
           }
         },
         MoreExecutors.directExecutor(),
@@ -263,6 +266,9 @@ class MediaRepository
       position: Double? = null,
     ) {
       _timerOption.postValue(timerOption)
+      if (timerOption != null) {
+        clarityTracker.trackEvent("sleep_timer_set")
+      }
 
       when (timerOption) {
         is DurationTimerOption -> scheduleServiceTimer(timerOption.duration * 60.0, timerOption)
@@ -564,6 +570,7 @@ class MediaRepository
         }
 
       context.startForegroundService(intent)
+      clarityTracker.trackEvent("playback_start")
     }
 
     private fun pause() {
@@ -573,6 +580,7 @@ class MediaRepository
         }
 
       context.startService(intent)
+      clarityTracker.trackEvent("playback_pause")
     }
 
     private fun seekTo(position: Double) {

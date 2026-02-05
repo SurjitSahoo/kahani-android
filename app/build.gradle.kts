@@ -66,6 +66,8 @@ android {
     buildConfigField("String", "ACRA_REPORT_LOGIN", "\"$acraReportLogin\"")
     buildConfigField("String", "ACRA_REPORT_PASSWORD", "\"$acraReportPassword\"")
     
+    buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
+    
     signingConfigs {
       create("release") {
         val envKeyStore = System.getenv("RELEASE_STORE_FILE")
@@ -193,6 +195,8 @@ dependencies {
   implementation(libs.converter.moshi)
   implementation(libs.moshi)
   implementation(libs.moshi.kotlin)
+  
+  implementation(libs.microsoft.clarity)
   
   debugImplementation(libs.androidx.ui.tooling)
   debugImplementation(libs.androidx.ui.test.manifest)

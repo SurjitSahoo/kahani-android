@@ -3,6 +3,7 @@ package org.grakovne.lissen.content
 import android.net.Uri
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.OperationError
@@ -32,6 +33,7 @@ class BookRepository
     private val localCacheRepository: LocalCacheRepository,
     private val cachedCoverProvider: CachedCoverProvider,
     private val networkService: NetworkService,
+    private val clarityTracker: ClarityTracker,
   ) {
     fun provideFileUri(
       libraryItemId: String,
@@ -71,6 +73,7 @@ class BookRepository
       Timber.d("Syncing Progress for $itemId. $progress")
 
       localCacheRepository.syncProgress(itemId, progress)
+      clarityTracker.trackEvent("sync_progress")
 
       val channelSyncResult =
         providePreferredChannel()

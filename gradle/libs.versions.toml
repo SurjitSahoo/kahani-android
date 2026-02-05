@@ -32,6 +32,7 @@ coreKtx = "1.17.0"
 timber = "5.0.1"
 moshi = "1.15.2"
 converterMoshi = "3.0.0"
+clarity = "3.8.1"
 
 [libraries]
 acra-core = { module = "ch.acra:acra-core", version.ref = "acraCore" }
@@ -84,6 +85,7 @@ converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.r
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
+microsoft-clarity = { module = "com.microsoft.clarity:clarity-compose", version.ref = "clarity" }
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
