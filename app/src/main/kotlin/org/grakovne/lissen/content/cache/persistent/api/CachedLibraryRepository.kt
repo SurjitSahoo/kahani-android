@@ -16,15 +16,15 @@ class CachedLibraryRepository
     private val preferences: LissenSharedPreferences,
   ) {
     suspend fun cacheLibraries(libraries: List<Library>) {
-      val host = preferences.getHost() ?: ""
-      val username = preferences.getUsername() ?: ""
+      val host = preferences.getHost()
+      val username = preferences.getUsername()
 
       dao.updateLibraries(libraries, host, username)
     }
 
     suspend fun fetchLibraries(): List<Library> {
-      val host = preferences.getHost() ?: ""
-      val username = preferences.getUsername() ?: ""
+      val host = preferences.getHost()
+      val username = preferences.getUsername()
 
       return dao
         .fetchLibraries(host, username)

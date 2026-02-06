@@ -59,7 +59,10 @@ class AuthRepository
           refreshToken = account.refreshToken,
         )
 
-      clarityTracker.setUser("${account.username}@$host")
+      clarityTracker.setUser(
+        org.grakovne.lissen.common
+          .sha256("${account.username}@$host"),
+      )
       clarityTracker.trackEvent("login_success")
 
       // Trigger library fetch

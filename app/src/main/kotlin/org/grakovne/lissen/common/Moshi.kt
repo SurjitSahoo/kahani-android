@@ -7,12 +7,26 @@ import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import timber.log.Timber
+import java.lang.reflect.Type
 import java.util.UUID
 
 val moshi: Moshi =
   Moshi
     .Builder()
     .add(
+      object : JsonAdapter.Factory {
+        override fun create(
+          type: Type,
+          annotations: Set<Annotation>,
+          moshi: Moshi,
+        ): JsonAdapter<*>? {
+          val adapter = moshi.nextAdapter<Any>(this, type, annotations)
+          Timber.d("Moshi Breadcrumb: Created adapter for type: $type. Adapter: ${adapter.javaClass.simpleName}")
+          return adapter
+        }
+      },
+    ).add(
       UUID::class.java,
       object : JsonAdapter<UUID>() {
         @FromJson
@@ -26,4 +40,5 @@ val moshi: Moshi =
           writer.value(value?.toString())
         }
       },
-    ).build()
+    ).addLast(KotlinJsonAdapterFactory())
+    .build()

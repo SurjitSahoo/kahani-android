@@ -59,10 +59,15 @@ class CachedBookRepository
     }
 
     suspend fun deleteNonDownloadedBooks() {
-      val host = preferences.getHost() ?: ""
-      val username = preferences.getUsername() ?: ""
+      val nonDownloadedIds = bookDao.fetchNonDownloadedBookIds()
 
-      bookDao.deleteNonDownloadedBooks(host, username)
+      nonDownloadedIds.forEach { bookId ->
+        properties
+          .provideBookCache(bookId)
+          .deleteRecursively()
+      }
+
+      bookDao.deleteNonDownloadedBooks()
     }
 
     suspend fun cacheBook(
@@ -70,8 +75,8 @@ class CachedBookRepository
       fetchedChapters: List<PlayingChapter>,
       droppedChapters: List<PlayingChapter>,
     ) {
-      val host = preferences.getHost() ?: ""
-      val username = preferences.getUsername() ?: ""
+      val host = preferences.getHost()
+      val username = preferences.getUsername()
 
       bookDao.upsertCachedBook(book, host, username, fetchedChapters, droppedChapters)
     }
@@ -113,8 +118,8 @@ class CachedBookRepository
               libraryType = null,
               createdAt = 0,
               updatedAt = 0,
-              host = preferences.getHost() ?: "",
-              username = preferences.getUsername() ?: "",
+              host = preferences.getHost(),
+              username = preferences.getUsername(),
               seriesNames = book.series,
               seriesJson = "[]",
             )
@@ -127,8 +132,6 @@ class CachedBookRepository
       bookId: String,
       chapterId: String,
     ) = bookDao.isBookChapterCached(bookId, chapterId)
-
-    fun hasDownloadedChapters(bookId: String) = bookDao.hasDownloadedChapters(bookId)
 
     suspend fun fetchCachedItems(
       pageSize: Int,
@@ -157,8 +160,8 @@ class CachedBookRepository
           .orderField(option)
           .orderDirection(direction)
           .downloadedOnly(downloadedOnly)
-          .host(preferences.getHost() ?: "")
-          .username(preferences.getUsername() ?: "")
+          .host(preferences.getHost())
+          .username(preferences.getUsername())
           .build()
 
       return bookDao
@@ -167,8 +170,8 @@ class CachedBookRepository
     }
 
     suspend fun countBooks(libraryId: String): Int {
-      val host = preferences.getHost() ?: ""
-      val username = preferences.getUsername() ?: ""
+      val host = preferences.getHost()
+      val username = preferences.getUsername()
       return bookDao.countCachedBooks(libraryId = libraryId, host = host, username = username)
     }
 
@@ -179,13 +182,13 @@ class CachedBookRepository
       val (option, direction) = buildOrdering()
 
       val request =
-        SearchRequestBuilder()
-          .searchQuery(query)
+        SearchRequestBuilder(
+          host = preferences.getHost(),
+          username = preferences.getUsername(),
+        ).searchQuery(query)
           .libraryId(libraryId)
           .orderField(option)
           .orderDirection(direction)
-          .host(preferences.getHost() ?: "")
-          .username(preferences.getUsername() ?: "")
           .build()
 
       return bookDao
@@ -201,8 +204,8 @@ class CachedBookRepository
         RecentRequestBuilder()
           .libraryId(libraryId)
           .downloadedOnly(downloadedOnly)
-          .host(preferences.getHost() ?: "")
-          .username(preferences.getUsername() ?: "")
+          .host(preferences.getHost())
+          .username(preferences.getUsername())
           .build()
 
       val recentBooks = bookDao.fetchRecentlyListenedCachedBooks(request)
@@ -225,8 +228,8 @@ class CachedBookRepository
         RecentRequestBuilder()
           .libraryId(libraryId)
           .downloadedOnly(downloadedOnly)
-          .host(preferences.getHost() ?: "")
-          .username(preferences.getUsername() ?: "")
+          .host(preferences.getHost())
+          .username(preferences.getUsername())
           .build()
 
       return bookDao
@@ -261,8 +264,8 @@ class CachedBookRepository
           currentTime = progress.currentTotalTime,
           isFinished = progress.currentTotalTime == book.chapters.sumOf { it.duration },
           lastUpdate = Instant.now().toEpochMilli(),
-          host = preferences.getHost() ?: "",
-          username = preferences.getUsername() ?: "",
+          host = preferences.getHost(),
+          username = preferences.getUsername(),
         )
 
       bookDao.upsertMediaProgress(entity)

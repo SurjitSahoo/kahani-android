@@ -176,9 +176,24 @@ fun DownloadsComposable(
                 // Scenario B: Segmented
                 if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.SEGMENTED) {
                   if (currentVolume != null && !currentVolume.isDownloaded) {
-                    val startChapter = book.chapters.indexOfFirst { it.id == currentVolume.chapters.firstOrNull()?.id } + 1
-                    val endChapter = book.chapters.indexOfFirst { it.id == currentVolume.chapters.lastOrNull()?.id } + 1
-                    val range = if (startChapter == endChapter) "$startChapter" else "$startChapter-$endChapter"
+                    val startIdx = book.chapters.indexOfFirst { it.id == currentVolume.chapters.firstOrNull()?.id }
+                    val startChapter = if (startIdx >= 0) startIdx + 1 else null
+
+                    val endIdx = book.chapters.indexOfFirst { it.id == currentVolume.chapters.lastOrNull()?.id }
+                    val endChapter = if (endIdx >= 0) endIdx + 1 else null
+
+                    val range =
+                      when {
+                        startChapter != null && endChapter != null ->
+                          if (startChapter ==
+                            endChapter
+                          ) {
+                            "$startChapter"
+                          } else {
+                            "$startChapter-$endChapter"
+                          }
+                        else -> "?"
+                      }
 
                     ActionRow(
                       title =
@@ -242,7 +257,10 @@ fun DownloadsComposable(
                   }
 
                   if (!isFullBookDownloaded) {
-                    val totalSize = volumes.sumOf { it.size }
+                    val totalSize =
+                      volumes
+                        .filter { !it.isDownloaded }
+                        .sumOf { it.size }
                     ActionRow(
                       title = stringResource(R.string.downloads_menu_download_option_entire_book),
                       subtitle = Formatter.formatFileSize(context, totalSize),

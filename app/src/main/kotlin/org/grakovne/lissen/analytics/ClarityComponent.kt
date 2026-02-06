@@ -24,6 +24,11 @@ class ClarityComponent
   ) : RunningComponent,
     Application.ActivityLifecycleCallbacks {
     override fun onCreate() {
+      if (BuildConfig.DEBUG) {
+        Timber.d("Skip Microsoft Clarity initialization for debug build")
+        return
+      }
+
       (context as? Application)?.registerActivityLifecycleCallbacks(this)
     }
 
@@ -38,8 +43,19 @@ class ClarityComponent
       val config = ClarityConfig(BuildConfig.CLARITY_PROJECT_ID)
       Clarity.initialize(activity, config)
 
+      applyConsent()
+
       initialized = true
       reidentifyUser()
+    }
+
+    fun updateConsent(accepted: Boolean) {
+      Clarity.consent(accepted, accepted)
+    }
+
+    private fun applyConsent() {
+      val consent = preferences.getAnalyticsConsentState() ?: false
+      Clarity.consent(consent, consent)
     }
 
     override fun onActivityStarted(activity: Activity) {}

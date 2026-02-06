@@ -7,8 +7,8 @@ class RecentRequestBuilder {
   private var libraryId: String? = null
   private var downloadedOnly: Boolean = false
   private var limit: Int = 10
-  private var host: String = ""
-  private var username: String = ""
+  private var host: String? = null
+  private var username: String? = null
 
   fun libraryId(id: String?) = apply { this.libraryId = id }
 
@@ -16,9 +16,9 @@ class RecentRequestBuilder {
 
   fun limit(limit: Int) = apply { this.limit = limit }
 
-  fun host(host: String) = apply { this.host = host }
+  fun host(host: String?) = apply { this.host = host }
 
-  fun username(username: String) = apply { this.username = username }
+  fun username(username: String?) = apply { this.username = username }
 
   fun build(): SupportSQLiteQuery {
     val args = mutableListOf<Any>()
@@ -36,9 +36,16 @@ class RecentRequestBuilder {
       when (downloadedOnly) {
         true -> "EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)"
         false -> {
-          args.add(host)
-          args.add(username)
-          "((detailed_books.host = ? AND detailed_books.username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+          val host = host
+          val username = username
+
+          if (!host.isNullOrEmpty() && !username.isNullOrEmpty()) {
+            args.add(host)
+            args.add(username)
+            "((detailed_books.host = ? AND detailed_books.username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+          } else {
+            "EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)"
+          }
         }
       }
 

@@ -233,6 +233,9 @@
 
     <!-- Migration Screen -->
     <string name="migration_screen_message">Rearranging the library shelves…</string>
+    <string name="migration_screen_error_message">Library update failed. Should we try again?</string>
+    <string name="migration_screen_retry_button">Try again</string>
+    <string name="migration_screen_dismiss_button">Skip for now</string>
 
     <!-- Clear Cache -->
     <string name="settings_screen_clear_metadata_cache_title">Clear metadata cache</string>
@@ -263,4 +266,15 @@
     <string name="download_volume_chapters_range">Chapters %1$s</string>
 
     <string name="manage_downloads_free_up">Free up %1$s?</string>
+    <string name="settings_screen_cached_items_edit">Edit</string>
+    <string name="settings_screen_cached_items_cancel">Cancel</string>
+    <string name="accessibility_id_download_complete">Download complete</string>
+    <string name="accessibility_id_download_available">Download available</string>
+    <string name="accessibility_id_download_queued">Download queued</string>
+    <string name="downloads_menu_download_option_selected_volume">Selected Volume</string>
+    <string name="accessibility_id_fully_downloaded">Fully downloaded</string>
+    <string name="analytics_consent_title">Help us polish the experience.</string>
+    <string name="analytics_consent_message">Help us squash bugs by sharing anonymous technical data. Your library and personal info stay 100% private.</string>
+    <string name="analytics_consent_accept">Help Improve Kahani 🚀</string>
+    <string name="analytics_consent_decline">Maybe later</string>
 </resources>

@@ -154,7 +154,7 @@ fun ActionRow(
         Text(
           text = subtitle,
           style = MaterialTheme.typography.labelSmall,
-          color = subtextColor.copy(alpha = contentAlpha),
+          color = subtextColor.copy(alpha = subtextColor.alpha * contentAlpha),
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )

@@ -4,11 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,21 +55,68 @@ fun MigrationScreen(
   ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.padding(Spacing.lg),
+      modifier =
+        Modifier
+          .padding(Spacing.lg)
+          .padding(bottom = Spacing.xl),
     ) {
-      CircularProgressIndicator(
-        color = MaterialTheme.colorScheme.primary,
-        strokeWidth = 4.dp,
-      )
+      when (state) {
+        is MigrationState.Error -> {
+          Icon(
+            imageVector = Icons.Rounded.ErrorOutline,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.error,
+          )
 
-      Spacer(modifier = Modifier.height(Spacing.xl))
+          Spacer(modifier = Modifier.height(Spacing.xl))
 
-      Text(
-        text = stringResource(R.string.migration_screen_message),
-        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onBackground,
-      )
+          Text(
+            text = stringResource(R.string.migration_screen_error_message),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground,
+          )
+
+          Spacer(modifier = Modifier.height(Spacing.xl))
+
+          Button(
+            onClick = { viewModel.retryMigration() },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+          ) {
+            Text(text = stringResource(R.string.migration_screen_retry_button))
+          }
+
+          Spacer(modifier = Modifier.height(Spacing.md))
+
+          TextButton(
+            onClick = { onMigrationComplete() },
+            modifier = Modifier.fillMaxWidth(),
+          ) {
+            Text(
+              text = stringResource(R.string.migration_screen_dismiss_button),
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+        }
+
+        else -> {
+          CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 4.dp,
+          )
+
+          Spacer(modifier = Modifier.height(Spacing.xl))
+
+          Text(
+            text = stringResource(R.string.migration_screen_message),
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground,
+          )
+        }
+      }
     }
   }
 }

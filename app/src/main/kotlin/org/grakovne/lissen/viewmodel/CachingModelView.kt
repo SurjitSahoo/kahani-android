@@ -161,6 +161,7 @@ class CachingModelView
     suspend fun dropCompletedChapters(item: DetailedItem) {
       contentCachingManager.dropCompletedChapters(item)
       _cacheVersion.value += 1
+      refreshStorageStats()
     }
 
     fun stopCaching(item: DetailedItem) {
@@ -191,14 +192,10 @@ class CachingModelView
 
     fun localCacheUsing() = preferences.isForceCache()
 
-    fun provideCacheState(bookId: String): LiveData<Boolean> = contentCachingManager.hasMetadataCached(bookId)
-
     fun provideCacheState(
       bookId: String,
       chapterId: String,
     ): LiveData<Boolean> = contentCachingManager.hasMetadataCached(bookId, chapterId)
-
-    fun hasDownloadedChapters(bookId: String): LiveData<Boolean> = contentCachingManager.hasDownloadedChapters(bookId)
 
     fun fetchCachedItems() {
       viewModelScope.launch {

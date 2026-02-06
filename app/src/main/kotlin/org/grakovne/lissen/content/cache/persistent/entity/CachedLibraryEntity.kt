@@ -17,6 +17,6 @@ data class CachedLibraryEntity(
   val id: String,
   val title: String,
   val type: LibraryType,
-  val host: String = "",
-  val username: String = "",
+  val host: String? = null,
+  val username: String? = null,
 ) : Serializable

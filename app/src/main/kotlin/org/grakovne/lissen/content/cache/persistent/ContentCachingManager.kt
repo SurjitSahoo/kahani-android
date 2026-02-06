@@ -121,7 +121,7 @@ class ContentCachingManager
           }
 
           else -> {
-            cachingChapters.map { dropCache(mediaItem, it) }
+            cachingChapters.forEach { dropCache(mediaItem, it) }
             send(CacheState(CacheStatus.Error))
           }
         }
@@ -205,8 +205,6 @@ class ContentCachingManager
       chapterId: String,
     ) = bookRepository.provideCacheState(mediaItemId, chapterId)
 
-    fun hasDownloadedChapters(mediaItemId: String) = bookRepository.hasDownloadedChapters(mediaItemId)
-
     private suspend fun cacheBookMedia(
       bookId: String,
       files: List<BookFile>,
@@ -221,7 +219,7 @@ class ContentCachingManager
             preferences = preferences,
           )
 
-        files.mapIndexed { index, file ->
+        files.forEachIndexed { index, file ->
           val uri = channel.provideFileUri(bookId, file.id)
           val requestBuilder = Request.Builder().url(uri.toString())
           headers.forEach { requestBuilder.addHeader(it.name, it.value) }

@@ -175,7 +175,14 @@ fun CachedItemsSettingsScreen(
               if (!selectionMode) selectedVolumes.clear()
             }) {
               Text(
-                text = if (selectionMode) "Cancel" else "Edit", // Localization later
+                text =
+                  if (selectionMode) {
+                    stringResource(
+                      R.string.settings_screen_cached_items_cancel,
+                    )
+                  } else {
+                    stringResource(R.string.settings_screen_cached_items_edit)
+                  },
                 style = typography.labelLarge,
                 color = colorScheme.primary,
               )
@@ -186,7 +193,10 @@ fun CachedItemsSettingsScreen(
     },
     bottomBar = {
       if (selectionMode && selectedVolumes.isNotEmpty()) {
-        val totalSizeToReclaim = calculateReclaimSize(selectedVolumes, cachedItems, viewModel)
+        val totalSizeToReclaim =
+          remember(selectedVolumes.toList(), cachedItems.itemCount) {
+            calculateReclaimSize(selectedVolumes, cachedItems, viewModel)
+          }
         val formattedSize = Formatter.formatFileSize(context, totalSizeToReclaim)
 
         Box(
@@ -198,9 +208,9 @@ fun CachedItemsSettingsScreen(
         ) {
           Button(
             onClick = {
-              scope.launch {
-                deleteSelectedVolumes(selectedVolumes, cachedItems, viewModel, playerViewModel)
-                withHaptic(view) {
+              withHaptic(view) {
+                scope.launch {
+                  deleteSelectedVolumes(selectedVolumes, cachedItems, viewModel, playerViewModel)
                   selectionMode = false
                   selectedVolumes.clear()
                   refreshContent(false)
@@ -425,8 +435,6 @@ private fun CachedItemComposable(
   val context = LocalContext.current
   val view = LocalView.current
   var expanded by remember { mutableStateOf(false) }
-
-  val isSingleFileBook = remember(book) { book.files.size <= 1 }
 
   val bookSize =
     remember(book) {
@@ -668,15 +676,22 @@ private fun calculateReclaimSize(
   cachedItems: LazyPagingItems<DetailedItem>,
   viewModel: CachingModelView,
 ): Long {
+  if (selectedIds.isEmpty()) return 0L
+
+  val selectedByBook = selectedIds.groupBy { it.bookId }
   var total = 0L
-  selectedIds.forEach { selection ->
-    val book = (0 until cachedItems.itemCount).mapNotNull { cachedItems[it] }.find { it.id == selection.bookId }
-    book?.let {
-      val volumes = viewModel.getVolumes(it)
-      val volume = volumes.find { v -> v.id == selection.fileId }
+
+  for (i in 0 until cachedItems.itemCount) {
+    val book = cachedItems[i] ?: continue
+    val selectionsForBook = selectedByBook[book.id] ?: continue
+
+    val volumes = viewModel.getVolumes(book)
+    selectionsForBook.forEach { selection ->
+      val volume = volumes.find { it.id == selection.fileId }
       total += volume?.size ?: 0L
     }
   }
+
   return total
 }
 

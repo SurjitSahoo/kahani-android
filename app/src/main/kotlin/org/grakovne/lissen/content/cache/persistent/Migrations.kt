@@ -265,18 +265,24 @@ val MIGRATION_14_15 =
   }
 
 fun produceMigration15_16(
-  host: String,
-  username: String,
+  host: String?,
+  username: String?,
 ) = object : Migration(15, 16) {
   override fun migrate(db: SupportSQLiteDatabase) {
-    db.execSQL("ALTER TABLE detailed_books ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
-    db.execSQL("ALTER TABLE detailed_books ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+    // We add columns as nullable without a fixed DEFAULT value.
+    // If the user is logged in during migration, we can tag existing data.
+    // If they are logged out, existing data remains NULL (owned by "legacy/unknown").
+    val hostClause = if (host != null) " DEFAULT '$host'" else ""
+    val usernameClause = if (username != null) " DEFAULT '$username'" else ""
 
-    db.execSQL("ALTER TABLE media_progress ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
-    db.execSQL("ALTER TABLE media_progress ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+    db.execSQL("ALTER TABLE detailed_books ADD COLUMN host TEXT$hostClause")
+    db.execSQL("ALTER TABLE detailed_books ADD COLUMN username TEXT$usernameClause")
 
-    db.execSQL("ALTER TABLE libraries ADD COLUMN host TEXT NOT NULL DEFAULT '$host'")
-    db.execSQL("ALTER TABLE libraries ADD COLUMN username TEXT NOT NULL DEFAULT '$username'")
+    db.execSQL("ALTER TABLE media_progress ADD COLUMN host TEXT$hostClause")
+    db.execSQL("ALTER TABLE media_progress ADD COLUMN username TEXT$usernameClause")
+
+    db.execSQL("ALTER TABLE libraries ADD COLUMN host TEXT$hostClause")
+    db.execSQL("ALTER TABLE libraries ADD COLUMN username TEXT$usernameClause")
   }
 }
 
@@ -284,5 +290,126 @@ val MIGRATION_16_17 =
   object : Migration(16, 17) {
     override fun migrate(db: SupportSQLiteDatabase) {
       db.execSQL("ALTER TABLE book_files ADD COLUMN size INTEGER NOT NULL DEFAULT 0")
+    }
+  }
+
+val MIGRATION_17_18 =
+  object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+      // Recreate detailed_books to ensure host and username are nullable and correctly positioned
+      db.execSQL("ALTER TABLE detailed_books RENAME TO detailed_books_old")
+      db.execSQL(
+        """
+        CREATE TABLE detailed_books (
+            id TEXT NOT NULL PRIMARY KEY, 
+            title TEXT NOT NULL, 
+            subtitle TEXT, 
+            author TEXT, 
+            narrator TEXT, 
+            year TEXT, 
+            abstract TEXT, 
+            publisher TEXT, 
+            duration INTEGER NOT NULL, 
+            libraryId TEXT, 
+            libraryType TEXT, 
+            seriesJson TEXT, 
+            seriesNames TEXT, 
+            createdAt INTEGER NOT NULL, 
+            updatedAt INTEGER NOT NULL, 
+            host TEXT, 
+            username TEXT
+        )
+        """.trimIndent(),
+      )
+      db.execSQL(
+        """
+        INSERT INTO detailed_books (
+            id, title, subtitle, author, narrator, year, abstract, publisher, 
+            duration, libraryId, libraryType, seriesJson, seriesNames, createdAt, updatedAt, host, username
+        )
+        SELECT 
+            id, title, subtitle, author, narrator, year, abstract, publisher, 
+            duration, libraryId, libraryType, seriesJson, seriesNames, createdAt, updatedAt, host, username 
+        FROM detailed_books_old
+        """.trimIndent(),
+      )
+      db.execSQL("DROP TABLE detailed_books_old")
+
+      // Recreate libraries
+      db.execSQL("ALTER TABLE libraries RENAME TO libraries_old")
+      db.execSQL(
+        """
+        CREATE TABLE libraries (
+            id TEXT NOT NULL PRIMARY KEY, 
+            title TEXT NOT NULL, 
+            type TEXT NOT NULL, 
+            host TEXT, 
+            username TEXT
+        )
+        """.trimIndent(),
+      )
+      db.execSQL(
+        """
+        INSERT INTO libraries (id, title, type, host, username)
+        SELECT id, title, type, host, username FROM libraries_old
+        """.trimIndent(),
+      )
+      db.execSQL("DROP TABLE libraries_old")
+
+      // Recreate media_progress
+      db.execSQL("ALTER TABLE media_progress RENAME TO media_progress_old")
+      db.execSQL(
+        """
+        CREATE TABLE media_progress (
+            bookId TEXT NOT NULL PRIMARY KEY, 
+            currentTime REAL NOT NULL, 
+            isFinished INTEGER NOT NULL, 
+            lastUpdate INTEGER NOT NULL, 
+            host TEXT, 
+            username TEXT,
+            FOREIGN KEY(bookId) REFERENCES detailed_books(id) ON UPDATE NO ACTION ON DELETE CASCADE
+        )
+        """.trimIndent(),
+      )
+      db.execSQL(
+        """
+        INSERT INTO media_progress (bookId, currentTime, isFinished, lastUpdate, host, username)
+        SELECT bookId, currentTime, isFinished, lastUpdate, host, username FROM media_progress_old
+        """.trimIndent(),
+      )
+      db.execSQL("DROP TABLE media_progress_old")
+      db.execSQL("CREATE INDEX IF NOT EXISTS index_media_progress_bookId ON media_progress (bookId)")
+
+      // Recreate book_files to move size to the end
+      db.execSQL("ALTER TABLE book_files RENAME TO book_files_old")
+      db.execSQL(
+        """
+        CREATE TABLE book_files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+            bookFileId TEXT NOT NULL, 
+            name TEXT NOT NULL, 
+            duration REAL NOT NULL, 
+            mimeType TEXT NOT NULL, 
+            bookId TEXT NOT NULL, 
+            size INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(bookId) REFERENCES detailed_books(id) ON UPDATE NO ACTION ON DELETE CASCADE
+        )
+        """.trimIndent(),
+      )
+      db.execSQL(
+        """
+        INSERT INTO book_files (id, bookFileId, name, duration, mimeType, bookId, size)
+        SELECT id, bookFileId, name, duration, mimeType, bookId, size FROM book_files_old
+        """.trimIndent(),
+      )
+      db.execSQL("DROP TABLE book_files_old")
+      db.execSQL("CREATE INDEX IF NOT EXISTS index_book_files_bookId ON book_files (bookId)")
+    }
+  }
+
+val MIGRATION_18_19 =
+  object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+      // Schema realignment to fix identity hash mismatch
     }
   }

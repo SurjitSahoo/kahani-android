@@ -40,8 +40,13 @@ fun DownloadProgressIcon(
   Box(contentAlignment = Alignment.Center) {
     when (cacheState.status) {
       is CacheStatus.Queued -> {
+        val queuedDescription = stringResource(R.string.accessibility_id_download_queued)
+
         CircularProgressIndicator(
-          modifier = Modifier.size(size - 4.dp),
+          modifier =
+            Modifier
+              .semantics { contentDescription = queuedDescription }
+              .size(size - 4.dp),
           strokeWidth = 2.dp,
           color = colorScheme.primary,
           trackColor = color.copy(alpha = 0.1f),
@@ -87,14 +92,14 @@ fun DownloadProgressIcon(
         if (isFullyDownloaded) {
           Icon(
             imageVector = Icons.Filled.CloudDone,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.accessibility_id_download_complete),
             modifier = Modifier.size(size),
             tint = colorScheme.primary,
           )
         } else {
           Icon(
             imageVector = Icons.Outlined.CloudDownload,
-            contentDescription = stringResource(R.string.player_screen_downloads_navigation),
+            contentDescription = stringResource(R.string.accessibility_id_download_available),
             modifier = Modifier.size(size).alpha(0.8f),
             tint = color,
           )
@@ -105,14 +110,14 @@ fun DownloadProgressIcon(
         if (isFullyDownloaded) {
           Icon(
             imageVector = Icons.Filled.CloudDone,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.accessibility_id_download_complete),
             modifier = Modifier.size(size),
             tint = colorScheme.primary,
           )
         } else {
           Icon(
             imageVector = Icons.Outlined.CloudDownload,
-            contentDescription = stringResource(R.string.player_screen_downloads_navigation),
+            contentDescription = stringResource(R.string.accessibility_id_download_available),
             modifier = Modifier.size(size).alpha(0.8f),
             tint = color,
           )

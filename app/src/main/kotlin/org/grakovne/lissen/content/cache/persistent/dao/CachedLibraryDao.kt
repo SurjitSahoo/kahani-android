@@ -13,8 +13,8 @@ interface CachedLibraryDao {
   @Transaction
   suspend fun updateLibraries(
     libraries: List<Library>,
-    host: String,
-    username: String,
+    host: String?,
+    username: String?,
   ) {
     val entities =
       libraries.map {
@@ -36,19 +36,23 @@ interface CachedLibraryDao {
   suspend fun fetchLibrary(libraryId: String): CachedLibraryEntity?
 
   @Transaction
-  @Query("SELECT * FROM libraries WHERE host = :host AND username = :username")
+  @Query(
+    "SELECT * FROM libraries WHERE ((:host IS NULL AND host IS NULL) OR (host = :host)) AND ((:username IS NULL AND username IS NULL) OR (username = :username))",
+  )
   suspend fun fetchLibraries(
-    host: String,
-    username: String,
+    host: String?,
+    username: String?,
   ): List<CachedLibraryEntity>
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun upsertLibraries(libraries: List<CachedLibraryEntity>)
 
-  @Query("DELETE FROM libraries WHERE id NOT IN (:ids) AND host = :host AND username = :username")
+  @Query(
+    "DELETE FROM libraries WHERE id NOT IN (:ids) AND ((:host IS NULL AND host IS NULL) OR (host = :host)) AND ((:username IS NULL AND username IS NULL) OR (username = :username))",
+  )
   suspend fun deleteLibrariesExcept(
     ids: List<String>,
-    host: String,
-    username: String,
+    host: String?,
+    username: String?,
   )
 }

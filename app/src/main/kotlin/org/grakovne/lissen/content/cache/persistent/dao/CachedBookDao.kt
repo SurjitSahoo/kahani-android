@@ -29,8 +29,8 @@ interface CachedBookDao {
   @Transaction
   suspend fun upsertCachedBook(
     book: DetailedItem,
-    host: String,
-    username: String,
+    host: String?,
+    username: String?,
     fetchedChapters: List<PlayingChapter>,
     droppedChapters: List<PlayingChapter>,
   ) {
@@ -136,14 +136,14 @@ interface CachedBookDao {
     """
     SELECT COUNT(*) FROM detailed_books
     WHERE ((:libraryId IS NULL AND libraryId IS NULL) OR (libraryId = :libraryId))
-      AND host = :host
-      AND username = :username
+      AND ((:host IS NULL AND host IS NULL) OR (host = :host))
+      AND ((:username IS NULL AND username IS NULL) OR (username = :username))
     """,
   )
   suspend fun countCachedBooks(
     libraryId: String?,
-    host: String,
-    username: String,
+    host: String?,
+    username: String?,
   ): Int
 
   @Transaction
@@ -208,16 +208,6 @@ interface CachedBookDao {
 
   @Query(
     """
-    SELECT COUNT(*) > 0
-    FROM book_chapters
-    WHERE bookId = :bookId
-      AND isCached = 1
-    """,
-  )
-  fun hasDownloadedChapters(bookId: String): LiveData<Boolean>
-
-  @Query(
-    """
         SELECT MAX(mp.lastUpdate)
         FROM detailed_books AS d
         INNER JOIN media_progress AS mp ON d.id = mp.bookId
@@ -258,18 +248,22 @@ interface CachedBookDao {
   @Delete
   suspend fun deleteBook(book: BookEntity)
 
+  @Query(
+    """
+    SELECT id FROM detailed_books
+    WHERE id NOT IN (SELECT DISTINCT bookId FROM book_chapters WHERE isCached = 1)
+    """,
+  )
+  suspend fun fetchNonDownloadedBookIds(): List<String>
+
   @Transaction
   @Query(
     """
     DELETE FROM detailed_books
     WHERE id NOT IN (SELECT DISTINCT bookId FROM book_chapters WHERE isCached = 1)
-      AND (host != :currentHost OR username != :currentUsername)
     """,
   )
-  suspend fun deleteNonDownloadedBooks(
-    currentHost: String,
-    currentUsername: String,
-  )
+  suspend fun deleteNonDownloadedBooks()
 
   companion object {
     val type = Types.newParameterizedType(List::class.java, BookSeriesDto::class.java)

@@ -65,6 +65,7 @@ import org.grakovne.lissen.common.NetworkService
 import org.grakovne.lissen.common.withHaptic
 import org.grakovne.lissen.lib.domain.LibraryType
 import org.grakovne.lissen.lib.domain.RecentBook
+import org.grakovne.lissen.ui.components.AnalyticsConsentBottomSheet
 import org.grakovne.lissen.ui.components.withScrollbar
 import org.grakovne.lissen.ui.extensions.withMinimumTime
 import org.grakovne.lissen.ui.navigation.AppNavigationService
@@ -102,6 +103,7 @@ fun LibraryScreen(
 
   val activity = LocalActivity.current
   val recentBooks: List<RecentBook> by libraryViewModel.recentBooks.observeAsState(emptyList())
+  val analyticsConsent by settingsViewModel.analyticsConsent.observeAsState()
 
   var pullRefreshing by remember { mutableStateOf(false) }
   val recentBookRefreshing by libraryViewModel.recentBookUpdating.observeAsState(false)
@@ -477,6 +479,13 @@ fun LibraryScreen(
         refreshContent(false)
         preferredLibraryExpanded = false
       },
+    )
+  }
+
+  if (analyticsConsent == null) {
+    AnalyticsConsentBottomSheet(
+      onAccept = { settingsViewModel.updateAnalyticsConsent(true) },
+      onDecline = { settingsViewModel.updateAnalyticsConsent(false) },
     )
   }
 }

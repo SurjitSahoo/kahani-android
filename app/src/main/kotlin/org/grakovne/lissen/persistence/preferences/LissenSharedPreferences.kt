@@ -389,7 +389,7 @@ class LissenSharedPreferences
           val adapter = moshi.adapter(DetailedItem::class.java)
           try {
             adapter.fromJson(json)
-          } catch (e: Exception) {
+          } catch (e: Throwable) {
             null
           }
         }
@@ -481,6 +481,21 @@ class LissenSharedPreferences
       sharedPreferences.edit {
         putBoolean(KEY_SMART_REWIND_ENABLED, enabled)
       }
+
+    fun getAnalyticsConsentState(): Boolean? {
+      if (!sharedPreferences.contains(KEY_ANALYTICS_CONSENT)) return null
+      return sharedPreferences.getBoolean(KEY_ANALYTICS_CONSENT, false)
+    }
+
+    fun saveAnalyticsConsentState(accepted: Boolean?) {
+      sharedPreferences.edit {
+        if (accepted == null) {
+          remove(KEY_ANALYTICS_CONSENT)
+        } else {
+          putBoolean(KEY_ANALYTICS_CONSENT, accepted)
+        }
+      }
+    }
 
     fun getSmartRewindEnabled(): Boolean = sharedPreferences.getBoolean(KEY_SMART_REWIND_ENABLED, false)
 
@@ -672,6 +687,7 @@ class LissenSharedPreferences
       private const val KEY_SHOW_PLAYER_NAV_BUTTONS = "show_player_nav_buttons"
       private const val KEY_SHAKE_TO_RESET_TIMER = "shake_to_reset_timer"
       private const val KEY_SKIP_SILENCE_ENABLED = "skip_silence_enabled"
+      private const val KEY_ANALYTICS_CONSENT = "analytics_consent"
 
       private const val KEY_PLAYING_BOOK = "playing_book"
       private const val KEY_VOLUME_BOOST = "volume_boost"

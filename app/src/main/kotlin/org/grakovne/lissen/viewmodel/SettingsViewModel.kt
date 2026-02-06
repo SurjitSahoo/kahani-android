@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import org.grakovne.lissen.analytics.ClarityComponent
 import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.Host
 import org.grakovne.lissen.channel.common.OperationResult
@@ -37,6 +38,7 @@ class SettingsViewModel
     private val bookRepository: org.grakovne.lissen.content.BookRepository,
     private val cachedCoverProvider: org.grakovne.lissen.content.cache.temporary.CachedCoverProvider,
     private val clarityTracker: ClarityTracker,
+    private val clarityComponent: ClarityComponent,
   ) : ViewModel() {
     private val _host: MutableLiveData<Host> = MutableLiveData(preferences.getHost()?.let { Host.external(it) })
     val host = _host
@@ -98,6 +100,9 @@ class SettingsViewModel
     val smartRewindThreshold = preferences.smartRewindThresholdFlow.asLiveData()
     val smartRewindDuration = preferences.smartRewindDurationFlow.asLiveData()
 
+    private val _analyticsConsent = MutableLiveData(preferences.getAnalyticsConsentState())
+    val analyticsConsent: LiveData<Boolean?> = _analyticsConsent
+
     fun preferCrashReporting(value: Boolean) {
       _crashReporting.postValue(value)
       preferences.saveAcraEnabled(value)
@@ -139,6 +144,12 @@ class SettingsViewModel
 
     fun logout() {
       preferences.clearPreferences()
+    }
+
+    fun updateAnalyticsConsent(accepted: Boolean) {
+      _analyticsConsent.postValue(accepted)
+      preferences.saveAnalyticsConsentState(accepted)
+      clarityComponent.updateConsent(accepted)
     }
 
     fun refreshConnectionInfo() {
@@ -188,7 +199,7 @@ class SettingsViewModel
     fun preferLibrary(library: Library) {
       _preferredLibrary.postValue(library)
       preferences.savePreferredLibrary(library)
-      clarityTracker.trackEvent("library_switched", library.title)
+      clarityTracker.trackEvent("library_switched", library.id)
     }
 
     fun preferAutoDownloadNetworkType(type: NetworkTypeAutoCache) {
@@ -297,9 +308,18 @@ class SettingsViewModel
 
     fun clearMetadataCache(onComplete: () -> Unit) {
       viewModelScope.launch {
-        bookRepository.clearMetadataCache()
-        cachedCoverProvider.clearCache()
-        onComplete()
+        try {
+          bookRepository.clearMetadataCache()
+          cachedCoverProvider.clearCache()
+        } catch (e: Exception) {
+          if (e is kotlinx.coroutines.CancellationException) {
+            throw e
+          }
+
+          timber.log.Timber.e(e, "Failed to clear metadata cache")
+        } finally {
+          onComplete()
+        }
       }
     }
   }

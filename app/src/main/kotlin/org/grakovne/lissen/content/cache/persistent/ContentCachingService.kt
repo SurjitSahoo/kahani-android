@@ -106,7 +106,7 @@ class ContentCachingService : LifecycleService() {
         executor
           .run(mediaProvider.providePreferredChannel())
           .onCompletion {
-            if (executionStatuses.isEmpty()) {
+            if (executionStatuses.isEmpty() || !inProgress()) {
               finish()
             }
           }.collect { progress ->
@@ -127,7 +127,7 @@ class ContentCachingService : LifecycleService() {
               lastNotificationUpdate = currentTime
             }
 
-            if (!inProgress() && !hasErrors()) {
+            if (!inProgress()) {
               finish()
             }
           }

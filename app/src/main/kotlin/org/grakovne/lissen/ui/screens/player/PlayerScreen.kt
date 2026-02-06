@@ -432,7 +432,6 @@ fun PlayerScreen(
             org.grakovne.lissen.content.cache.persistent
               .CacheState(org.grakovne.lissen.lib.domain.CacheStatus.Idle),
         )
-      val hasDownloadedChapters by cachingModelView.hasDownloadedChapters(playingBook?.id.orEmpty()).observeAsState(false)
 
       playingBook?.let { book ->
         DownloadsComposable(

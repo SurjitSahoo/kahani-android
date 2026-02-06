@@ -3,13 +3,14 @@ package org.grakovne.lissen.content.cache.persistent.api
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 
-class SearchRequestBuilder {
+class SearchRequestBuilder(
+  private val host: String?,
+  private val username: String?,
+) {
   private var libraryId: String? = null
   private var searchQuery: String = ""
   private var orderField: String = "title"
   private var orderDirection: String = "ASC"
-  private var host: String = ""
-  private var username: String = ""
 
   fun libraryId(id: String?) = apply { this.libraryId = id }
 
@@ -18,10 +19,6 @@ class SearchRequestBuilder {
   fun orderField(field: String) = apply { this.orderField = field }
 
   fun orderDirection(direction: String) = apply { this.orderDirection = direction }
-
-  fun host(host: String) = apply { this.host = host }
-
-  fun username(username: String) = apply { this.username = username }
 
   fun build(): SupportSQLiteQuery {
     val args = mutableListOf<Any>()
@@ -42,9 +39,17 @@ class SearchRequestBuilder {
     args.add(pattern)
 
     val isolationClause =
-      "((host = ? AND username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
-    args.add(host)
-    args.add(username)
+      run {
+        val host = host
+        val username = username
+        if (!host.isNullOrEmpty() && !username.isNullOrEmpty()) {
+          args.add(host)
+          args.add(username)
+          "((host = ? AND username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+        } else {
+          "EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)"
+        }
+      }
 
     val field =
       when (orderField) {

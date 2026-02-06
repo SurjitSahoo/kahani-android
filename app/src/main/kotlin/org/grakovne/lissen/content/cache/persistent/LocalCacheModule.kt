@@ -47,10 +47,12 @@ object LocalCacheModule {
       .addMigrations(MIGRATION_14_15)
       .addMigrations(
         produceMigration15_16(
-          host = preferences.getHost() ?: "",
-          username = preferences.getUsername() ?: "",
+          host = preferences.getHost(),
+          username = preferences.getUsername(),
         ),
       ).addMigrations(MIGRATION_16_17)
+      .addMigrations(MIGRATION_17_18)
+      .addMigrations(MIGRATION_18_19)
       .build()
   }
 

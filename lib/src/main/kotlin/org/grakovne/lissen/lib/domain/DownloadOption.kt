@@ -3,6 +3,8 @@ package org.grakovne.lissen.lib.domain
 import androidx.annotation.Keep
 import java.io.Serializable
 
+import java.util.Base64
+
 @Keep
 sealed interface DownloadOption : Serializable
 
@@ -25,7 +27,13 @@ fun DownloadOption?.makeId() = when (this) {
   AllItemsDownloadOption -> "all_items"
   CurrentItemDownloadOption -> "current_item"
   is NumberItemDownloadOption -> "number_items_$itemsNumber"
-  is SpecificFilesDownloadOption -> "specific_files_${fileIds.joinToString(",")}"
+  is SpecificFilesDownloadOption -> {
+    val payload = fileIds
+      .map { Base64.getUrlEncoder().withoutPadding().encodeToString(it.toByteArray()) }
+      .joinToString(",")
+    "specific_files_$payload"
+  }
+
   RemainingItemsDownloadOption -> "remaining_items"
 }
 
@@ -35,7 +43,19 @@ fun String?.makeDownloadOption(): DownloadOption? = when {
   this == "current_item" -> CurrentItemDownloadOption
   this == "remaining_items" -> RemainingItemsDownloadOption
   startsWith("number_items_") -> NumberItemDownloadOption(substringAfter("number_items_").toInt())
-  startsWith("specific_files_") -> SpecificFilesDownloadOption(substringAfter("specific_files_").split(","))
+  startsWith("specific_files_") -> {
+    val payload = substringAfter("specific_files_")
+
+    val fileIds = when {
+      payload.isEmpty() -> emptyList()
+      else -> payload
+        .split(",")
+        .map { String(Base64.getUrlDecoder().decode(it)) }
+    }
+
+    SpecificFilesDownloadOption(fileIds)
+  }
+
   else -> null
 }
 

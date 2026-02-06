@@ -24,12 +24,23 @@ class MigrationViewModel
     val migrationState: LiveData<MigrationState> = _migrationState
 
     fun startMigration() {
+      if (_migrationState.value != MigrationState.Idle) {
+        return
+      }
+
+      executeMigration()
+    }
+
+    fun retryMigration() {
+      executeMigration()
+    }
+
+    private fun executeMigration() {
       viewModelScope.launch {
         _migrationState.value = MigrationState.Running
 
         // Artificial delay for a better UX if migration is target-fast
         delay(1500)
-
         try {
           withContext(Dispatchers.IO) {
             // Trigger DB initialization and migration by performing a simple query
@@ -39,14 +50,18 @@ class MigrationViewModel
           preferences.setDatabaseVersion(CURRENT_DATABASE_VERSION)
           _migrationState.value = MigrationState.Completed
         } catch (e: Exception) {
-          // In a real app, we might want to handle this more gracefully
-          _migrationState.value = MigrationState.Completed // Proceed anyway to avoid bricking
+          if (e is kotlinx.coroutines.CancellationException) {
+            throw e
+          }
+
+          timber.log.Timber.e(e, "Migration failed")
+          _migrationState.value = MigrationState.Error(e)
         }
       }
     }
 
     companion object {
-      const val CURRENT_DATABASE_VERSION = 16
+      const val CURRENT_DATABASE_VERSION = 19
     }
   }
 
@@ -56,4 +71,8 @@ sealed class MigrationState {
   data object Running : MigrationState()
 
   data object Completed : MigrationState()
+
+  data class Error(
+    val throwable: Throwable,
+  ) : MigrationState()
 }

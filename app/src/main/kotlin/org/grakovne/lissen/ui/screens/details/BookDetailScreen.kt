@@ -143,7 +143,6 @@ fun BookDetailScreen(
   val totalPosition by playerViewModel.totalPosition.observeAsState(0.0)
 
   val cacheProgress: CacheState by cachingModelView.getProgress(bookId).collectAsState(initial = CacheState(CacheStatus.Idle))
-  val hasDownloadedChapters by cachingModelView.hasDownloadedChapters(bookId).observeAsState(false)
   var downloadsExpanded by remember { mutableStateOf(false) }
   val scope = androidx.compose.runtime.rememberCoroutineScope()
 
@@ -312,7 +311,7 @@ fun BookDetailScreen(
                   Spacer(modifier = Modifier.width(8.dp))
                   Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.accessibility_id_fully_downloaded),
                     tint = colorScheme.primary,
                     modifier = Modifier.size(20.dp),
                   )
@@ -582,7 +581,6 @@ fun BookDetailScreen(
     if (downloadsExpanded && bookDetail != null) {
       val book = bookDetail!!
       val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
-      val volumes = remember(book.id) { cachingModelView.getVolumes(book) }
 
       DownloadsComposable(
         book = book,

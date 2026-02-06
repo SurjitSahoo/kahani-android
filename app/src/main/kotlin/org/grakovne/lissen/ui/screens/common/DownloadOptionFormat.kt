@@ -8,6 +8,7 @@ import org.grakovne.lissen.lib.domain.DownloadOption
 import org.grakovne.lissen.lib.domain.LibraryType
 import org.grakovne.lissen.lib.domain.NumberItemDownloadOption
 import org.grakovne.lissen.lib.domain.RemainingItemsDownloadOption
+import org.grakovne.lissen.lib.domain.SpecificFilesDownloadOption
 
 fun DownloadOption?.makeText(
   context: Context,
@@ -16,8 +17,8 @@ fun DownloadOption?.makeText(
   when (this) {
     null -> context.getString(R.string.downloads_menu_download_option_disable)
 
-    is org.grakovne.lissen.lib.domain.SpecificFilesDownloadOption -> {
-      "Selected Volume"
+    is SpecificFilesDownloadOption -> {
+      context.getString(R.string.downloads_menu_download_option_selected_volume)
     }
 
     CurrentItemDownloadOption -> {
@@ -64,9 +65,5 @@ fun DownloadOption?.makeText(
             itemsNumber,
           )
       }
-    }
-
-    is org.grakovne.lissen.lib.domain.SpecificFilesDownloadOption -> {
-      "Multiple Files"
     }
   }
