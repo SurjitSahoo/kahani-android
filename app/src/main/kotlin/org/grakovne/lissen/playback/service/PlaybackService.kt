@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -60,7 +61,7 @@ class PlaybackService : MediaSessionService() {
   lateinit var playbackTimer: PlaybackTimer
 
   @Inject
-  lateinit var mediaCache: Cache
+  lateinit var mediaCache: dagger.Lazy<Cache>
 
   private var session: MediaSession? = null
 
@@ -181,7 +182,7 @@ class PlaybackService : MediaSessionService() {
           val sourceFactory =
             LissenDataSourceFactory(
               baseContext = baseContext,
-              mediaCache = mediaCache,
+              mediaCache = mediaCache.get(),
               requestHeadersProvider = requestHeadersProvider,
               sharedPreferences = sharedPreferences,
               mediaProvider = mediaProvider,
