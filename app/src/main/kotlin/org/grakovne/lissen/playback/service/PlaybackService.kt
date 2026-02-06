@@ -196,7 +196,7 @@ class PlaybackService : MediaSessionService() {
                     .Builder()
                     .setTitle(file.name)
                     .setArtist(book.title)
-                    .setArtworkUri(fetchCover(book))
+                    .build()
 
                 val mediaItem =
                   MediaItem
@@ -204,7 +204,7 @@ class PlaybackService : MediaSessionService() {
                     .setMediaId(file.id)
                     .setUri(apply(book.id, file.id))
                     .setTag(book)
-                    .setMediaMetadata(mediaData.build())
+                    .setMediaMetadata(mediaData)
                     .build()
 
                 ProgressiveMediaSource
@@ -231,6 +231,31 @@ class PlaybackService : MediaSessionService() {
       val prepareSession =
         async {
           playbackSynchronizationService.startPlaybackSynchronization(book)
+        }
+
+      val updateCover =
+        async {
+          val artworkUri = fetchCover(book) ?: return@async
+
+          withContext(Dispatchers.Main) {
+            for (i in 0 until exoPlayer.mediaItemCount) {
+              val currentItem = exoPlayer.getMediaItemAt(i)
+              val updatedMetadata =
+                currentItem
+                  .mediaMetadata
+                  .buildUpon()
+                  .setArtworkUri(artworkUri)
+                  .build()
+
+              val updatedItem =
+                currentItem
+                  .buildUpon()
+                  .setMediaMetadata(updatedMetadata)
+                  .build()
+
+              exoPlayer.replaceMediaItem(i, updatedItem)
+            }
+          }
         }
 
       awaitAll(prepareSession, prepareQueue)

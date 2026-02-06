@@ -243,9 +243,23 @@ class LibraryViewModel
       }
     }
 
-    fun refreshLibrary() {
+    fun refreshLibrary(forceRefresh: Boolean = false) {
       viewModelScope.launch {
         withContext(Dispatchers.IO) {
+          if (forceRefresh && networkService.isServerAvailable.value && !preferences.isForceCache()) {
+            val libraryId = preferences.getPreferredLibrary()?.id
+
+            if (libraryId != null) {
+              bookRepository.syncLibraryPage(
+                libraryId = libraryId,
+                pageSize = PAGE_SIZE,
+                pageNumber = 0,
+              )
+            }
+
+            bookRepository.syncRepositories()
+          }
+
           when (searchRequested.value) {
             true -> searchPagingSource?.invalidate()
             else -> defaultPagingSource.value?.invalidate()

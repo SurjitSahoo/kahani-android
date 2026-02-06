@@ -98,6 +98,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.HtmlCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.Extras
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -110,6 +111,7 @@ import org.grakovne.lissen.lib.domain.CacheStatus
 import org.grakovne.lissen.lib.domain.DetailedItem
 import org.grakovne.lissen.lib.domain.LibraryType
 import org.grakovne.lissen.ui.components.AsyncShimmeringImage
+import org.grakovne.lissen.ui.components.BookCoverFetcher
 import org.grakovne.lissen.ui.components.DownloadProgressIcon
 import org.grakovne.lissen.ui.extensions.formatTime
 import org.grakovne.lissen.ui.navigation.AppNavigationService
@@ -272,6 +274,18 @@ fun BookDetailScreen(
                     .build()
                 }
 
+              val thumbnailRequest: ImageRequest =
+                remember<ImageRequest>(book.id) {
+                  ImageRequest
+                    .Builder(context)
+                    .data(book.id)
+                    .size(200, 200)
+                    .memoryCacheKey("${book.id}_thumbnail")
+                    .diskCacheKey("${book.id}_thumbnail")
+                    .apply { extras[BookCoverFetcher.LocalOnlyKey] = true }
+                    .build()
+                }
+
               Box(
                 modifier =
                   Modifier
@@ -283,6 +297,7 @@ fun BookDetailScreen(
               ) {
                 AsyncShimmeringImage(
                   imageRequest = imageRequest,
+                  thumbnailRequest = thumbnailRequest,
                   imageLoader = imageLoader,
                   contentDescription = "${book.title} cover",
                   contentScale = ContentScale.Crop,

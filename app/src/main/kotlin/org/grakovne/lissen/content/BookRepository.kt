@@ -1,8 +1,17 @@
 package org.grakovne.lissen.content
 
 import android.net.Uri
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.MediaChannel
@@ -35,6 +44,8 @@ class BookRepository
     private val networkService: NetworkService,
     private val clarityTracker: ClarityTracker,
   ) {
+    private val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     fun provideFileUri(
       libraryItemId: String,
       chapterId: String,
@@ -169,7 +180,10 @@ class BookRepository
             pageNumber = pageNumber,
           ).also {
             it.foldAsync(
-              onSuccess = { result -> localCacheRepository.cacheBooks(result.items) },
+              onSuccess = { result ->
+                localCacheRepository.cacheBooks(result.items)
+                backgroundScope.launch { prefetchCovers(result.items) }
+              },
               onFailure = {},
             )
           }
@@ -331,7 +345,10 @@ class BookRepository
         when {
           remoteTime > localTime -> {
             providePreferredChannel().fetchBook(id).foldAsync(
-              onSuccess = { localCacheRepository.cacheBookMetadata(it) },
+              onSuccess = {
+                localCacheRepository.cacheBookMetadata(it)
+                backgroundScope.launch { prefetchCovers(listOf(it.toBook())) }
+              },
               onFailure = {},
             )
           }
@@ -361,6 +378,34 @@ class BookRepository
         }
       }
     }
+
+    private suspend fun prefetchCovers(books: List<Book>) {
+      if (!networkService.isNetworkAvailable() || preferences.isForceCache()) {
+        return
+      }
+
+      yield()
+      delay(2000) // Initial delay to prioritize core metadata and thumbnails
+
+      withContext(Dispatchers.IO) {
+        books.forEach { book ->
+          fetchBookCover(book.id, null)
+          delay(100)
+          yield()
+        }
+      }
+    }
+
+    private fun DetailedItem.toBook() =
+      Book(
+        id = this.id,
+        subtitle = this.subtitle,
+        series = this.series.joinToString { it.name },
+        title = this.title,
+        author = this.author,
+        duration = this.chapters.sumOf { it.duration },
+        libraryId = this.libraryId ?: "",
+      )
 
     private fun <T> OperationResult<T>.getOrNull(): T? =
       when (this) {

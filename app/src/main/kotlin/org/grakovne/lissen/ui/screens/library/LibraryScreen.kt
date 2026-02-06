@@ -146,7 +146,7 @@ fun LibraryScreen(
       withMinimumTime(minimumTime) {
         listOf(
           async { settingsViewModel.fetchLibraries() },
-          async { libraryViewModel.refreshLibrary() },
+          async { libraryViewModel.refreshLibrary(forceRefresh = showPullRefreshing) },
           async { libraryViewModel.fetchRecentListening() },
         ).awaitAll()
       }
