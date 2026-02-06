@@ -162,6 +162,7 @@ class MediaRepository
                   updateShakeDetectorState(preferences.getShakeToResetTimer(), isPlaying)
 
                   if (isPlaying) {
+                    _preparingBookId.postValue(null)
                     _playingBook.value?.let { startUpdatingProgress(it) }
                   } else {
                     handler.removeCallbacksAndMessages(null)
@@ -215,7 +216,6 @@ class MediaRepository
                 preferences.savePlayingBook(it)
 
                 _isPlaybackReady.postValue(true)
-                _preparingBookId.postValue(null)
 
                 pendingChapterIndex?.let { index ->
                   setChapter(index)
@@ -225,6 +225,8 @@ class MediaRepository
                 if (_playAfterPrepare.value == true) {
                   _playAfterPrepare.postValue(false)
                   play()
+                } else {
+                  _preparingBookId.postValue(null)
                 }
               }
             }
