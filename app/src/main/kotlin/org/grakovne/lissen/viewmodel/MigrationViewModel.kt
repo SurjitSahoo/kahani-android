@@ -32,6 +32,10 @@ class MigrationViewModel
     }
 
     fun retryMigration() {
+      if (_migrationState.value == MigrationState.Running) {
+        return
+      }
+
       executeMigration()
     }
 

@@ -37,19 +37,19 @@ class ClarityComponent
       savedInstanceState: Bundle?,
     ) {
       // Initialize Clarity only once with the first activity
-      if (initialized) return
+      if (isClarityInitialized) return
 
       Timber.d("Initializing Microsoft Clarity with activity: ${activity.javaClass.simpleName}")
       val config = ClarityConfig(BuildConfig.CLARITY_PROJECT_ID)
       Clarity.initialize(activity, config)
+      isClarityInitialized = true
 
       applyConsent()
-
-      initialized = true
       reidentifyUser()
     }
 
     fun updateConsent(accepted: Boolean) {
+      if (!isClarityInitialized) return
       Clarity.consent(accepted, accepted)
     }
 
@@ -73,7 +73,7 @@ class ClarityComponent
 
     override fun onActivityDestroyed(activity: Activity) {}
 
-    private var initialized = false
+    private var isClarityInitialized = false
 
     private fun reidentifyUser() {
       if (preferences.hasCredentials()) {

@@ -272,8 +272,11 @@ fun produceMigration15_16(
     // We add columns as nullable without a fixed DEFAULT value.
     // If the user is logged in during migration, we can tag existing data.
     // If they are logged out, existing data remains NULL (owned by "legacy/unknown").
-    val hostClause = if (host != null) " DEFAULT '$host'" else ""
-    val usernameClause = if (username != null) " DEFAULT '$username'" else ""
+    val safeHost = host?.replace("'", "''")
+    val safeUsername = username?.replace("'", "''")
+
+    val hostClause = if (safeHost != null) " DEFAULT '$safeHost'" else ""
+    val usernameClause = if (safeUsername != null) " DEFAULT '$safeUsername'" else ""
 
     db.execSQL("ALTER TABLE detailed_books ADD COLUMN host TEXT$hostClause")
     db.execSQL("ALTER TABLE detailed_books ADD COLUMN username TEXT$usernameClause")

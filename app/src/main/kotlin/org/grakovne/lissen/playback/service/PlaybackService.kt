@@ -233,30 +233,30 @@ class PlaybackService : MediaSessionService() {
           playbackSynchronizationService.startPlaybackSynchronization(book)
         }
 
-      val updateCover =
-        async {
-          val artworkUri = fetchCover(book) ?: return@async
+      // Fire-and-forget: Update cover in background without blocking playback readiness.
+      launch {
+        val artworkUri = fetchCover(book) ?: return@launch
 
-          withContext(Dispatchers.Main) {
-            for (i in 0 until exoPlayer.mediaItemCount) {
-              val currentItem = exoPlayer.getMediaItemAt(i)
-              val updatedMetadata =
-                currentItem
-                  .mediaMetadata
-                  .buildUpon()
-                  .setArtworkUri(artworkUri)
-                  .build()
+        withContext(Dispatchers.Main) {
+          for (i in 0 until exoPlayer.mediaItemCount) {
+            val currentItem = exoPlayer.getMediaItemAt(i)
+            val updatedMetadata =
+              currentItem
+                .mediaMetadata
+                .buildUpon()
+                .setArtworkUri(artworkUri)
+                .build()
 
-              val updatedItem =
-                currentItem
-                  .buildUpon()
-                  .setMediaMetadata(updatedMetadata)
-                  .build()
+            val updatedItem =
+              currentItem
+                .buildUpon()
+                .setMediaMetadata(updatedMetadata)
+                .build()
 
-              exoPlayer.replaceMediaItem(i, updatedItem)
-            }
+            exoPlayer.replaceMediaItem(i, updatedItem)
           }
         }
+      }
 
       awaitAll(prepareSession, prepareQueue)
 

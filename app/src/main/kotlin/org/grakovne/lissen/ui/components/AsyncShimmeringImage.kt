@@ -33,8 +33,8 @@ fun AsyncShimmeringImage(
   error: Painter,
   onLoadingStateChanged: (Boolean) -> Unit = {},
 ) {
-  var isMainLoading by remember { mutableStateOf(true) }
-  var isThumbnailLoaded by remember { mutableStateOf(false) }
+  var isMainLoading by remember(imageRequest) { mutableStateOf(true) }
+  var isThumbnailLoaded by remember(thumbnailRequest) { mutableStateOf(false) }
 
   Box(
     modifier = modifier,
