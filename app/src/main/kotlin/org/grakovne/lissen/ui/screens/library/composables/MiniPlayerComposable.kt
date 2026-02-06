@@ -71,6 +71,10 @@ fun MiniPlayerComposable(
   val view: View = LocalView.current
 
   val isPlaying: Boolean by playerViewModel.isPlaying.observeAsState(false)
+  val isPlaybackReady by playerViewModel.isPlaybackReady.observeAsState(false)
+  val preparingBookId by playerViewModel.preparingBookId.observeAsState(null)
+  val preparingError by playerViewModel.preparingError.observeAsState(false)
+
   var backgroundVisible by remember { mutableStateOf(true) }
 
   val dismissState =
@@ -260,12 +264,23 @@ fun MiniPlayerComposable(
                 IconButton(
                   onClick = { withHaptic(view) { playerViewModel.togglePlayPause() } },
                 ) {
-                  Icon(
-                    imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = colorScheme.onSurface,
-                    modifier = Modifier.size(38.dp),
-                  )
+                  val isError = preparingError
+                  val isLoading = preparingBookId != null
+
+                  if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                      modifier = Modifier.size(32.dp),
+                      color = colorScheme.onSurface,
+                      strokeWidth = 3.dp,
+                    )
+                  } else {
+                    Icon(
+                      imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
+                      contentDescription = if (isPlaying) "Pause" else "Play",
+                      tint = colorScheme.onSurface,
+                      modifier = Modifier.size(38.dp),
+                    )
+                  }
                 }
               }
             }

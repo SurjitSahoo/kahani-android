@@ -391,12 +391,10 @@ fun PlayerContent(
           horizontalAlignment = Alignment.CenterHorizontally,
           modifier = Modifier.padding(horizontal = 16.dp),
         ) {
-          if (isPlaybackReady) {
-            PlaybackButtonsComposable(
-              viewModel = playerViewModel,
-              settingsViewModel = settingsViewModel,
-            )
-          }
+          PlaybackButtonsComposable(
+            viewModel = playerViewModel,
+            settingsViewModel = settingsViewModel,
+          )
         }
       }
 
