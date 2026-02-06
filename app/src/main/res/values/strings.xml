@@ -221,22 +221,22 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_playback">Playback &amp; Downloads</string>
     <string name="settings_section_about">About</string>
-
+ 
     <!-- Bottom navigation labels -->
     <string name="player_nav_boost">Boost</string>
     <string name="player_nav_speed">Speed</string>
     <string name="player_nav_download">Download</string>
     <string name="player_nav_timer">Timer</string>
-
+ 
     <!-- Cached indicator -->
     <string name="chapter_cached_indicator">Downloaded</string>
-
+ 
     <!-- Migration Screen -->
     <string name="migration_screen_message">Rearranging the library shelves…</string>
     <string name="migration_screen_error_message">Library update failed. Should we try again?</string>
     <string name="migration_screen_retry_button">Try again</string>
     <string name="migration_screen_dismiss_button">Skip for now</string>
-
+ 
     <!-- Clear Cache -->
     <string name="settings_screen_clear_metadata_cache_title">Clear metadata cache</string>
     <string name="settings_screen_clear_metadata_cache_hint">Remove metadata for non-downloaded books from other servers to free up space.</string>
@@ -247,24 +247,24 @@
     <string name="settings_screen_cached_items_empty_title">No downloads yet</string>
     <string name="settings_screen_cached_items_empty_description">Your downloaded books and chapters will appear here.</string>
     <string name="settings_screen_cached_items_empty_action">Go to Library</string>
-
+ 
     <!-- Storage Truth Strings -->
     <string name="download_modal_monolith_title">Download book (%1$s)</string>
     <string name="download_modal_monolith_description">High-fidelity single archive. Individual chapter downloads are not available.</string>
     <string name="download_modal_remove_book">Remove book from downloads</string>
-
+ 
     <string name="download_modal_segmented_part_title">Download Part %1$d (%2$s)</string>
     <string name="download_modal_segmented_part_subtext">Chapters %1$s</string>
     <string name="download_modal_segmented_remaining">Download remaining parts (%1$s)</string>
     <string name="download_modal_segmented_remaining_subtext">Parts %1$s</string>
-
+ 
     <string name="download_modal_atomic_remaining">Download remaining chapters (%1$s)</string>
     <string name="download_modal_atomic_entire">Download entire book (%1$s)</string>
-
+ 
     <string name="download_volume_name">Volume %1$d</string>
     <string name="download_volume_full_archive">Full Archive</string>
     <string name="download_volume_chapters_range">Chapters %1$s</string>
-
+ 
     <string name="manage_downloads_free_up">Free up %1$s?</string>
     <string name="settings_screen_cached_items_edit">Select</string>
     <string name="settings_screen_cached_items_cancel">Cancel</string>
@@ -277,4 +277,9 @@
     <string name="analytics_consent_message">Help us squash bugs by sharing anonymous technical data. Your library and personal info stay 100% private.</string>
     <string name="analytics_consent_accept">Help Improve Kahani 🚀</string>
     <string name="analytics_consent_decline">Maybe later</string>
+
+    <string name="notification_channel_updates_name">App Updates</string>
+    <string name="notification_channel_updates_description">Notifications about new versions</string>
+    <string name="notification_update_available_title">Kahani %1$s Available</string>
+    <string name="notification_update_available_body">A new version is available. Tap to download.</string>
 </resources>
