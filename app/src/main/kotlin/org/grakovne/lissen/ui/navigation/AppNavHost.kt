@@ -129,6 +129,9 @@ fun AppNavHost(
                 navController.popBackStack()
               }
             },
+            onNavigateToLibrary = {
+              navigationService.showLibrary(clearHistory = true)
+            },
             imageLoader = imageLoader,
           )
         }

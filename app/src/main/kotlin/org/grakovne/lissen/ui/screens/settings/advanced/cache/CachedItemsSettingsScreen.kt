@@ -104,6 +104,7 @@ data class VolumeIdentifier(
 @Composable
 fun CachedItemsSettingsScreen(
   onBack: () -> Unit,
+  onNavigateToLibrary: () -> Unit,
   imageLoader: ImageLoader,
   viewModel: CachingModelView = hiltViewModel(),
   playerViewModel: PlayerViewModel = hiltViewModel(),
@@ -238,7 +239,7 @@ fun CachedItemsSettingsScreen(
         StorageHeader(viewModel)
 
         when (cachedItems.itemCount == 0) {
-          true -> PolishedCachedItemsEmptyState(onBack)
+          true -> PolishedCachedItemsEmptyState(onNavigateToLibrary)
           false ->
             CachedItemsComposable(
               cachedItems = cachedItems,
