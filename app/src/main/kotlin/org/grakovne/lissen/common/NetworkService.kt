@@ -54,37 +54,37 @@ class NetworkService
       val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
           override fun onAvailable(network: Network) {
-            checkServerAvailability()
+            refreshServerAvailability()
           }
 
           override fun onLost(network: Network) {
             if (cachedNetworkHandle == network.getNetworkHandle()) {
               cachedSsid = null
             }
-            checkServerAvailability()
+            refreshServerAvailability()
           }
 
           override fun onCapabilitiesChanged(
             network: Network,
             networkCapabilities: NetworkCapabilities,
           ) {
-            checkServerAvailability()
+            refreshServerAvailability()
           }
         }
 
       connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
-      checkServerAvailability()
+      refreshServerAvailability()
 
       scope.launch {
         preferences.hostFlow.collect {
-          checkServerAvailability()
+          refreshServerAvailability()
         }
       }
     }
 
     private var checkJob: Job? = null
 
-    private fun checkServerAvailability() {
+    fun refreshServerAvailability() {
       checkJob?.cancel()
       checkJob =
         scope.launch {

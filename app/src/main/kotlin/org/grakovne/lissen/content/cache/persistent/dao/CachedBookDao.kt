@@ -122,7 +122,7 @@ interface CachedBookDao {
           )
         }
 
-    upsertBook(bookEntity)
+    safeUpsertBook(bookEntity)
     upsertBookFiles(bookFiles)
     upsertBookChapters(bookChapters)
     mediaProgress?.let { upsertMediaProgress(it) }
@@ -220,17 +220,34 @@ interface CachedBookDao {
   @Query("SELECT * FROM detailed_books WHERE id = :bookId")
   suspend fun fetchBook(bookId: String): BookEntity?
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun upsertBook(book: BookEntity)
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  suspend fun insertBookIgnore(book: BookEntity): Long
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun upsertBooks(books: List<BookEntity>)
-
-  @Query("SELECT * FROM detailed_books WHERE id IN (:bookIds)")
-  suspend fun fetchBooks(bookIds: List<String>): List<BookEntity>
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  suspend fun insertBooksIgnore(books: List<BookEntity>): List<Long>
 
   @Update
   suspend fun updateBook(book: BookEntity)
+
+  @Update
+  suspend fun updateBooks(books: List<BookEntity>)
+
+  @Transaction
+  suspend fun safeUpsertBook(book: BookEntity) {
+    val result = insertBookIgnore(book)
+    if (result == -1L) {
+      updateBook(book)
+    }
+  }
+
+  @Transaction
+  suspend fun upsertBooks(books: List<BookEntity>) {
+    insertBooksIgnore(books)
+    updateBooks(books)
+  }
+
+  @Query("SELECT * FROM detailed_books WHERE id IN (:bookIds)")
+  suspend fun fetchBooks(bookIds: List<String>): List<BookEntity>
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun upsertBookFiles(files: List<BookFileEntity>)

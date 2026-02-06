@@ -106,7 +106,6 @@ fun LibraryScreen(
   val analyticsConsent by settingsViewModel.analyticsConsent.observeAsState(true)
 
   var pullRefreshing by remember { mutableStateOf(false) }
-  val recentBookRefreshing by libraryViewModel.recentBookUpdating.observeAsState(false)
   val searchRequested by libraryViewModel.searchRequested.observeAsState(false)
   val preparingError by playerViewModel.preparingError.observeAsState(false)
 
@@ -147,7 +146,6 @@ fun LibraryScreen(
         listOf(
           async { settingsViewModel.fetchLibraries() },
           async { libraryViewModel.refreshLibrary(forceRefresh = showPullRefreshing) },
-          async { libraryViewModel.fetchRecentListening() },
         ).awaitAll()
       }
 
@@ -162,7 +160,7 @@ fun LibraryScreen(
       }
 
       val hasContent = library.itemCount > 0 || recentBooks.isNotEmpty()
-      val isLoading = pullRefreshing || recentBookRefreshing || library.loadState.refresh is LoadState.Loading
+      val isLoading = pullRefreshing || library.loadState.refresh is LoadState.Loading
 
       isLoading && !hasContent
     }

@@ -50,9 +50,6 @@ class LibraryViewModel
     private val _recentBooks = MutableLiveData<List<RecentBook>>(emptyList())
     val recentBooks: LiveData<List<RecentBook>> = _recentBooks
 
-    private val _recentBookUpdating = MutableLiveData(false)
-    val recentBookUpdating: LiveData<Boolean> = _recentBookUpdating
-
     private val _searchRequested = MutableLiveData(false)
     val searchRequested: LiveData<Boolean> = _searchRequested
 
@@ -94,7 +91,6 @@ class LibraryViewModel
       val localCacheUpdated = latestLocalUpdate?.let { it > localCacheUpdatedAt } ?: true
 
       if (emptyContent || libraryChanged || orderingChanged || (isLocalCacheUsing && localCacheUpdated)) {
-        refreshRecentListening()
         refreshLibrary()
 
         currentLibraryId = preferences.getPreferredLibrary()?.id ?: ""
@@ -104,10 +100,6 @@ class LibraryViewModel
     }
 
     init {
-      viewModelScope.launch {
-        downloadedOnlyFlow.collect { refreshRecentListening() }
-      }
-
       viewModelScope.launch {
         combine(
           preferences.preferredLibraryIdFlow,
@@ -135,7 +127,6 @@ class LibraryViewModel
             if (isAvailable) {
               Timber.d("Server is reachable. Triggering repository sync.")
               bookRepository.syncRepositories()
-              refreshRecentListening()
               refreshLibrary()
             }
           }
@@ -202,7 +193,6 @@ class LibraryViewModel
     private fun syncLibrary(libraryId: String) {
       viewModelScope.launch(Dispatchers.IO) {
         bookRepository.syncRepositories()
-        refreshRecentListening()
         defaultPagingSource.value?.invalidate()
       }
     }
@@ -234,19 +224,16 @@ class LibraryViewModel
         ?.type
         ?: LibraryType.UNKNOWN
 
-    fun refreshRecentListening() {
-      clarityTracker.trackEvent("library_refresh")
-      viewModelScope.launch {
-        withContext(Dispatchers.IO) {
-          fetchRecentListening()
-        }
-      }
-    }
-
     fun refreshLibrary(forceRefresh: Boolean = false) {
       viewModelScope.launch {
         withContext(Dispatchers.IO) {
-          if (forceRefresh && networkService.isServerAvailable.value && !preferences.isForceCache()) {
+          if (forceRefresh) {
+            networkService.refreshServerAvailability()
+          }
+
+          val shouldSync = (forceRefresh || networkService.isServerAvailable.value) && !preferences.isForceCache()
+
+          if (shouldSync) {
             val libraryId = preferences.getPreferredLibrary()?.id
 
             if (libraryId != null) {
@@ -265,21 +252,6 @@ class LibraryViewModel
             else -> defaultPagingSource.value?.invalidate()
           }
         }
-      }
-    }
-
-    fun fetchRecentListening() {
-      _recentBookUpdating.postValue(true)
-
-      val preferredLibrary =
-        preferences.getPreferredLibrary()?.id ?: run {
-          _recentBookUpdating.postValue(false)
-          return
-        }
-
-      viewModelScope.launch {
-        bookRepository.fetchRecentListenedBooks(preferredLibrary)
-        _recentBookUpdating.postValue(false)
       }
     }
 
