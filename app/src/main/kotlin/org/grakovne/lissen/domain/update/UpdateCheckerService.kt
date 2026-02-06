@@ -26,7 +26,7 @@ import javax.inject.Singleton
 class UpdateCheckerService
   @Inject
   constructor(
-    @ApplicationContext private valcontext: Context,
+    @ApplicationContext private val context: Context,
   ) {
     private val client =
       OkHttpClient
@@ -114,7 +114,7 @@ class UpdateCheckerService
       val builder =
         NotificationCompat
           .Builder(context, channelId)
-          .setSmallIcon(R.drawable.ic_notification)
+          .setSmallIcon(R.drawable.ic_notification_silhouette)
           .setContentTitle(context.getString(R.string.notification_update_available_title, version))
           .setContentText(context.getString(R.string.notification_update_available_body))
           .setPriority(NotificationCompat.PRIORITY_DEFAULT)

@@ -64,6 +64,9 @@ interface CachedBookDao {
             },
       )
 
+    val existingBook = fetchCachedBook(book.id)
+    val existingChapters = existingBook?.chapters?.associateBy { it.bookChapterId } ?: emptyMap()
+
     val bookFiles =
       book
         .files
@@ -78,17 +81,12 @@ interface CachedBookDao {
           )
         }
 
-    val cachedBookChapters =
-      fetchCachedBook(book.id)
-        ?.chapters
-        ?: emptyList()
-
     val bookChapters =
       book
         .chapters
         .map { chapter ->
           val fetched = fetchedChapters.any { it.id == chapter.id }
-          val exists = cachedBookChapters.any { it.bookChapterId == chapter.id && it.isCached }
+          val exists = existingChapters[chapter.id]?.isCached == true
           val dropped = droppedChapters.any { it.id == chapter.id }
 
           val cached =
@@ -123,8 +121,13 @@ interface CachedBookDao {
         }
 
     safeUpsertBook(bookEntity)
+
+    deleteBookFiles(book.id)
     upsertBookFiles(bookFiles)
+
+    deleteBookChapters(book.id)
     upsertBookChapters(bookChapters)
+
     mediaProgress?.let { upsertMediaProgress(it) }
   }
 
@@ -264,6 +267,12 @@ interface CachedBookDao {
 
   @Delete
   suspend fun deleteBook(book: BookEntity)
+
+  @Query("DELETE FROM book_chapters WHERE bookId = :bookId")
+  suspend fun deleteBookChapters(bookId: String)
+
+  @Query("DELETE FROM book_files WHERE bookId = :bookId")
+  suspend fun deleteBookFiles(bookId: String)
 
   @Query(
     """
