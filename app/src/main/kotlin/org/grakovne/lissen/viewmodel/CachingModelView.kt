@@ -205,6 +205,22 @@ class CachingModelView
       }
     }
 
+    fun refreshMetadata() {
+      viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+          localCacheRepository
+            .fetchDetailedItems(Int.MAX_VALUE, 0)
+            .fold(
+              onSuccess = { it.items },
+              onFailure = { emptyList() },
+            ).forEach { localCacheRepository.cacheBookMetadata(it) }
+
+          _cacheVersion.value += 1
+          refreshStorageStats()
+        }
+      }
+    }
+
     suspend fun fetchLatestUpdate(libraryId: String) = localCacheRepository.fetchLatestUpdate(libraryId)
 
     companion object {

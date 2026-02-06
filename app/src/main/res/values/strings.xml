@@ -266,7 +266,7 @@
     <string name="download_volume_chapters_range">Chapters %1$s</string>
 
     <string name="manage_downloads_free_up">Free up %1$s?</string>
-    <string name="settings_screen_cached_items_edit">Edit</string>
+    <string name="settings_screen_cached_items_edit">Select</string>
     <string name="settings_screen_cached_items_cancel">Cancel</string>
     <string name="accessibility_id_download_complete">Download complete</string>
     <string name="accessibility_id_download_available">Download available</string>

@@ -154,6 +154,11 @@ class ContentCachingManager
           ?.filter { it.available }
           ?: emptyList()
 
+      if (stillCachedChapters.isEmpty()) {
+        dropCache(item.id)
+        return
+      }
+
       val stillNeededFiles =
         stillCachedChapters
           .flatMap { findRelatedFiles(it, item.files) }
