@@ -44,9 +44,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.acra.ACRA
 import timber.log.Timber
 
 fun Modifier.withScrollbar(
@@ -96,7 +97,7 @@ fun Modifier.withScrollbar(
     }
   } catch (ex: Exception) {
     Timber.w("Unable to apply scrollbar due to ${ex.message}")
-    ACRA.errorReporter.handleSilentException(ex)
+    Firebase.crashlytics.recordException(ex)
     return this
   }
 }

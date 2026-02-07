@@ -102,11 +102,11 @@ class LissenSharedPreferences
       }
     }
 
-    fun getAcraEnabled() = sharedPreferences.getBoolean(org.acra.ACRA.PREF_ENABLE_ACRA, true)
+    fun getCrashReportingEnabled() = sharedPreferences.getBoolean(KEY_CRASH_REPORTING_ENABLED, true)
 
-    fun saveAcraEnabled(enabled: Boolean) {
+    fun saveCrashReportingEnabled(enabled: Boolean) {
       sharedPreferences.edit {
-        putBoolean(org.acra.ACRA.PREF_ENABLE_ACRA, enabled)
+        putBoolean(KEY_CRASH_REPORTING_ENABLED, enabled)
       }
     }
 
@@ -691,6 +691,7 @@ class LissenSharedPreferences
 
       private const val KEY_PLAYING_BOOK = "playing_book"
       private const val KEY_VOLUME_BOOST = "volume_boost"
+      private const val KEY_CRASH_REPORTING_ENABLED = "crash_reporting_enabled"
 
       private const val ANDROID_KEYSTORE = "AndroidKeyStore"
       private const val TRANSFORMATION = "AES/GCM/NoPadding"

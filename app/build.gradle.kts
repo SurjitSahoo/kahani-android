@@ -8,6 +8,8 @@ plugins {
   id("com.google.dagger.hilt.android")
   id("org.jmailen.kotlinter") version "5.2.0"
   id("com.google.devtools.ksp")
+  alias(libs.plugins.google.services)
+  alias(libs.plugins.firebase.crashlytics)
 }
 
 kotlinter {
@@ -59,12 +61,6 @@ android {
     buildConfigField("String", "GIT_HASH", "\"$commitHash\"")
     
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    
-    val acraReportLogin = "8yJ59n0UToCja8LR"
-    val acraReportPassword = "kuW9TV7BbJByuIAc"
-    
-    buildConfigField("String", "ACRA_REPORT_LOGIN", "\"$acraReportLogin\"")
-    buildConfigField("String", "ACRA_REPORT_PASSWORD", "\"$acraReportPassword\"")
     
     buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
     
@@ -185,10 +181,6 @@ dependencies {
   implementation(libs.androidx.glance.appwidget)
   implementation(libs.androidx.glance.material3)
   
-  implementation(libs.acra.core)
-  implementation(libs.acra.http)
-  implementation(libs.acra.toast)
-  
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
   
@@ -197,6 +189,10 @@ dependencies {
   implementation(libs.moshi.kotlin)
   
   implementation(libs.microsoft.clarity)
+  
+  implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.crashlytics)
+  implementation(libs.firebase.analytics)
   
   debugImplementation(libs.androidx.ui.tooling)
   debugImplementation(libs.androidx.ui.test.manifest)

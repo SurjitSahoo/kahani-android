@@ -81,7 +81,7 @@ class SettingsViewModel
 
     val seekTime = preferences.seekTimeFlow.asLiveData()
 
-    private val _crashReporting = MutableLiveData(preferences.getAcraEnabled())
+    private val _crashReporting = MutableLiveData(preferences.getCrashReportingEnabled())
     val crashReporting = _crashReporting
 
     private val _bypassSsl = MutableLiveData(preferences.getSslBypass())
@@ -105,7 +105,7 @@ class SettingsViewModel
 
     fun preferCrashReporting(value: Boolean) {
       _crashReporting.postValue(value)
-      preferences.saveAcraEnabled(value)
+      preferences.saveCrashReportingEnabled(value)
     }
 
     fun preferBypassSsl(value: Boolean) {
