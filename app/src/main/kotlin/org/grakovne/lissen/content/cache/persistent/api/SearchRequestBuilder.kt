@@ -67,7 +67,7 @@ class SearchRequestBuilder(
       """
       SELECT * FROM detailed_books
       WHERE $libraryClause AND $searchClause AND $isolationClause
-      ORDER BY $field $direction
+      ORDER BY $field $direction, id ASC
       """.trimIndent()
 
     return SimpleSQLiteQuery(sql, args.toTypedArray())

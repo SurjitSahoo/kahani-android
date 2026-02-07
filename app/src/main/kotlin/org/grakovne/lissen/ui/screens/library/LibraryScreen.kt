@@ -359,7 +359,12 @@ fun LibraryScreen(
                 totalItems = libraryCount,
                 ignoreItems = scrollbarIgnoreItems,
               ),
-          contentPadding = PaddingValues(horizontal = Spacing.md),
+          contentPadding =
+            PaddingValues(
+              start = Spacing.md,
+              end = Spacing.md,
+              bottom = Spacing.md,
+            ),
         ) {
           item(key = "recent_books") {
             val showRecent = isRecentVisible()

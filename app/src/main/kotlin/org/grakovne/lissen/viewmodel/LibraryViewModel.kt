@@ -198,7 +198,7 @@ class LibraryViewModel
 
     private fun syncLibrary(libraryId: String) {
       viewModelScope.launch(Dispatchers.IO) {
-        bookRepository.syncRepositories()
+        bookRepository.syncRepositories(overrideLibraryId = libraryId)
         defaultPagingSource.value?.invalidate()
       }
     }

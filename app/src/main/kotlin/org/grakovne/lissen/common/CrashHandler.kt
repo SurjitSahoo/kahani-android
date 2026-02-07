@@ -31,6 +31,6 @@ class CrashHandler(
   }
 
   companion object {
-    private const val TOAST_TIMEOUT = 2500L
+    private const val TOAST_TIMEOUT = 1000L
   }
 }

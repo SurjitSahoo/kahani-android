@@ -76,7 +76,7 @@ class FetchRequestBuilder {
       """
       SELECT detailed_books.* FROM detailed_books
       WHERE $libraryClause AND $isolationClause
-      ORDER BY $field $direction
+      ORDER BY $field $direction, detailed_books.id ASC
       LIMIT ? OFFSET ?
       """.trimIndent()
 

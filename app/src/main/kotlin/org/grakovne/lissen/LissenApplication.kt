@@ -10,27 +10,46 @@ import javax.inject.Inject
 @HiltAndroidApp
 class LissenApplication : Application() {
   @Inject
+  lateinit var preferences: org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
+
+  @Inject
   lateinit var runningComponents: Set<@JvmSuppressWildcards RunningComponent>
 
   override fun onCreate() {
     super.onCreate()
     appContext = applicationContext
 
-    if (BuildConfig.DEBUG) {
-      Timber.plant(Timber.DebugTree())
+    // Initialize core services first
+    try {
+      if (BuildConfig.DEBUG) {
+        Timber.plant(Timber.DebugTree())
+      }
+
+      val isCrashReportingEnabled = preferences.getCrashReportingEnabled()
+      com.google.firebase.crashlytics.FirebaseCrashlytics
+        .getInstance()
+        .setCrashlyticsCollectionEnabled(isCrashReportingEnabled)
+
+      val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+      Thread.setDefaultUncaughtExceptionHandler(
+        org.grakovne.lissen.common
+          .CrashHandler(this, defaultHandler),
+      )
+    } catch (e: Exception) {
+      // Fallback logging if core services fail
+      android.util.Log.e("LissenApplication", "Failed to initialize core services", e)
     }
 
-    val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-    Thread.setDefaultUncaughtExceptionHandler(
-      org.grakovne.lissen.common
-        .CrashHandler(this, defaultHandler),
-    )
-
+    // Initialize components with individual error handling
     runningComponents.forEach {
       try {
         it.onCreate()
       } catch (ex: Exception) {
-        Timber.e("Unable to register Running component due to: ${ex.message}")
+        Timber.e(ex, "Unable to register Running component: ${ex.message}")
+        com.google.firebase.crashlytics.FirebaseCrashlytics
+          .getInstance()
+          .recordException(ex)
       }
     }
   }

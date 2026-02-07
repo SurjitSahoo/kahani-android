@@ -102,8 +102,8 @@ class CachedBookRepository
               author = book.author,
               subtitle = book.subtitle,
               seriesNames = book.series,
-              duration = book.duration.toInt(),
-              libraryType = null, // currently not available here
+              duration = if (book.duration > 0) book.duration.toInt() else existing.duration,
+              updatedAt = if (book.updatedAt > 0) book.updatedAt else existing.updatedAt,
             ) ?: BookEntity(
               id = book.id,
               title = book.title,
@@ -116,8 +116,8 @@ class CachedBookRepository
               duration = book.duration.toInt(),
               libraryId = book.libraryId,
               libraryType = null,
-              createdAt = 0,
-              updatedAt = 0,
+              createdAt = book.addedAt,
+              updatedAt = book.updatedAt,
               host = preferences.getHost(),
               username = preferences.getUsername(),
               seriesNames = book.series,

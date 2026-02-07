@@ -11,4 +11,6 @@ data class Book(
   val author: String?,
   val duration: Double = 0.0,
   val libraryId: String = "",
+  val addedAt: Long = 0,
+  val updatedAt: Long = 0,
 )
