@@ -53,8 +53,15 @@ fun AppNavHost(
 
   val book = preferences.getPlayingBook()
 
+  val isMigrationNeeded by remember {
+    mutableStateOf(
+      preferences.getDatabaseVersion() < org.grakovne.lissen.viewmodel.MigrationViewModel.CURRENT_DATABASE_VERSION,
+    )
+  }
+
   val startDestination =
     when {
+      isMigrationNeeded -> ROUTE_MIGRATION
       appLaunchAction == AppLaunchAction.MANAGE_DOWNLOADS -> "$ROUTE_SETTINGS/cached_items"
       hasCredentials.not() -> ROUTE_LOGIN
       appLaunchAction == AppLaunchAction.CONTINUE_PLAYBACK && book != null ->
@@ -98,6 +105,18 @@ fun AppNavHost(
         startDestination = startDestination,
       ) {
         composable(
+          route = ROUTE_MIGRATION,
+          enterTransition = { EnterTransition.None },
+          exitTransition = { fadeOut() },
+        ) {
+          org.grakovne.lissen.ui.screens.migration.MigrationScreen(
+            onMigrationComplete = {
+              navigationService.showLibrary(clearHistory = true)
+            },
+          )
+        }
+
+        composable(
           route = "settings_screen/cached_items",
           enterTransition = { enterTransition },
           exitTransition = { exitTransition },
@@ -109,6 +128,9 @@ fun AppNavHost(
               if (navController.previousBackStackEntry != null) {
                 navController.popBackStack()
               }
+            },
+            onNavigateToLibrary = {
+              navigationService.showLibrary(clearHistory = true)
             },
             imageLoader = imageLoader,
           )

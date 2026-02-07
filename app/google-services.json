@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "139954826172",
+    "project_id": "kahani-app-android",
+    "storage_bucket": "kahani-app-android.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139954826172:android:0f4f76f1de010ba41699b9",
+        "android_client_info": {
+          "package_name": "com.kahani.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB8o-65tB6TzUbdaqVAP9XnTl1wgC6dks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139954826172:android:1d7d97392c6e248f1699b9",
+        "android_client_info": {
+          "package_name": "com.kahani.app.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB8o-65tB6TzUbdaqVAP9XnTl1wgC6dks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

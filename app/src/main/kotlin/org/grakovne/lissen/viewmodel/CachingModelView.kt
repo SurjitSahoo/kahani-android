@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.grakovne.lissen.content.cache.persistent.CacheState
@@ -49,6 +50,18 @@ class CachingModelView
     val totalCount: LiveData<Int> = _totalCount
     private val _bookCachingProgress = mutableMapOf<String, MutableStateFlow<CacheState>>()
 
+    private val _storageStats = MutableStateFlow<StorageStats?>(null)
+    val storageStats: Flow<StorageStats?> = _storageStats
+
+    private val _cacheVersion = MutableStateFlow(0L)
+    val cacheVersion: Flow<Long> = _cacheVersion
+
+    data class StorageStats(
+      val usedBytes: Long,
+      val freeBytes: Long,
+      val totalBytes: Long,
+    )
+
     private val pageConfig =
       PagingConfig(
         pageSize = PAGE_SIZE,
@@ -77,9 +90,56 @@ class CachingModelView
               MutableStateFlow(progress)
             }
           flow.value = progress
+
+          if (progress.status is CacheStatus.Completed || progress.status is CacheStatus.Error) {
+            _cacheVersion.update { it + 1 }
+          }
+        }
+      }
+
+      refreshStorageStats()
+    }
+
+    fun refreshStorageStats() {
+      viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+          val used = localCacheRepository.calculateTotalCacheSize()
+          val free = localCacheRepository.getAvailableDiskSpace()
+          val total = localCacheRepository.getTotalDiskSpace()
+          _storageStats.value = StorageStats(used, free, total)
         }
       }
     }
+
+    fun getBookSize(book: DetailedItem) = localCacheRepository.calculateBookSize(book)
+
+    fun calculateChapterSize(
+      bookId: String,
+      chapter: org.grakovne.lissen.lib.domain.PlayingChapter,
+      files: List<org.grakovne.lissen.lib.domain.BookFile>,
+    ) = localCacheRepository.calculateChapterSize(bookId, chapter, files)
+
+    fun getBookStorageType(book: DetailedItem) = localCacheRepository.getBookStorageType(book)
+
+    fun getVolumes(book: DetailedItem) =
+      localCacheRepository.mapChaptersToVolumes(book) { type, index ->
+        when (type) {
+          org.grakovne.lissen.content.cache.persistent.VolumeLabelType.FULL_ARCHIVE ->
+            context.getString(
+              org.grakovne.lissen.R.string.download_volume_full_archive,
+            )
+          org.grakovne.lissen.content.cache.persistent.VolumeLabelType.VOLUME ->
+            context.getString(
+              org.grakovne.lissen.R.string.download_volume_name,
+              index,
+            )
+          org.grakovne.lissen.content.cache.persistent.VolumeLabelType.PART ->
+            context.getString(
+              org.grakovne.lissen.R.string.download_volume_part,
+              index,
+            )
+        }
+      }
 
     suspend fun clearShortTermCache() {
       withContext(Dispatchers.IO) {
@@ -113,10 +173,14 @@ class CachingModelView
 
     suspend fun dropCache(bookId: String) {
       contentCachingManager.dropCache(bookId)
+      _cacheVersion.update { it + 1 }
+      refreshStorageStats()
     }
 
     suspend fun dropCompletedChapters(item: DetailedItem) {
       contentCachingManager.dropCompletedChapters(item)
+      _cacheVersion.update { it + 1 }
+      refreshStorageStats()
     }
 
     fun stopCaching(item: DetailedItem) {
@@ -134,6 +198,8 @@ class CachingModelView
       chapter: PlayingChapter,
     ) {
       contentCachingManager.dropCache(item, chapter)
+      _cacheVersion.update { it + 1 }
+      refreshStorageStats()
     }
 
     fun toggleCacheForce() {
@@ -145,14 +211,10 @@ class CachingModelView
 
     fun localCacheUsing() = preferences.isForceCache()
 
-    fun provideCacheState(bookId: String): LiveData<Boolean> = contentCachingManager.hasMetadataCached(bookId)
-
     fun provideCacheState(
       bookId: String,
       chapterId: String,
     ): LiveData<Boolean> = contentCachingManager.hasMetadataCached(bookId, chapterId)
-
-    fun hasDownloadedChapters(bookId: String): LiveData<Boolean> = contentCachingManager.hasDownloadedChapters(bookId)
 
     fun fetchCachedItems() {
       viewModelScope.launch {
@@ -162,9 +224,40 @@ class CachingModelView
       }
     }
 
+    fun refreshMetadata() {
+      viewModelScope.launch {
+        withContext(Dispatchers.IO) {
+          var page = 0
+          var hasMore = true
+
+          while (hasMore) {
+            val items =
+              localCacheRepository
+                .fetchDetailedItems(BATCH_SIZE, page)
+                .fold(
+                  onSuccess = { it.items },
+                  onFailure = { emptyList() },
+                )
+
+            items.forEach { localCacheRepository.cacheBookMetadata(it) }
+
+            if (items.size < BATCH_SIZE) {
+              hasMore = false
+            } else {
+              page++
+            }
+          }
+
+          _cacheVersion.update { it + 1 }
+          refreshStorageStats()
+        }
+      }
+    }
+
     suspend fun fetchLatestUpdate(libraryId: String) = localCacheRepository.fetchLatestUpdate(libraryId)
 
     companion object {
       private const val PAGE_SIZE = 20
+      private const val BATCH_SIZE = 50
     }
   }

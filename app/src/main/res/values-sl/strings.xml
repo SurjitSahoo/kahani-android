@@ -33,7 +33,7 @@
     <string name="the_offline_library_is_empty">Ni še shranjenih knjig</string>
     <string name="audiobookshelf_server_is_required">Potreben je strežnik Audiobookshelf</string>
     <string name="no_internet_connection">Ni internetne povezave</string>
-    <string name="app_crach_toast">Se opravičujemo za zrušitev aplikacije\nDnevniki so bili poslani v analizo</string>
+    <string name="app_crash_toast">Se opravičujemo za zrušitev aplikacije\nDnevniki so bili poslani v analizo</string>
     <string name="playback_speed_title">Hitrost predvajanja</string>
     <string name="color_scheme_follow_system">Sistem</string>
     <string name="color_scheme_light">Svetlo</string>
@@ -150,9 +150,6 @@
     <string name="local_url_hint_ssid_name">Ime omrežja Wi-Fi</string>
     <string name="location_permission_request_hint">Aplikacija potrebuje dostop do lokacije za zaznavanje imena omrežja Wi-Fi</string>
     <string name="permission_request_grant_button">Dovoli</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Počisti predpomnilnik sličic</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Odstranite predpomnjene sličice, da sprostite prostor.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Predpomnilnik sličic je bil izbrisan</string>
     <string name="settings_screen_delay_autodownload_title">Zakasnitev samodejnega prenosa</string>
     <string name="settings_screen_delay_autodownload_description">Preden začnete s prenosom, počakajte nekaj časa</string>
     <string name="settings_screen_bypass_ssl_title">Onemogoči preverjanje SSL</string>

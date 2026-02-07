@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.common.LibraryOrderingConfiguration
 import org.grakovne.lissen.common.NetworkService
 import org.grakovne.lissen.content.BookRepository
@@ -44,12 +45,10 @@ class LibraryViewModel
     private val bookRepository: BookRepository,
     private val preferences: LissenSharedPreferences,
     private val networkService: NetworkService,
+    private val clarityTracker: ClarityTracker,
   ) : ViewModel() {
     private val _recentBooks = MutableLiveData<List<RecentBook>>(emptyList())
     val recentBooks: LiveData<List<RecentBook>> = _recentBooks
-
-    private val _recentBookUpdating = MutableLiveData(false)
-    val recentBookUpdating: LiveData<Boolean> = _recentBookUpdating
 
     private val _searchRequested = MutableLiveData(false)
     val searchRequested: LiveData<Boolean> = _searchRequested
@@ -74,7 +73,11 @@ class LibraryViewModel
         networkService.isServerAvailable,
         preferences.forceCacheFlow,
       ) { isServerAvailable, isForceCache ->
-        !isServerAvailable || isForceCache
+        val downloadedOnly = !isServerAvailable || isForceCache
+        Timber.d(
+          "Library State Calculation: isServerAvailable=$isServerAvailable, isForceCache=$isForceCache -> downloadedOnly=$downloadedOnly",
+        )
+        downloadedOnly
       }
 
     private var currentLibraryId = ""
@@ -92,7 +95,6 @@ class LibraryViewModel
       val localCacheUpdated = latestLocalUpdate?.let { it > localCacheUpdatedAt } ?: true
 
       if (emptyContent || libraryChanged || orderingChanged || (isLocalCacheUsing && localCacheUpdated)) {
-        refreshRecentListening()
         refreshLibrary()
 
         currentLibraryId = preferences.getPreferredLibrary()?.id ?: ""
@@ -102,10 +104,6 @@ class LibraryViewModel
     }
 
     init {
-      viewModelScope.launch {
-        downloadedOnlyFlow.collect { refreshRecentListening() }
-      }
-
       viewModelScope.launch {
         combine(
           preferences.preferredLibraryIdFlow,
@@ -131,10 +129,11 @@ class LibraryViewModel
           .isServerAvailable
           .collect { isAvailable ->
             if (isAvailable) {
-              Timber.d("Server is reachable. Triggering repository sync.")
+              Timber.i("Server Availability Event: Server is now REACHABLE. Triggering repository sync.")
               bookRepository.syncRepositories()
-              refreshRecentListening()
               refreshLibrary()
+            } else {
+              Timber.i("Server Availability Event: Server is now UNREACHABLE.")
             }
           }
       }
@@ -199,8 +198,7 @@ class LibraryViewModel
 
     private fun syncLibrary(libraryId: String) {
       viewModelScope.launch(Dispatchers.IO) {
-        bookRepository.syncRepositories()
-        refreshRecentListening()
+        bookRepository.syncRepositories(overrideLibraryId = libraryId)
         defaultPagingSource.value?.invalidate()
       }
     }
@@ -215,7 +213,10 @@ class LibraryViewModel
     }
 
     fun updateSearch(token: String) {
-      viewModelScope.launch { _searchToken.emit(token) }
+      _searchToken.value = token
+      if (token.isNotEmpty()) {
+        clarityTracker.trackEvent("search_performed")
+      }
     }
 
     fun fetchPreferredLibraryTitle(): String? =
@@ -229,37 +230,37 @@ class LibraryViewModel
         ?.type
         ?: LibraryType.UNKNOWN
 
-    fun refreshRecentListening() {
+    fun refreshLibrary(forceRefresh: Boolean = false) {
       viewModelScope.launch {
         withContext(Dispatchers.IO) {
-          fetchRecentListening()
-        }
-      }
-    }
+          val isAvailable =
+            if (forceRefresh) {
+              networkService.refreshServerAvailabilitySync()
+            } else {
+              networkService.isServerAvailable.value
+            }
 
-    fun refreshLibrary() {
-      viewModelScope.launch {
-        withContext(Dispatchers.IO) {
+          val shouldSync = (forceRefresh || isAvailable) && !preferences.isForceCache()
+
+          if (shouldSync) {
+            val libraryId = preferences.getPreferredLibrary()?.id
+
+            if (libraryId != null) {
+              bookRepository.syncLibraryPage(
+                libraryId = libraryId,
+                pageSize = PAGE_SIZE,
+                pageNumber = 0,
+              )
+            }
+
+            bookRepository.syncRepositories()
+          }
+
           when (searchRequested.value) {
             true -> searchPagingSource?.invalidate()
             else -> defaultPagingSource.value?.invalidate()
           }
         }
-      }
-    }
-
-    fun fetchRecentListening() {
-      _recentBookUpdating.postValue(true)
-
-      val preferredLibrary =
-        preferences.getPreferredLibrary()?.id ?: run {
-          _recentBookUpdating.postValue(false)
-          return
-        }
-
-      viewModelScope.launch {
-        bookRepository.fetchRecentListenedBooks(preferredLibrary)
-        _recentBookUpdating.postValue(false)
       }
     }
 

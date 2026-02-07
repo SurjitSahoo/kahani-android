@@ -18,6 +18,11 @@ This is an offline-first Android client app for the [audiobookshelf](https://git
 - If the offline track is deleted/cleared while the book is being played, the player should attempt to fallback to the online URL if the server is reachable, otherwise pause playback and persist the last playback state (track ID, playback position/timestamp, current chapter/index, and playback status) plus a flag indicating offline content was removed; ensure the rule notes that these persisted fields are used to resume or report playback state and are written atomically to the player state store.
 - The app must be fully functional for downloaded content when offline.
 
+## Future Plans (Not to be implemented now)
+- The app should support multi-server / multi-user connections. A user should be able to connect to a server, download a few books for offline listening, then disconnect and connect to a new server and download few more books, and listen to all the books offline, and then connecting back to the previous server should push (sync) progress updates from the books which were downloaded earlier for offline listening.
+- The app should also support uploading books that were downloaded from a server to another server (sharing)
+- The app should support importing audiobooks from the phone storage directly without any server connection. Optionally, the user should be able to upload these audiobooks to the server along with the progress.
+
 ## Ensure Stability
 
 - Ensure null-safety when converting data (e.g., check for division by zero in percentage calculations).

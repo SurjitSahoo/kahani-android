@@ -54,70 +54,85 @@ class NetworkService
       val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
           override fun onAvailable(network: Network) {
-            checkServerAvailability()
+            refreshServerAvailability()
           }
 
           override fun onLost(network: Network) {
             if (cachedNetworkHandle == network.getNetworkHandle()) {
               cachedSsid = null
             }
-            checkServerAvailability()
+            refreshServerAvailability()
           }
 
           override fun onCapabilitiesChanged(
             network: Network,
             networkCapabilities: NetworkCapabilities,
           ) {
-            checkServerAvailability()
+            refreshServerAvailability()
           }
         }
 
       connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
-      checkServerAvailability()
+      refreshServerAvailability()
 
       scope.launch {
         preferences.hostFlow.collect {
-          checkServerAvailability()
+          refreshServerAvailability()
         }
       }
     }
 
     private var checkJob: Job? = null
+    private var initialRetryCount = 0
 
-    private fun checkServerAvailability() {
+    fun refreshServerAvailability() {
       checkJob?.cancel()
       checkJob =
         scope.launch {
-          delay(500)
-          val isConnectedToInternet = isNetworkAvailable()
-          _networkStatus.emit(isConnectedToInternet)
-
-          if (!isConnectedToInternet) {
-            _isServerAvailable.emit(false)
-            return@launch
-          }
-
-          val hostUrl = preferences.getHost()
-          if (hostUrl.isNullOrBlank()) {
-            _isServerAvailable.emit(false)
-            return@launch
-          }
-
-          try {
-            val url = java.net.URL(hostUrl)
-            val port = if (url.port == -1) url.defaultPort else url.port
-            val address = java.net.InetSocketAddress(url.host, port)
-
-            java.net.Socket().use { socket ->
-              socket.connect(address, 2000)
-            }
-
-            _isServerAvailable.emit(true)
-          } catch (e: Exception) {
-            Timber.e(e, "Server reachability check failed for $hostUrl")
-            _isServerAvailable.emit(false)
-          }
+          refreshServerAvailabilitySync()
         }
+    }
+
+    suspend fun refreshServerAvailabilitySync(): Boolean {
+      delay(500)
+      val isConnectedToInternet = isNetworkAvailable()
+      _networkStatus.emit(isConnectedToInternet)
+
+      if (!isConnectedToInternet) {
+        _isServerAvailable.emit(false)
+        return false
+      }
+
+      val hostUrl = preferences.getHost()
+      if (hostUrl.isNullOrBlank()) {
+        _isServerAvailable.emit(false)
+        return false
+      }
+
+      return try {
+        val url = java.net.URL(hostUrl)
+        val port = if (url.port == -1) url.defaultPort else url.port
+        val address = java.net.InetSocketAddress(url.host, port)
+
+        java.net.Socket().use { socket ->
+          socket.connect(address, 2000)
+        }
+
+        _isServerAvailable.emit(true)
+        initialRetryCount = MAX_INITIAL_RETRIES // Stop retries once connected
+        true
+      } catch (e: Exception) {
+        Timber.e(e, "Server reachability check failed for $hostUrl (Attempt ${initialRetryCount + 1})")
+        _isServerAvailable.emit(false)
+
+        if (initialRetryCount < MAX_INITIAL_RETRIES) {
+          initialRetryCount++
+          delay(300L)
+          refreshServerAvailabilitySync()
+        } else {
+          false
+        }
+      }
     }
 
     fun isNetworkAvailable(): Boolean {
@@ -167,5 +182,9 @@ class NetworkService
 
     override fun onDestroy() {
       scope.cancel()
+    }
+
+    private companion object {
+      private const val MAX_INITIAL_RETRIES = 3
     }
   }

@@ -41,6 +41,8 @@ fun PlaybackButtonsComposable(
   val book by viewModel.book.observeAsState()
   val chapters = book?.chapters ?: emptyList()
 
+  val preparingBookId by viewModel.preparingBookId.observeAsState(null)
+
   val seekTime by settingsViewModel.seekTime.observeAsState(SeekTime.Default)
   val showNavButtons by settingsViewModel.showPlayerNavButtons.observeAsState(true)
 
@@ -94,14 +96,24 @@ fun PlaybackButtonsComposable(
         shadowElevation = 4.dp,
       ) {
         Box(contentAlignment = Alignment.Center) {
-          GlowIcon(
-            imageVector = if (isPlaying) Icons.Filled.Pause else AppIcons.PlayFilled,
-            contentDescription = null,
-            tint = colorScheme.onPrimary,
-            glowColor = colorScheme.onPrimary.copy(alpha = 0.5f),
-            glowRadius = 8.dp,
-            modifier = Modifier.size(42.dp),
-          )
+          val isLoading = preparingBookId != null
+
+          if (isLoading) {
+            androidx.compose.material3.CircularProgressIndicator(
+              modifier = Modifier.size(32.dp),
+              color = colorScheme.onPrimary,
+              strokeWidth = 3.dp,
+            )
+          } else {
+            GlowIcon(
+              imageVector = if (isPlaying) Icons.Filled.Pause else AppIcons.PlayFilled,
+              contentDescription = null,
+              tint = colorScheme.onPrimary,
+              glowColor = colorScheme.onPrimary.copy(alpha = 0.5f),
+              glowRadius = 8.dp,
+              modifier = Modifier.size(42.dp),
+            )
+          }
         }
       }
     }

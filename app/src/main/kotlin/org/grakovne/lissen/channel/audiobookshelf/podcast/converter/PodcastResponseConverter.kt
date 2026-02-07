@@ -85,6 +85,7 @@ class PodcastResponseConverter
                 id = it.audioFile.ino,
                 name = it.title,
                 duration = it.audioFile.duration,
+                size = it.audioFile.size ?: it.size ?: 0L,
                 mimeType = it.audioFile.mimeType,
               )
             }

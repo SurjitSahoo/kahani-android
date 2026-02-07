@@ -1,5 +1,4 @@
 [versions]
-acraCore = "5.13.1"
 agp = "8.13.2"
 browser = "1.9.0"
 coilCompose = "3.3.0"
@@ -32,11 +31,12 @@ coreKtx = "1.17.0"
 timber = "5.0.1"
 moshi = "1.15.2"
 converterMoshi = "3.0.0"
+clarity = "3.8.0"
+googleServices = "4.4.2"
+firebaseCrashlyticsPlugin = "3.0.3"
+firebaseBom = "33.9.0"
 
 [libraries]
-acra-core = { module = "ch.acra:acra-core", version.ref = "acraCore" }
-acra-http = { module = "ch.acra:acra-http", version.ref = "acraCore" }
-acra-toast = { module = "ch.acra:acra-toast", version.ref = "acraCore" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 androidx-glance = { module = "androidx.glance:glance", version.ref = "glance" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
@@ -84,9 +84,15 @@ converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.r
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
+microsoft-clarity = { module = "com.microsoft.clarity:clarity-compose", version.ref = "clarity" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }

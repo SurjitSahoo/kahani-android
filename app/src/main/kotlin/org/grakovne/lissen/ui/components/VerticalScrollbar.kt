@@ -44,16 +44,17 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.acra.ACRA
 import timber.log.Timber
 
 fun Modifier.withScrollbar(
   state: LazyListState,
-  color: Color,
+  color: () -> Color,
   totalItems: Int?,
-  ignoreItems: List<String> = emptyList(),
+  ignoreItems: Set<String> = emptySet(),
 ): Modifier {
   try {
     return baseScrollbar { atEnd ->
@@ -66,6 +67,10 @@ fun Modifier.withScrollbar(
             val key = it.key
             key is String && ignoreItems.contains(key)
           }
+
+      if (items.isEmpty()) {
+        return@baseScrollbar
+      }
 
       val itemsSize = items.sumOf { it.size }
       val count = totalItems ?: layoutInfo.totalItemsCount
@@ -87,12 +92,12 @@ fun Modifier.withScrollbar(
             ?.let { (itemSize * it.index - it.offset) / totalSize * canvasSize }
             ?: 0f
 
-        drawScrollbarThumb(atEnd, thumbSize, startOffset, color)
+        drawScrollbarThumb(atEnd, thumbSize, startOffset, color())
       }
     }
   } catch (ex: Exception) {
     Timber.w("Unable to apply scrollbar due to ${ex.message}")
-    ACRA.errorReporter.handleSilentException(ex)
+    Firebase.crashlytics.recordException(ex)
     return this
   }
 }

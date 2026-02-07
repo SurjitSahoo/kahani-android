@@ -7,10 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.grakovne.lissen.common.NetworkService
+import org.grakovne.lissen.domain.update.UpdateCheckerService
 import org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 import org.grakovne.lissen.ui.navigation.AppLaunchAction
 import org.grakovne.lissen.ui.navigation.AppNavHost
@@ -30,6 +33,9 @@ class AppActivity : ComponentActivity() {
 
   @Inject
   lateinit var networkService: NetworkService
+
+  @Inject
+  lateinit var updateCheckerService: UpdateCheckerService
 
   private lateinit var appNavigationService: AppNavigationService
 
@@ -55,6 +61,10 @@ class AppActivity : ComponentActivity() {
           appLaunchAction = getLaunchAction(intent),
         )
       }
+    }
+
+    lifecycleScope.launch {
+      updateCheckerService.checkForUpdates()
     }
   }
 

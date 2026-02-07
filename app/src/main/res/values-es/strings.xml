@@ -26,7 +26,7 @@
     <string name="login_error_connection_error">Error de conexión</string>
     <string name="the_library_is_empty">La biblioteca esta vacía</string>
     <string name="the_offline_library_is_empty">Aún no hay libros guardados</string>
-    <string name="app_crach_toast">Lamentamos el fallo de la aplicación\nLos registros se han enviado para su análisis</string>
+    <string name="app_crash_toast">Lamentamos el fallo de la aplicación\nLos registros se han enviado para su análisis</string>
     <string name="library_screen_continue_listening_title">Seguir escuchando</string>
     <string name="player_screen_now_playing_title_chapter_of">Capítulo %1$d de %2$s</string>
     <string name="player_screen_now_playing_title_item_of">Artículo %1$d de %2$s</string>

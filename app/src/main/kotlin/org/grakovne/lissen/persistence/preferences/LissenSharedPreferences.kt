@@ -6,6 +6,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Types
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -102,13 +104,17 @@ class LissenSharedPreferences
       }
     }
 
-    fun getAcraEnabled() = sharedPreferences.getBoolean(org.acra.ACRA.PREF_ENABLE_ACRA, true)
+    fun getCrashReportingEnabled() = sharedPreferences.getBoolean(KEY_CRASH_REPORTING_ENABLED, true)
 
-    fun saveAcraEnabled(enabled: Boolean) {
+    fun saveCrashReportingEnabled(enabled: Boolean) {
       sharedPreferences.edit {
-        putBoolean(org.acra.ACRA.PREF_ENABLE_ACRA, enabled)
+        putBoolean(KEY_CRASH_REPORTING_ENABLED, enabled)
       }
     }
+
+    fun getDatabaseVersion() = sharedPreferences.getInt(KEY_DATABASE_VERSION, 0)
+
+    fun setDatabaseVersion(version: Int) = sharedPreferences.edit().putInt(KEY_DATABASE_VERSION, version).apply()
 
     fun getSslBypass() = sharedPreferences.getBoolean(KEY_BYPASS_SSL, false)
 
@@ -383,7 +389,11 @@ class LissenSharedPreferences
         null -> null
         else -> {
           val adapter = moshi.adapter(DetailedItem::class.java)
-          adapter.fromJson(json)
+          try {
+            adapter.fromJson(json)
+          } catch (e: Throwable) {
+            null
+          }
         }
       }
     }
@@ -473,6 +483,21 @@ class LissenSharedPreferences
       sharedPreferences.edit {
         putBoolean(KEY_SMART_REWIND_ENABLED, enabled)
       }
+
+    fun getAnalyticsConsentState(): Boolean? {
+      if (!sharedPreferences.contains(KEY_ANALYTICS_CONSENT)) return null
+      return sharedPreferences.getBoolean(KEY_ANALYTICS_CONSENT, false)
+    }
+
+    fun saveAnalyticsConsentState(accepted: Boolean?) {
+      sharedPreferences.edit {
+        if (accepted == null) {
+          remove(KEY_ANALYTICS_CONSENT)
+        } else {
+          putBoolean(KEY_ANALYTICS_CONSENT, accepted)
+        }
+      }
+    }
 
     fun getSmartRewindEnabled(): Boolean = sharedPreferences.getBoolean(KEY_SMART_REWIND_ENABLED, false)
 
@@ -639,6 +664,7 @@ class LissenSharedPreferences
       private const val KEY_SMART_REWIND_DURATION = "smart_rewind_duration"
 
       private const val KEY_SERVER_VERSION = "server_version"
+      private const val KEY_DATABASE_VERSION = "database_version"
 
       private const val KEY_DEVICE_ID = "device_id"
 
@@ -663,9 +689,11 @@ class LissenSharedPreferences
       private const val KEY_SHOW_PLAYER_NAV_BUTTONS = "show_player_nav_buttons"
       private const val KEY_SHAKE_TO_RESET_TIMER = "shake_to_reset_timer"
       private const val KEY_SKIP_SILENCE_ENABLED = "skip_silence_enabled"
+      private const val KEY_ANALYTICS_CONSENT = "analytics_consent"
 
       private const val KEY_PLAYING_BOOK = "playing_book"
       private const val KEY_VOLUME_BOOST = "volume_boost"
+      private const val KEY_CRASH_REPORTING_ENABLED = "crash_reporting_enabled"
 
       private const val ANDROID_KEYSTORE = "AndroidKeyStore"
       private const val TRANSFORMATION = "AES/GCM/NoPadding"
@@ -714,6 +742,7 @@ class LissenSharedPreferences
         return try {
           String(cipher.doFinal(cipherText))
         } catch (ex: Exception) {
+          Firebase.crashlytics.recordException(ex)
           null
         }
       }

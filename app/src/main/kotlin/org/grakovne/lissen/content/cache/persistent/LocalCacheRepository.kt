@@ -15,12 +15,19 @@ import org.grakovne.lissen.lib.domain.Library
 import org.grakovne.lissen.lib.domain.MediaProgress
 import org.grakovne.lissen.lib.domain.PagedItems
 import org.grakovne.lissen.lib.domain.PlaybackProgress
+import org.grakovne.lissen.lib.domain.PlayingChapter
 import org.grakovne.lissen.lib.domain.RecentBook
 import org.grakovne.lissen.playback.service.calculateChapterIndex
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+
+enum class VolumeLabelType {
+  FULL_ARCHIVE,
+  VOLUME,
+  PART,
+}
 
 @Singleton
 class LocalCacheRepository
@@ -148,6 +155,151 @@ class LocalCacheRepository
 
     suspend fun fetchLatestUpdate(libraryId: String) = cachedBookRepository.fetchLatestUpdate(libraryId)
 
+    fun calculateBookSize(book: DetailedItem): Long =
+      book.files.sumOf { file ->
+        storageProperties.provideMediaCachePath(book.id, file.id).length()
+      }
+
+    fun calculateChapterSize(
+      bookId: String,
+      chapter: PlayingChapter,
+      files: List<org.grakovne.lissen.lib.domain.BookFile>,
+    ): Long =
+      org.grakovne.lissen.content.cache.common.findRelatedFiles(chapter, files).sumOf { file ->
+        storageProperties.provideMediaCachePath(bookId, file.id).length()
+      }
+
+    fun getBookStorageType(book: DetailedItem): org.grakovne.lissen.lib.domain.BookStorageType {
+      if (book.files.size <= 1) return org.grakovne.lissen.lib.domain.BookStorageType.MONOLITH
+
+      // Heuristic: If files match chapters exactly, it's virtually always Atomic in Audiobookshelf.
+      if (book.files.size == book.chapters.size) return org.grakovne.lissen.lib.domain.BookStorageType.ATOMIC
+
+      val mediaMap = calculateMediaMap(book)
+
+      val hasSegmentedFile =
+        book.files.any { file ->
+          (mediaMap[file.id]?.size ?: 0) > 1
+        }
+
+      return if (hasSegmentedFile) {
+        org.grakovne.lissen.lib.domain.BookStorageType.SEGMENTED
+      } else {
+        org.grakovne.lissen.lib.domain.BookStorageType.ATOMIC
+      }
+    }
+
+    fun mapChaptersToVolumes(
+      book: DetailedItem,
+      nameResolver: (VolumeLabelType, Int) -> String,
+    ): List<org.grakovne.lissen.lib.domain.BookVolume> {
+      val storageType = getBookStorageType(book)
+
+      if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.MONOLITH) {
+        val file = book.files.firstOrNull() ?: return emptyList()
+        return listOf(
+          org.grakovne.lissen.lib.domain.BookVolume(
+            id = file.id,
+            name = nameResolver(VolumeLabelType.FULL_ARCHIVE, 0),
+            size = file.size,
+            chapters = book.chapters,
+            isDownloaded = storageProperties.provideMediaCachePath(book.id, file.id).exists(),
+          ),
+        )
+      }
+
+      val mediaMap = calculateMediaMap(book)
+
+      return book.files.mapIndexed { index, file ->
+        val relatedChapters = mediaMap[file.id] ?: emptyList()
+
+        val name =
+          if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.SEGMENTED) {
+            nameResolver(VolumeLabelType.VOLUME, index + 1)
+          } else {
+            relatedChapters.firstOrNull()?.title ?: nameResolver(VolumeLabelType.PART, index + 1)
+          }
+
+        org.grakovne.lissen.lib.domain.BookVolume(
+          id = file.id,
+          name = name,
+          size = file.size,
+          chapters = relatedChapters,
+          isDownloaded = storageProperties.provideMediaCachePath(book.id, file.id).exists(),
+        )
+      }
+    }
+
+    private fun calculateMediaMap(book: DetailedItem): Map<String, List<PlayingChapter>> {
+      val result = mutableMapOf<String, MutableList<PlayingChapter>>()
+      val fileStartTimes = calculateFileStartTimes(book.files)
+
+      var chapterIdx = 0
+      for ((file, fileStart) in fileStartTimes) {
+        val fileEnd = fileStart + file.duration
+
+        // Skip chapters that end before this file starts
+        while (chapterIdx < book.chapters.size && book.chapters[chapterIdx].end.round() <= fileStart.round()) {
+          chapterIdx++
+        }
+
+        var currentChapterIdx = chapterIdx
+        while (currentChapterIdx < book.chapters.size && book.chapters[currentChapterIdx].start.round() < fileEnd.round()) {
+          result.getOrPut(file.id) { mutableListOf() }.add(book.chapters[currentChapterIdx])
+          currentChapterIdx++
+        }
+      }
+      return result
+    }
+
+    private fun calculateFileStartTimes(
+      files: List<org.grakovne.lissen.lib.domain.BookFile>,
+    ): List<Pair<org.grakovne.lissen.lib.domain.BookFile, Double>> {
+      val startTimes =
+        files
+          .runningFold(0.0) { acc, file -> acc + file.duration }
+          .dropLast(1)
+
+      return files.zip(startTimes)
+    }
+
+    private val PRECISION = 0.01
+
+    private fun Double.round(): Double = kotlin.math.round(this / PRECISION) * PRECISION
+
+    fun calculateTotalCacheSize(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return calculateFolderSize(mediaFolder)
+    }
+
+    private fun calculateFolderSize(folder: File): Long {
+      var size: Long = 0
+      if (folder.exists()) {
+        val files = folder.listFiles()
+        if (files != null) {
+          for (file in files) {
+            size +=
+              if (file.isDirectory) {
+                calculateFolderSize(file)
+              } else {
+                file.length()
+              }
+          }
+        }
+      }
+      return size
+    }
+
+    fun getAvailableDiskSpace(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return mediaFolder.freeSpace
+    }
+
+    fun getTotalDiskSpace(): Long {
+      val mediaFolder = storageProperties.baseFolder()
+      return mediaFolder.totalSpace
+    }
+
     /**
      * Fetches a detailed book item by its ID from the cached repository.
      * If the book is not found in the cache, returns `null`.
@@ -194,4 +346,6 @@ class LocalCacheRepository
     }
 
     fun fetchBookFlow(bookId: String): Flow<DetailedItem?> = cachedBookRepository.fetchBookFlow(bookId)
+
+    suspend fun clearMetadataCache() = cachedBookRepository.deleteNonDownloadedBooks()
   }

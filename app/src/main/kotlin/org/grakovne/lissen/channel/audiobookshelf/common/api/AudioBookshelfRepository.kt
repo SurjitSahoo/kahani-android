@@ -85,6 +85,18 @@ class AudioBookshelfRepository
         )
       }
 
+    suspend fun fetchLibraryMinified(libraryId: String): OperationResult<LibraryItemsResponse> =
+      audioBookShelfApiService.makeRequest {
+        it.fetchLibraryItems(
+          libraryId = libraryId,
+          pageSize = 10000,
+          pageNumber = 0,
+          sort = "addedAt",
+          desc = "1",
+          minified = "1",
+        )
+      }
+
     suspend fun fetchPodcastItems(
       libraryId: String,
       pageSize: Int,
@@ -100,6 +112,19 @@ class AudioBookshelfRepository
             pageNumber = pageNumber,
             sort = sort,
             desc = direction,
+          )
+        }
+
+    suspend fun fetchPodcastMinified(libraryId: String): OperationResult<PodcastItemsResponse> =
+      audioBookShelfApiService
+        .makeRequest {
+          it.fetchPodcastItems(
+            libraryId = libraryId,
+            pageSize = 10000,
+            pageNumber = 0,
+            sort = "addedAt",
+            desc = "1",
+            minified = "1",
           )
         }
 

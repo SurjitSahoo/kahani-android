@@ -27,6 +27,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.microsoft.clarity.modifiers.clarityMask
 import org.grakovne.lissen.R
 
 @Composable
@@ -79,6 +80,7 @@ fun LibrarySearchActionComposable(
         modifier =
           Modifier
             .weight(1f)
+            .clarityMask()
             .focusRequester(focusRequester),
         textStyle = typography.bodyLarge.copy(color = colorScheme.onBackground),
         singleLine = true,

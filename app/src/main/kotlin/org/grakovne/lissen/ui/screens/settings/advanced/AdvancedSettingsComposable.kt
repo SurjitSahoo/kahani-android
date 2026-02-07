@@ -115,20 +115,6 @@ fun AdvancedSettingsComposable(
             description = stringResource(R.string.settings_screen_crash_report_description),
             initialState = crashReporting,
           ) { viewModel.preferCrashReporting(it) }
-
-          AdvancedSettingsSimpleItemComposable(
-            title = stringResource(R.string.settings_screen_clear_thumbnail_cache_title),
-            description = stringResource(R.string.settings_screen_clear_thumbnail_cache_hint),
-            onclick = {
-              scope.launch { cachingModelView.clearShortTermCache() }
-              Toast
-                .makeText(
-                  context,
-                  context.getString(R.string.settings_screen_clear_thumbnail_cache_success_toast),
-                  Toast.LENGTH_SHORT,
-                ).show()
-            },
-          )
         }
       }
     },

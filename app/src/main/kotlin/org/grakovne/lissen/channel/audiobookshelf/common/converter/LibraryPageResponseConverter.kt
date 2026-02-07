@@ -27,6 +27,8 @@ class LibraryPageResponseConverter
             author = it.media.metadata.authorName,
             duration = 0.0,
             libraryId = libraryId,
+            addedAt = it.addedAt ?: 0L,
+            updatedAt = it.updatedAt ?: 0L,
           )
         }.let {
           PagedItems(

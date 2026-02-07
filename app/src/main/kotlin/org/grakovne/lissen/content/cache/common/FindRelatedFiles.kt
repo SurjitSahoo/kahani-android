@@ -7,15 +7,21 @@ fun findRelatedFiles(
   chapter: PlayingChapter,
   files: List<BookFile>,
 ): List<BookFile> {
-  val chapterStartRounded = chapter.start.round()
-  val chapterEndRounded = chapter.end.round()
-
   val startTimes =
     files
       .runningFold(0.0) { acc, file -> acc + file.duration }
       .dropLast(1)
 
   val fileStartTimes = files.zip(startTimes)
+  return findRelatedFilesByStartTimes(chapter, fileStartTimes)
+}
+
+fun findRelatedFilesByStartTimes(
+  chapter: PlayingChapter,
+  fileStartTimes: List<Pair<BookFile, Double>>,
+): List<BookFile> {
+  val chapterStartRounded = chapter.start.round()
+  val chapterEndRounded = chapter.end.round()
 
   return fileStartTimes
     .filter { (file, fileStartTime) ->

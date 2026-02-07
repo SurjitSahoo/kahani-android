@@ -56,6 +56,9 @@ class PlayerViewModel
     val preparingError: LiveData<Boolean> = mediaRepository.mediaPreparingError
     val preparingBookId: LiveData<String?> = mediaRepository.preparingBookId
 
+    private val _isFetchingDetails = MutableLiveData<Boolean>(false)
+    val isFetchingDetails: LiveData<Boolean> = _isFetchingDetails
+
     private val _searchRequested = MutableLiveData(false)
     val searchRequested: LiveData<Boolean> = _searchRequested
 
@@ -154,7 +157,12 @@ class PlayerViewModel
 
     fun fetchBook(bookId: String) {
       viewModelScope.launch {
-        mediaRepository.fetchBook(bookId)
+        try {
+          _isFetchingDetails.postValue(true)
+          mediaRepository.fetchBook(bookId)
+        } finally {
+          _isFetchingDetails.postValue(false)
+        }
       }
     }
 

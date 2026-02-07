@@ -29,6 +29,8 @@ interface CachedBookDao {
   @Transaction
   suspend fun upsertCachedBook(
     book: DetailedItem,
+    host: String?,
+    username: String?,
     fetchedChapters: List<PlayingChapter>,
     droppedChapters: List<PlayingChapter>,
   ) {
@@ -47,6 +49,8 @@ interface CachedBookDao {
         publisher = book.publisher,
         createdAt = book.createdAt,
         updatedAt = book.updatedAt,
+        host = host,
+        username = username,
         seriesNames =
           book
             .series
@@ -60,6 +64,9 @@ interface CachedBookDao {
             },
       )
 
+    val existingBook = fetchCachedBook(book.id)
+    val existingChapters = existingBook?.chapters?.associateBy { it.bookChapterId } ?: emptyMap()
+
     val bookFiles =
       book
         .files
@@ -68,22 +75,18 @@ interface CachedBookDao {
             bookFileId = file.id,
             name = file.name,
             duration = file.duration,
+            size = file.size,
             mimeType = file.mimeType,
             bookId = book.id,
           )
         }
-
-    val cachedBookChapters =
-      fetchCachedBook(book.id)
-        ?.chapters
-        ?: emptyList()
 
     val bookChapters =
       book
         .chapters
         .map { chapter ->
           val fetched = fetchedChapters.any { it.id == chapter.id }
-          val exists = cachedBookChapters.any { it.bookChapterId == chapter.id && it.isCached }
+          val exists = existingChapters[chapter.id]?.isCached == true
           val dropped = droppedChapters.any { it.id == chapter.id }
 
           val cached =
@@ -112,12 +115,19 @@ interface CachedBookDao {
             currentTime = progress.currentTime,
             isFinished = progress.isFinished,
             lastUpdate = progress.lastUpdate,
+            host = host,
+            username = username,
           )
         }
 
-    upsertBook(bookEntity)
+    safeUpsertBook(bookEntity)
+
+    deleteBookFiles(book.id)
     upsertBookFiles(bookFiles)
+
+    deleteBookChapters(book.id)
     upsertBookChapters(bookChapters)
+
     mediaProgress?.let { upsertMediaProgress(it) }
   }
 
@@ -128,11 +138,16 @@ interface CachedBookDao {
   @Query(
     """
     SELECT COUNT(*) FROM detailed_books
-    WHERE (:libraryId IS NULL AND libraryId IS NULL)
-       OR (libraryId = :libraryId)
+    WHERE ((:libraryId IS NULL AND libraryId IS NULL) OR (libraryId = :libraryId))
+      AND ((:host IS NULL AND host IS NULL) OR (host = :host))
+      AND ((:username IS NULL AND username IS NULL) OR (username = :username))
     """,
   )
-  suspend fun countCachedBooks(libraryId: String?): Int
+  suspend fun countCachedBooks(
+    libraryId: String?,
+    host: String?,
+    username: String?,
+  ): Int
 
   @Transaction
   @RawQuery
@@ -161,6 +176,7 @@ interface CachedBookDao {
   @Query(
     """
     SELECT * FROM detailed_books
+    WHERE EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)
     ORDER BY title ASC, libraryId ASC
     LIMIT :pageSize
     OFFSET (:pageNumber * :pageSize)
@@ -171,7 +187,12 @@ interface CachedBookDao {
     pageNumber: Int,
   ): List<CachedBookEntity>
 
-  @Query("SELECT COUNT(*) FROM detailed_books")
+  @Query(
+    """
+    SELECT COUNT(*) FROM detailed_books 
+    WHERE EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)
+    """,
+  )
   suspend fun fetchCachedItemsCount(): Int
 
   @Query(
@@ -190,16 +211,6 @@ interface CachedBookDao {
 
   @Query(
     """
-    SELECT COUNT(*) > 0
-    FROM book_chapters
-    WHERE bookId = :bookId
-      AND isCached = 1
-    """,
-  )
-  fun hasDownloadedChapters(bookId: String): LiveData<Boolean>
-
-  @Query(
-    """
         SELECT MAX(mp.lastUpdate)
         FROM detailed_books AS d
         INNER JOIN media_progress AS mp ON d.id = mp.bookId
@@ -212,17 +223,34 @@ interface CachedBookDao {
   @Query("SELECT * FROM detailed_books WHERE id = :bookId")
   suspend fun fetchBook(bookId: String): BookEntity?
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun upsertBook(book: BookEntity)
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  suspend fun insertBookIgnore(book: BookEntity): Long
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun upsertBooks(books: List<BookEntity>)
-
-  @Query("SELECT * FROM detailed_books WHERE id IN (:bookIds)")
-  suspend fun fetchBooks(bookIds: List<String>): List<BookEntity>
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  suspend fun insertBooksIgnore(books: List<BookEntity>): List<Long>
 
   @Update
   suspend fun updateBook(book: BookEntity)
+
+  @Update
+  suspend fun updateBooks(books: List<BookEntity>)
+
+  @Transaction
+  suspend fun safeUpsertBook(book: BookEntity) {
+    val result = insertBookIgnore(book)
+    if (result == -1L) {
+      updateBook(book)
+    }
+  }
+
+  @Transaction
+  suspend fun upsertBooks(books: List<BookEntity>) {
+    insertBooksIgnore(books)
+    updateBooks(books)
+  }
+
+  @Query("SELECT * FROM detailed_books WHERE id IN (:bookIds)")
+  suspend fun fetchBooks(bookIds: List<String>): List<BookEntity>
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun upsertBookFiles(files: List<BookFileEntity>)
@@ -239,6 +267,29 @@ interface CachedBookDao {
 
   @Delete
   suspend fun deleteBook(book: BookEntity)
+
+  @Query("DELETE FROM book_chapters WHERE bookId = :bookId")
+  suspend fun deleteBookChapters(bookId: String)
+
+  @Query("DELETE FROM book_files WHERE bookId = :bookId")
+  suspend fun deleteBookFiles(bookId: String)
+
+  @Query(
+    """
+    SELECT id FROM detailed_books
+    WHERE id NOT IN (SELECT DISTINCT bookId FROM book_chapters WHERE isCached = 1)
+    """,
+  )
+  suspend fun fetchNonDownloadedBookIds(): List<String>
+
+  @Transaction
+  @Query(
+    """
+    DELETE FROM detailed_books
+    WHERE id NOT IN (SELECT DISTINCT bookId FROM book_chapters WHERE isCached = 1)
+    """,
+  )
+  suspend fun deleteNonDownloadedBooks()
 
   companion object {
     val type = Types.newParameterizedType(List::class.java, BookSeriesDto::class.java)

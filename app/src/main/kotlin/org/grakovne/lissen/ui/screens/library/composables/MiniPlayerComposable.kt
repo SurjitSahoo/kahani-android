@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -71,6 +73,9 @@ fun MiniPlayerComposable(
   val view: View = LocalView.current
 
   val isPlaying: Boolean by playerViewModel.isPlaying.observeAsState(false)
+  val preparingBookId by playerViewModel.preparingBookId.observeAsState(null)
+  val preparingError by playerViewModel.preparingError.observeAsState(false)
+
   var backgroundVisible by remember { mutableStateOf(true) }
 
   val dismissState =
@@ -260,12 +265,30 @@ fun MiniPlayerComposable(
                 IconButton(
                   onClick = { withHaptic(view) { playerViewModel.togglePlayPause() } },
                 ) {
-                  Icon(
-                    imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = colorScheme.onSurface,
-                    modifier = Modifier.size(38.dp),
-                  )
+                  val isError = preparingError
+                  val isLoading = preparingBookId != null
+
+                  if (isLoading) {
+                    CircularProgressIndicator(
+                      modifier = Modifier.size(32.dp),
+                      color = colorScheme.onSurface,
+                      strokeWidth = 3.dp,
+                    )
+                  } else if (isError) {
+                    Icon(
+                      imageVector = Icons.Rounded.Error,
+                      contentDescription = "Error",
+                      tint = colorScheme.error,
+                      modifier = Modifier.size(32.dp),
+                    )
+                  } else {
+                    Icon(
+                      imageVector = if (isPlaying) AppIcons.PauseCircleNegative else AppIcons.PlayCircleNegative,
+                      contentDescription = if (isPlaying) "Pause" else "Play",
+                      tint = colorScheme.onSurface,
+                      modifier = Modifier.size(38.dp),
+                    )
+                  }
                 }
               }
             }

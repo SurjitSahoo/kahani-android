@@ -87,7 +87,7 @@
     <string name="custom_headers_title">Mukautetut otsakkeet</string>
     <string name="downloads_menu_download_book">Lataa kirja</string>
     <string name="downloads_menu_download_option_entire_podcast">Koko podcast</string>
-    <string name="app_crach_toast">Pahoittelut sovelluksen kaatumisesta.\nVirheraportti on lähetetty tutkittavaksi.</string>
+    <string name="app_crash_toast">Pahoittelut sovelluksen kaatumisesta.\nVirheraportti on lähetetty tutkittavaksi.</string>
     <string name="settings_screen_custom_headers_title">Mukautetut otsakkeet</string>
     <string name="timer_option_disable_timer">Poista ajastin käytöstä</string>
     <string name="widget_placeholder_text">Paina avataksesi sovelluksen</string>

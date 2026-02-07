@@ -38,7 +38,7 @@
     <string name="the_offline_library_is_empty">Brak pobranych książek</string>
     <string name="audiobookshelf_server_is_required">Serwer Audiobookshelf jest wymagany</string>
     <string name="no_internet_connection">Brak połączenia internetowego</string>
-    <string name="app_crach_toast">Przykro nam ale aplikacja zamknęła się z powodu błędu\nLogi zostały wysłane do dalszej analizy</string>
+    <string name="app_crash_toast">Przykro nam ale aplikacja zamknęła się z powodu błędu\nLogi zostały wysłane do dalszej analizy</string>
     <string name="playback_speed_title">Prędkość odtwarzania</string>
     <string name="color_scheme_follow_system">System</string>
     <string name="color_scheme_light">Jasny</string>
@@ -150,9 +150,6 @@
     <string name="local_url_hint_ssid_name">Nazwa sieci WiFi</string>
     <string name="location_permission_request_hint">Aplikacja potrzebuje dostępu do lokalizacji aby wykryć nazwę WiFi</string>
     <string name="permission_request_grant_button">Zezwól</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Usuń pamięć podręczną miniatur</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Usuń pamięć podręczną miniatur aby zwolnić miejsce.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Usunięto pamięć podręczną miniatur</string>
     <string name="settings_screen_delay_autodownload_title">Opóźnij automatyczne pobieranie</string>
     <string name="settings_screen_delay_autodownload_description">Zaczekaj krótki czas przed pobraniem</string>
     <string name="settings_screen_bypass_ssl_title">Wyłącz weryfikację certyfikatu SSL</string>

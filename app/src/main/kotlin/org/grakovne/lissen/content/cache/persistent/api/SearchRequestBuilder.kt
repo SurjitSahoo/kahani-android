@@ -3,7 +3,10 @@ package org.grakovne.lissen.content.cache.persistent.api
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 
-class SearchRequestBuilder {
+class SearchRequestBuilder(
+  private val host: String?,
+  private val username: String?,
+) {
   private var libraryId: String? = null
   private var searchQuery: String = ""
   private var orderField: String = "title"
@@ -20,20 +23,32 @@ class SearchRequestBuilder {
   fun build(): SupportSQLiteQuery {
     val args = mutableListOf<Any>()
 
-    val whereClause =
-      buildString {
-        when (val libraryId = libraryId) {
-          null -> append("(libraryId IS NULL)")
-          else -> {
-            append("(libraryId = ? OR libraryId IS NULL)")
-            args.add(libraryId)
-          }
+    val libraryClause =
+      when (val libraryId = libraryId) {
+        null -> "(libraryId IS NULL)"
+        else -> {
+          args.add(libraryId)
+          "(libraryId = ? OR libraryId IS NULL)"
         }
-        append(" AND (title LIKE ? OR author LIKE ? OR seriesNames LIKE ?)")
-        val pattern = "%$searchQuery%"
-        args.add(pattern)
-        args.add(pattern)
-        args.add(pattern)
+      }
+
+    val searchClause = "(title LIKE ? ESCAPE '\\' OR author LIKE ? ESCAPE '\\' OR seriesNames LIKE ? ESCAPE '\\')"
+    val pattern = "%${searchQuery.escapeSqlLike()}%"
+    args.add(pattern)
+    args.add(pattern)
+    args.add(pattern)
+
+    val isolationClause =
+      run {
+        val host = host
+        val username = username
+        if (!host.isNullOrEmpty() && !username.isNullOrEmpty()) {
+          args.add(host)
+          args.add(username)
+          "((host = ? AND username = ?) OR EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1))"
+        } else {
+          "EXISTS (SELECT 1 FROM book_chapters WHERE bookId = detailed_books.id AND isCached = 1)"
+        }
       }
 
     val field =
@@ -51,10 +66,16 @@ class SearchRequestBuilder {
     val sql =
       """
       SELECT * FROM detailed_books
-      WHERE $whereClause
-      ORDER BY $field $direction
+      WHERE $libraryClause AND $searchClause AND $isolationClause
+      ORDER BY $field $direction, id ASC
       """.trimIndent()
 
     return SimpleSQLiteQuery(sql, args.toTypedArray())
   }
+
+  private fun String.escapeSqlLike() =
+    this
+      .replace("\\", "\\\\")
+      .replace("%", "\\%")
+      .replace("_", "\\_")
 }

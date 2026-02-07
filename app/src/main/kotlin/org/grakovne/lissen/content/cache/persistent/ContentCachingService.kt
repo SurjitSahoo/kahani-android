@@ -34,8 +34,13 @@ class ContentCachingService : LifecycleService() {
   @Inject
   lateinit var notificationService: ContentCachingNotificationService
 
-  private val executionStatuses = mutableMapOf<DetailedItem, CacheState>()
-  private val executingCaching = mutableMapOf<DetailedItem, Job>()
+  private val executionStatuses = java.util.concurrent.ConcurrentHashMap<DetailedItem, CacheState>()
+  private val executingCaching = java.util.concurrent.ConcurrentHashMap<DetailedItem, Job>()
+
+  private val lastNotificationUpdate =
+    java.util.concurrent.atomic
+      .AtomicLong(0L)
+  private val notificationUpdateThrottle = 500L
 
   override fun onStartCommand(
     intent: Intent?,
@@ -102,24 +107,28 @@ class ContentCachingService : LifecycleService() {
 
         executor
           .run(mediaProvider.providePreferredChannel())
-          .onCompletion {
-            if (executionStatuses.isEmpty()) {
-              finish()
-            }
-          }.collect { progress ->
+          .collect { progress ->
             executionStatuses[item] = progress
             cacheProgressBus.emit(item, progress)
 
-            Timber.d("Caching progress updated: $progress")
+            val isTerminalState =
+              progress.status is CacheStatus.Completed || progress.status is CacheStatus.Error || progress.status is CacheStatus.Idle
 
-            when (inProgress() && hasErrors().not()) {
-              true ->
-                executionStatuses
-                  .entries
-                  .map { (item, status) -> item to status }
-                  .let { notificationService.updateCachingNotification(it) }
+            val currentTime = System.currentTimeMillis()
+            val lastUpdate = lastNotificationUpdate.get()
+            val shouldUpdateNotification = isTerminalState || (currentTime - lastUpdate >= notificationUpdateThrottle)
 
-              false -> finish()
+            if (shouldUpdateNotification && (isTerminalState || (inProgress() && hasErrors().not()))) {
+              executionStatuses
+                .entries
+                .map { (item, status) -> item to status }
+                .let { notificationService.updateCachingNotification(it) }
+
+              lastNotificationUpdate.set(currentTime)
+            }
+
+            if (!inProgress()) {
+              finish()
             }
           }
       }
@@ -131,7 +140,7 @@ class ContentCachingService : LifecycleService() {
     finish()
   }
 
-  private fun inProgress(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Caching }
+  private fun inProgress(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Caching || it.status == CacheStatus.Queued }
 
   private fun hasErrors(): Boolean = executionStatuses.values.any { it.status == CacheStatus.Error }
 

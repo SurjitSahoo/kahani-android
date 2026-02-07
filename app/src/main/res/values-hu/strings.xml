@@ -49,7 +49,7 @@
     <string name="settings_screen_server_version">Kiszolgáló verziója</string>
     <string name="timer_option_after_current_episode">Amikor a rész véget ér</string>
     <string name="timer_option_after_current_chapter">Amikor a fejezet véget ér</string>
-    <string name="app_crach_toast">Elnézést kérünk az alkalmazás összeomlásáért\nA naplókat elküldtük kivizsgálásra</string>
+    <string name="app_crash_toast">Elnézést kérünk az alkalmazás összeomlásáért\nA naplókat elküldtük kivizsgálásra</string>
     <string name="timer_option_after_minutes">%1$d perc</string>
     <string name="timer_option_disable_timer">Időzítő kikapcsolása</string>
     <string name="timer_title">Elalvás időzítő</string>
@@ -149,9 +149,6 @@
     <string name="settings_screen_connection_local">Helyi hálózat</string>
     <string name="settings_screen_connection_external">Távoli hálózat</string>
     <string name="downloads_menu_download_option_stop_downloads">Letöltés leállítása</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Miniatűrök gyorsítótárának törlése</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Távolítsa el a gyorsítótárban tárolt miniatűröket, hogy helyet szabadítson fel.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Miniatűrök gyorsítótára törölve</string>
     <string name="settings_screen_delay_autodownload_title">Automatikus letöltés késleltetése</string>
     <string name="settings_screen_delay_autodownload_description">Várjon egy kicsit, mielőtt elkezdené a letöltést</string>
     <string name="settings_screen_bypass_ssl_title">SSL-ellenőrzés letiltása</string>

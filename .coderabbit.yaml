@@ -1,0 +1,3 @@
+language: "en-US"
+reviews:
+  auto_title_placeholder: "@coderabbit title"

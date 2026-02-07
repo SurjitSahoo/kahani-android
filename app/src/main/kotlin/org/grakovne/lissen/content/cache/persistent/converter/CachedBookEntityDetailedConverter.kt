@@ -33,6 +33,7 @@ class CachedBookEntityDetailedConverter
               id = fileEntity.bookFileId,
               name = fileEntity.name,
               duration = fileEntity.duration,
+              size = fileEntity.size,
               mimeType = fileEntity.mimeType,
             )
           },

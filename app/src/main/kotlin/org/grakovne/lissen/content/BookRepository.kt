@@ -1,8 +1,18 @@
 package org.grakovne.lissen.content
 
 import android.net.Uri
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.OperationError
@@ -32,7 +42,10 @@ class BookRepository
     private val localCacheRepository: LocalCacheRepository,
     private val cachedCoverProvider: CachedCoverProvider,
     private val networkService: NetworkService,
+    private val clarityTracker: ClarityTracker,
   ) {
+    private val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     fun provideFileUri(
       libraryItemId: String,
       chapterId: String,
@@ -71,6 +84,7 @@ class BookRepository
       Timber.d("Syncing Progress for $itemId. $progress")
 
       localCacheRepository.syncProgress(itemId, progress)
+      clarityTracker.trackEvent("sync_progress")
 
       val channelSyncResult =
         providePreferredChannel()
@@ -127,6 +141,10 @@ class BookRepository
         )
     }
 
+    suspend fun fetchLatestUpdate(libraryId: String) = localCacheRepository.fetchLatestUpdate(libraryId)
+
+    suspend fun clearMetadataCache() = localCacheRepository.clearMetadataCache()
+
     suspend fun fetchBooks(
       libraryId: String,
       pageSize: Int,
@@ -147,28 +165,13 @@ class BookRepository
         return localResult
       }
 
-      val localItems =
-        localResult.fold(
-          onSuccess = { it.items },
-          onFailure = { emptyList() },
-        )
-
-      if (localItems.isEmpty() || localItems.size < pageSize) {
-        Timber.d("Local cache miss (or partial) for page $pageNumber. Fetching from remote.")
-        return providePreferredChannel()
-          .fetchBooks(
-            libraryId = libraryId,
-            pageSize = pageSize,
-            pageNumber = pageNumber,
-          ).also {
-            it.foldAsync(
-              onSuccess = { result -> localCacheRepository.cacheBooks(result.items) },
-              onFailure = {},
-            )
-          }
-      }
-
-      return localResult
+      return localResult.fold(
+        onSuccess = { OperationResult.Success(it) },
+        onFailure = {
+          Timber.e("Failed to fetch books from local cache: ${it.message}")
+          OperationResult.Success(PagedItems(emptyList(), pageNumber, 0))
+        },
+      )
     }
 
     suspend fun syncLibraryPage(
@@ -176,9 +179,96 @@ class BookRepository
       pageSize: Int,
       pageNumber: Int,
     ): OperationResult<Unit> =
-      providePreferredChannel()
-        .fetchBooks(libraryId, pageSize, pageNumber)
-        .map { localCacheRepository.cacheBooks(it.items) }
+      OperationResult
+        .Success(Unit)
+        .also {
+          backgroundScope.launch {
+            try {
+              syncAllLibraries()
+            } catch (e: Exception) {
+              Timber.e(e, "Failed to sync all libraries")
+            }
+          }
+        }
+
+    private suspend fun syncAllLibraries() {
+      val librariesResult = fetchLibraries()
+      val libraries =
+        when (librariesResult) {
+          is OperationResult.Success -> librariesResult.data
+          is OperationResult.Error -> return
+        }
+
+      libraries.forEach { library ->
+        syncFullLibrary(library.id)
+      }
+    }
+
+    private suspend fun syncFullLibrary(libraryId: String) {
+      val remoteItemsResult = providePreferredChannel().fetchLibraryMinified(libraryId)
+
+      val remoteItems =
+        when (remoteItemsResult) {
+          is OperationResult.Success -> remoteItemsResult.data
+          is OperationResult.Error -> return
+        }
+
+      // Fast Sync: Immediately cache basic metadata (Title, Author, ID)
+      // This makes new books visible and searchable instantly.
+      // Existing details (Chapters, Duration) are preserved by the repository logic.
+      localCacheRepository.cacheBooks(remoteItems)
+
+      val knownBooks =
+        localCacheRepository
+          .fetchBooks(libraryId, Int.MAX_VALUE, 0, false)
+          .fold(
+            onSuccess = { it.items },
+            onFailure = { emptyList() },
+          ).associateBy { it.id }
+
+      val newOrUpdatedBooks =
+        remoteItems.filter { remote ->
+          val local = knownBooks[remote.id]
+
+          // If local is null (shouldn't be, since we just cached), or remote is newer
+          // Note: addedAt/updatedAt are now available in Book
+          local == null || (remote.updatedAt > local.updatedAt)
+        }
+
+      if (newOrUpdatedBooks.isEmpty()) {
+        Timber.d("Local library is up to date. Sync finished.")
+        return
+      }
+
+      Timber.d("Found ${newOrUpdatedBooks.size} new or updated books. Syncing details...")
+
+      newOrUpdatedBooks
+        .chunked(20)
+        .forEach { chunk ->
+          withContext(Dispatchers.IO) {
+            chunk
+              .map { book ->
+                async {
+                  providePreferredChannel()
+                    .fetchBook(book.id)
+                    .foldAsync(
+                      onSuccess = {
+                        localCacheRepository.cacheBookMetadata(it)
+                        it
+                      },
+                      onFailure = { null },
+                    )
+                }
+              }.awaitAll()
+              .filterNotNull()
+              .let { items ->
+                backgroundScope.launch {
+                  prefetchCovers(items.map { item -> item.toBook() })
+                }
+              }
+          }
+        }
+    }
 
     suspend fun fetchLibraries(): OperationResult<List<Library>> {
       Timber.d("Fetching List of libraries")
@@ -300,8 +390,11 @@ class BookRepository
           )
         }
 
-    suspend fun syncRepositories() {
-      val libraryId = preferences.getPreferredLibrary()?.id ?: return
+    suspend fun syncRepositories(overrideLibraryId: String? = null) {
+      val libraryId = overrideLibraryId ?: preferences.getPreferredLibrary()?.id ?: return
+
+      syncFullLibrary(libraryId)
+
       val remoteRecents = providePreferredChannel().fetchRecentListenedBooks(libraryId).getOrNull() ?: emptyList()
       val localRecents =
         localCacheRepository
@@ -324,7 +417,10 @@ class BookRepository
         when {
           remoteTime > localTime -> {
             providePreferredChannel().fetchBook(id).foldAsync(
-              onSuccess = { localCacheRepository.cacheBookMetadata(it) },
+              onSuccess = {
+                localCacheRepository.cacheBookMetadata(it)
+                backgroundScope.launch { prefetchCovers(listOf(it.toBook())) }
+              },
               onFailure = {},
             )
           }
@@ -354,6 +450,34 @@ class BookRepository
         }
       }
     }
+
+    private suspend fun prefetchCovers(books: List<Book>) {
+      if (!networkService.isNetworkAvailable() || preferences.isForceCache()) {
+        return
+      }
+
+      yield()
+      delay(2000) // Initial delay to prioritize core metadata and thumbnails
+
+      withContext(Dispatchers.IO) {
+        books.forEach { book ->
+          fetchBookCover(book.id, null)
+          delay(100)
+          yield()
+        }
+      }
+    }
+
+    private fun DetailedItem.toBook() =
+      Book(
+        id = this.id,
+        subtitle = this.subtitle,
+        series = this.series.joinToString { it.name },
+        title = this.title,
+        author = this.author,
+        duration = this.chapters.sumOf { it.duration },
+        libraryId = this.libraryId ?: "",
+      )
 
     private fun <T> OperationResult<T>.getOrNull(): T? =
       when (this) {

@@ -18,3 +18,7 @@
 -keep class dagger.hilt.android.internal.** { *; }
 -keep class *__HiltBindingModule { *; }
 -keep class org.grakovne.lissen.**_HiltComponents$* { *; }
+
+# Microsoft Clarity
+-keep class com.microsoft.clarity.** { *; }
+-keep interface com.microsoft.clarity.** { *; }

@@ -24,7 +24,7 @@
     <string name="the_library_is_empty">Die Bibliothek ist leer</string>
     <string name="audiobookshelf_server_is_required">Audiobookshelf Server ist notwendig</string>
     <string name="no_internet_connection">Keine Internetverbindung</string>
-    <string name="app_crach_toast">Entschuldigung für den Absturz der Anwendung\nDie Protokolle wurden zur Analyse gesendet</string>
+    <string name="app_crash_toast">Entschuldigung für den Absturz der Anwendung\nDie Protokolle wurden zur Analyse gesendet</string>
     <string name="settings_screen_color_scheme_title">Farbschema</string>
     <string name="library_search_hint">Suche nach Titel, Autor oder Serie</string>
     <string name="player_screen_title">Aktuelle Wiedergabe</string>
@@ -140,14 +140,11 @@
     <string name="library_type_library">Bücher</string>
     <string name="library_type_podcast">Podcasts</string>
     <string name="library_type_unknown">Unbekannt</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Vorschaubild-Cache gelöscht</string>
     <string name="settings_screen_internal_connection_url_title">Lokale Netzwerkserveradresse</string>
     <string name="settings_screen_internal_connection_url_description">Serverzugriff für Heim-WLAN definieren</string>
     <string name="local_url_hint_ssid_name">WLAN Netzwerk Name</string>
     <string name="location_permission_request_hint">Die App benötigt Zugriff auf den Standort, um den WLAN-Namen zu erkennen</string>
     <string name="permission_request_grant_button">Erlauben</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Vorschaubild-Cache löschen</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Vorschaubild-Cache löschen, um Speicherplatz freizugeben.</string>
     <string name="settings_screen_delay_autodownload_title">Verzögere automatisches Herunterladen</string>
     <string name="settings_screen_delay_autodownload_description">Warte eine kurze Zeit bevor der Download startet</string>
     <string name="settings_screen_connection_type">Verbindungstyp</string>

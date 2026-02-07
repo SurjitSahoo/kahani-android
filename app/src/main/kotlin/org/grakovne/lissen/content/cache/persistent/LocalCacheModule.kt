@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.grakovne.lissen.content.cache.persistent.dao.CachedBookDao
 import org.grakovne.lissen.content.cache.persistent.dao.CachedLibraryDao
+import org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 import javax.inject.Singleton
 
 @Module
@@ -20,6 +21,7 @@ object LocalCacheModule {
   @Singleton
   fun provideAppDatabase(
     @ApplicationContext context: Context,
+    preferences: LissenSharedPreferences,
   ): LocalCacheStorage {
     val database =
       Room.databaseBuilder(
@@ -43,6 +45,14 @@ object LocalCacheModule {
       .addMigrations(MIGRATION_12_13)
       .addMigrations(MIGRATION_13_14)
       .addMigrations(MIGRATION_14_15)
+      .addMigrations(
+        produceMigration15_16(
+          host = preferences.getHost() ?: "",
+          username = preferences.getUsername() ?: "",
+        ),
+      ).addMigrations(MIGRATION_16_17)
+      .addMigrations(MIGRATION_17_18)
+      .addMigrations(MIGRATION_18_19)
       .build()
   }
 

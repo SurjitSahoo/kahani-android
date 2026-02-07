@@ -3,13 +3,6 @@ package org.grakovne.lissen
 import android.app.Application
 import android.content.Context
 import dagger.hilt.android.HiltAndroidApp
-import org.acra.ReportField
-import org.acra.config.httpSender
-import org.acra.config.toast
-import org.acra.data.StringFormat
-import org.acra.ktx.initAcra
-import org.acra.security.TLS
-import org.acra.sender.HttpSender
 import org.grakovne.lissen.common.RunningComponent
 import timber.log.Timber
 import javax.inject.Inject
@@ -17,59 +10,47 @@ import javax.inject.Inject
 @HiltAndroidApp
 class LissenApplication : Application() {
   @Inject
-  lateinit var runningComponents: Set<@JvmSuppressWildcards RunningComponent>
+  lateinit var preferences: org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 
-  override fun attachBaseContext(base: Context) {
-    super.attachBaseContext(base)
-    initCrashReporting()
-  }
+  @Inject
+  lateinit var runningComponents: Set<@JvmSuppressWildcards RunningComponent>
 
   override fun onCreate() {
     super.onCreate()
     appContext = applicationContext
 
-    if (BuildConfig.DEBUG) {
-      Timber.plant(Timber.DebugTree())
+    // Initialize core services first
+    try {
+      if (BuildConfig.DEBUG) {
+        Timber.plant(Timber.DebugTree())
+      }
+
+      val isCrashReportingEnabled = preferences.getCrashReportingEnabled()
+      com.google.firebase.crashlytics.FirebaseCrashlytics
+        .getInstance()
+        .setCrashlyticsCollectionEnabled(isCrashReportingEnabled)
+
+      val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+      Thread.setDefaultUncaughtExceptionHandler(
+        org.grakovne.lissen.common
+          .CrashHandler(this, defaultHandler),
+      )
+    } catch (e: Exception) {
+      // Fallback logging if core services fail
+      android.util.Log.e("LissenApplication", "Failed to initialize core services", e)
     }
 
+    // Initialize components with individual error handling
     runningComponents.forEach {
       try {
         it.onCreate()
       } catch (ex: Exception) {
-        Timber.e("Unable to register Running component due to: ${ex.message}")
+        Timber.e(ex, "Unable to register Running component: ${ex.message}")
+        com.google.firebase.crashlytics.FirebaseCrashlytics
+          .getInstance()
+          .recordException(ex)
       }
-    }
-  }
-
-  private fun initCrashReporting() {
-    initAcra {
-      sharedPreferencesName = "secure_prefs"
-
-      buildConfigClass = BuildConfig::class.java
-      reportFormat = StringFormat.JSON
-
-      httpSender {
-        uri = "https://acrarium.grakovne.org/report"
-        basicAuthLogin = BuildConfig.ACRA_REPORT_LOGIN
-        basicAuthPassword = BuildConfig.ACRA_REPORT_PASSWORD
-        httpMethod = HttpSender.Method.POST
-        dropReportsOnTimeout = false
-        tlsProtocols = listOf(TLS.V1_3, TLS.V1_2)
-      }
-
-      toast {
-        text = getString(R.string.app_crach_toast)
-      }
-
-      reportContent =
-        listOf(
-          ReportField.APP_VERSION_NAME,
-          ReportField.APP_VERSION_CODE,
-          ReportField.ANDROID_VERSION,
-          ReportField.PHONE_MODEL,
-          ReportField.STACK_TRACE,
-          ReportField.ENVIRONMENT,
-        )
     }
   }
 

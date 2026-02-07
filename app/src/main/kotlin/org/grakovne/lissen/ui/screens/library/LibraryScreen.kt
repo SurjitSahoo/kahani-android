@@ -65,6 +65,7 @@ import org.grakovne.lissen.common.NetworkService
 import org.grakovne.lissen.common.withHaptic
 import org.grakovne.lissen.lib.domain.LibraryType
 import org.grakovne.lissen.lib.domain.RecentBook
+import org.grakovne.lissen.ui.components.AnalyticsConsentBottomSheet
 import org.grakovne.lissen.ui.components.withScrollbar
 import org.grakovne.lissen.ui.extensions.withMinimumTime
 import org.grakovne.lissen.ui.navigation.AppNavigationService
@@ -102,9 +103,9 @@ fun LibraryScreen(
 
   val activity = LocalActivity.current
   val recentBooks: List<RecentBook> by libraryViewModel.recentBooks.observeAsState(emptyList())
+  val analyticsConsent by settingsViewModel.analyticsConsent.observeAsState()
 
   var pullRefreshing by remember { mutableStateOf(false) }
-  val recentBookRefreshing by libraryViewModel.recentBookUpdating.observeAsState(false)
   val searchRequested by libraryViewModel.searchRequested.observeAsState(false)
   val preparingError by playerViewModel.preparingError.observeAsState(false)
 
@@ -144,8 +145,7 @@ fun LibraryScreen(
       withMinimumTime(minimumTime) {
         listOf(
           async { settingsViewModel.fetchLibraries() },
-          async { libraryViewModel.refreshLibrary() },
-          async { libraryViewModel.fetchRecentListening() },
+          async { libraryViewModel.refreshLibrary(forceRefresh = showPullRefreshing) },
         ).awaitAll()
       }
 
@@ -160,7 +160,7 @@ fun LibraryScreen(
       }
 
       val hasContent = library.itemCount > 0 || recentBooks.isNotEmpty()
-      val isLoading = pullRefreshing || recentBookRefreshing || library.loadState.refresh is LoadState.Loading
+      val isLoading = pullRefreshing || library.loadState.refresh is LoadState.Loading
 
       isLoading && !hasContent
     }
@@ -181,10 +181,17 @@ fun LibraryScreen(
     )
 
   val titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-  val titleHeightDp = with(LocalDensity.current) { titleTextStyle.lineHeight.toPx().toDp() }
+  val density = LocalDensity.current
+  val titleHeightDp =
+    remember(titleTextStyle.lineHeight, density) {
+      with(density) { titleTextStyle.lineHeight.toPx().toDp() }
+    }
 
   val playingBook by playerViewModel.book.observeAsState()
+  val onBackgroundColor = MaterialTheme.colorScheme.onBackground
   val context = LocalContext.current
+
+  val scrollbarIgnoreItems = remember { setOf("recent_books", "library_title") }
 
   fun isRecentVisible(): Boolean {
     val hasContent = recentBooks.isEmpty().not()
@@ -224,8 +231,11 @@ fun LibraryScreen(
   }
 
   LaunchedEffect(recentBooks.isNotEmpty()) {
+    val isScrolling = libraryListState.isScrollInProgress
+    val isSearching = libraryViewModel.searchRequested.value == true
     val needsScroll = libraryListState.firstVisibleItemIndex <= 1
-    if (recentBooks.isNotEmpty() && needsScroll) {
+
+    if (recentBooks.isNotEmpty() && needsScroll && !isScrolling && !isSearching) {
       libraryListState.animateScrollToItem(0)
     }
   }
@@ -345,11 +355,16 @@ fun LibraryScreen(
               .imePadding()
               .withScrollbar(
                 state = libraryListState,
-                color = colorScheme.onBackground.copy(alpha = scrollbarAlpha),
+                color = { onBackgroundColor.copy(alpha = scrollbarAlpha) },
                 totalItems = libraryCount,
-                ignoreItems = listOf("recent_books", "library_title"),
+                ignoreItems = scrollbarIgnoreItems,
               ),
-          contentPadding = PaddingValues(horizontal = Spacing.md),
+          contentPadding =
+            PaddingValues(
+              start = Spacing.md,
+              end = Spacing.md,
+              bottom = Spacing.md,
+            ),
         ) {
           item(key = "recent_books") {
             val showRecent = isRecentVisible()
@@ -443,8 +458,11 @@ fun LibraryScreen(
             }
 
             else ->
-              items(count = library.itemCount, key = { "library_item_$it" }) {
-                val book = library[it] ?: return@items
+              items(
+                count = library.itemCount,
+                key = { index -> library.peek(index)?.id ?: "library_item_$index" },
+              ) { index ->
+                val book = library[index] ?: return@items
 
                 BookComposable(
                   book = book,
@@ -477,6 +495,13 @@ fun LibraryScreen(
         refreshContent(false)
         preferredLibraryExpanded = false
       },
+    )
+  }
+
+  if (analyticsConsent == null) {
+    AnalyticsConsentBottomSheet(
+      onAccept = { settingsViewModel.updateAnalyticsConsent(true) },
+      onDecline = { settingsViewModel.updateAnalyticsConsent(false) },
     )
   }
 }

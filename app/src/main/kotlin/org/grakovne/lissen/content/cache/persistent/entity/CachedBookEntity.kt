@@ -1,6 +1,7 @@
 package org.grakovne.lissen.content.cache.persistent.entity
 
 import androidx.annotation.Keep
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -51,6 +52,8 @@ data class BookEntity(
   val seriesNames: String?,
   val createdAt: Long,
   val updatedAt: Long,
+  val host: String? = null,
+  val username: String? = null,
 ) : Serializable
 
 @Keep
@@ -74,6 +77,7 @@ data class BookFileEntity(
   val duration: Double,
   val mimeType: String,
   val bookId: String,
+  @ColumnInfo(defaultValue = "0") val size: Long = 0L,
 ) : Serializable
 
 @Keep
@@ -101,7 +105,6 @@ data class BookChapterEntity(
   val isCached: Boolean,
 ) : Serializable
 
-@Keep
 @Entity(
   tableName = "media_progress",
   foreignKeys = [
@@ -120,6 +123,8 @@ data class MediaProgressEntity(
   val currentTime: Double,
   val isFinished: Boolean,
   val lastUpdate: Long,
+  val host: String? = null,
+  val username: String? = null,
 ) : Serializable
 
 @Keep

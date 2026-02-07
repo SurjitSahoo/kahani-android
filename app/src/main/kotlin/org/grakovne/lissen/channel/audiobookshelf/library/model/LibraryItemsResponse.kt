@@ -15,6 +15,8 @@ data class LibraryItemsResponse(
 @JsonClass(generateAdapter = true)
 data class LibraryItem(
   val id: String,
+  val addedAt: Long?,
+  val updatedAt: Long?,
   val media: Media,
 )
 

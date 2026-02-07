@@ -8,6 +8,10 @@ import android.text.style.StyleSpan
 import android.text.style.URLSpan
 import android.text.style.UnderlineSpan
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,9 +38,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AvTimer
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -81,6 +88,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
@@ -93,6 +102,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.HtmlCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.Extras
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -105,6 +115,7 @@ import org.grakovne.lissen.lib.domain.CacheStatus
 import org.grakovne.lissen.lib.domain.DetailedItem
 import org.grakovne.lissen.lib.domain.LibraryType
 import org.grakovne.lissen.ui.components.AsyncShimmeringImage
+import org.grakovne.lissen.ui.components.BookCoverFetcher
 import org.grakovne.lissen.ui.components.DownloadProgressIcon
 import org.grakovne.lissen.ui.extensions.formatTime
 import org.grakovne.lissen.ui.navigation.AppNavigationService
@@ -135,12 +146,20 @@ fun BookDetailScreen(
   val isOnline by playerViewModel.isOnline.collectAsState(initial = false)
   val preparingBookId by playerViewModel.preparingBookId.observeAsState(null)
   val currentChapterIndex by playerViewModel.currentChapterIndex.observeAsState(-1)
+  val isFetchingDetails by playerViewModel.isFetchingDetails.observeAsState(false)
   val totalPosition by playerViewModel.totalPosition.observeAsState(0.0)
 
   val cacheProgress: CacheState by cachingModelView.getProgress(bookId).collectAsState(initial = CacheState(CacheStatus.Idle))
-  val hasDownloadedChapters by cachingModelView.hasDownloadedChapters(bookId).observeAsState(false)
   var downloadsExpanded by remember { mutableStateOf(false) }
   val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+  val cacheVersion by cachingModelView.cacheVersion.collectAsState(initial = 0L)
+  val volumes =
+    remember(bookDetail, cacheProgress.status, cacheVersion) {
+      bookDetail?.let { cachingModelView.getVolumes(it) }
+        ?: emptyList()
+    }
+  val isFullyDownloaded = volumes.isNotEmpty() && volumes.all { it.isDownloaded }
 
   LaunchedEffect(bookId) {
     timber.log.Timber.d("BookDetailScreen: Launched with bookId $bookId")
@@ -221,7 +240,9 @@ fun BookDetailScreen(
             IconButton(onClick = { downloadsExpanded = true }) {
               DownloadProgressIcon(
                 cacheState = cacheProgress,
+                isFullyDownloaded = isFullyDownloaded,
                 color = colorScheme.onSurface,
+                showShine = true,
               )
             }
           },
@@ -229,12 +250,14 @@ fun BookDetailScreen(
       },
       modifier = Modifier.systemBarsPadding(),
     ) { innerPadding ->
-      if (bookDetail == null) {
+      if (bookDetail == null || (isFetchingDetails && bookDetail?.chapters?.isEmpty() == true)) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           CircularProgressIndicator()
         }
       } else {
         val book = bookDetail!!
+        val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
+
         val isPodcast = book.libraryType == LibraryType.PODCAST
         val chapters = if (isPodcast) book.chapters.reversed() else book.chapters
         val maxDuration = chapters.maxOfOrNull { it.duration } ?: 0.0
@@ -257,6 +280,18 @@ fun BookDetailScreen(
                     .build()
                 }
 
+              val thumbnailRequest: ImageRequest =
+                remember<ImageRequest>(book.id) {
+                  ImageRequest
+                    .Builder(context)
+                    .data(book.id)
+                    .size(200, 200)
+                    .memoryCacheKey("${book.id}_thumbnail")
+                    .diskCacheKey("${book.id}_thumbnail")
+                    .apply { extras[BookCoverFetcher.LocalOnlyKey] = true }
+                    .build()
+                }
+
               Box(
                 modifier =
                   Modifier
@@ -268,6 +303,7 @@ fun BookDetailScreen(
               ) {
                 AsyncShimmeringImage(
                   imageRequest = imageRequest,
+                  thumbnailRequest = thumbnailRequest,
                   imageLoader = imageLoader,
                   contentDescription = "${book.title} cover",
                   contentScale = ContentScale.Crop,
@@ -282,7 +318,12 @@ fun BookDetailScreen(
                 style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier =
+                  Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth(),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
               )
 
               book.author?.takeIf { it.isNotBlank() }?.let {
@@ -545,39 +586,35 @@ fun BookDetailScreen(
       }
     }
 
-    if (downloadsExpanded) {
+    if (downloadsExpanded && bookDetail != null) {
+      val book = bookDetail!!
+      val storageType = remember(book.id) { cachingModelView.getBookStorageType(book) }
+
       DownloadsComposable(
-        libraryType = preferredLibrary?.type ?: LibraryType.UNKNOWN,
-        hasCachedEpisodes = hasDownloadedChapters,
+        book = book,
+        storageType = storageType,
+        volumes = volumes,
         isOnline = isOnline,
         cachingInProgress = cacheProgress.status is CacheStatus.Caching,
         onRequestedDownload = { option ->
-          bookDetail?.let {
-            cachingModelView.cache(
-              mediaItem = it,
-              option = option,
-            )
-          }
+          cachingModelView.cache(
+            mediaItem = book,
+            option = option,
+          )
         },
         onRequestedDrop = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.dropCache(it.id)
-            }
+          scope.launch {
+            cachingModelView.dropCache(book.id)
           }
         },
         onRequestedDropCompleted = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.dropCompletedChapters(it)
-            }
+          scope.launch {
+            cachingModelView.dropCompletedChapters(book)
           }
         },
         onRequestedStop = {
-          bookDetail?.let {
-            scope.launch {
-              cachingModelView.stopCaching(it)
-            }
+          scope.launch {
+            cachingModelView.stopCaching(book)
           }
         },
         onDismissRequest = { downloadsExpanded = false },

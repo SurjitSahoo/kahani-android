@@ -22,6 +22,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -31,6 +33,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.grakovne.lissen.analytics.ClarityTracker
 import org.grakovne.lissen.content.LissenMediaProvider
 import org.grakovne.lissen.lib.domain.CurrentEpisodeTimerOption
 import org.grakovne.lissen.lib.domain.DetailedItem
@@ -64,6 +67,7 @@ class MediaRepository
     private val preferences: LissenSharedPreferences,
     private val mediaChannel: LissenMediaProvider,
     private val shakeDetector: ShakeDetector,
+    private val clarityTracker: ClarityTracker,
   ) {
     fun getBookFlow(bookId: String): Flow<DetailedItem?> = mediaChannel.fetchBookFlow(bookId)
 
@@ -160,6 +164,7 @@ class MediaRepository
                   updateShakeDetectorState(preferences.getShakeToResetTimer(), isPlaying)
 
                   if (isPlaying) {
+                    _preparingBookId.postValue(null)
                     _playingBook.value?.let { startUpdatingProgress(it) }
                   } else {
                     handler.removeCallbacksAndMessages(null)
@@ -181,6 +186,8 @@ class MediaRepository
 
           override fun onFailure(t: Throwable) {
             Timber.e("Unable to add callback to player")
+            Firebase.crashlytics.recordException(t)
+            clarityTracker.trackEvent("playback_error", t.message ?: "Unknown error")
           }
         },
         MoreExecutors.directExecutor(),
@@ -212,7 +219,6 @@ class MediaRepository
                 preferences.savePlayingBook(it)
 
                 _isPlaybackReady.postValue(true)
-                _preparingBookId.postValue(null)
 
                 pendingChapterIndex?.let { index ->
                   setChapter(index)
@@ -222,6 +228,8 @@ class MediaRepository
                 if (_playAfterPrepare.value == true) {
                   _playAfterPrepare.postValue(false)
                   play()
+                } else {
+                  _preparingBookId.postValue(null)
                 }
               }
             }
@@ -263,6 +271,9 @@ class MediaRepository
       position: Double? = null,
     ) {
       _timerOption.postValue(timerOption)
+      if (timerOption != null) {
+        clarityTracker.trackEvent("sleep_timer_set")
+      }
 
       when (timerOption) {
         is DurationTimerOption -> scheduleServiceTimer(timerOption.duration * 60.0, timerOption)
@@ -309,6 +320,7 @@ class MediaRepository
           toneGen.release()
         }, 200)
       } catch (e: Exception) {
+        Firebase.crashlytics.recordException(e)
         Timber.e(e, "Failed to play reset sound")
       }
     }
@@ -348,6 +360,7 @@ class MediaRepository
 
         seekTo(chapterStartsAt)
       } catch (ex: Exception) {
+        Firebase.crashlytics.recordException(ex)
         return
       }
     }
@@ -376,6 +389,7 @@ class MediaRepository
 
         seekTo(absolutePosition)
       } catch (ex: Exception) {
+        Firebase.crashlytics.recordException(ex)
         return
       }
     }
@@ -564,6 +578,7 @@ class MediaRepository
         }
 
       context.startForegroundService(intent)
+      clarityTracker.trackEvent("playback_start")
     }
 
     private fun pause() {
@@ -573,6 +588,7 @@ class MediaRepository
         }
 
       context.startService(intent)
+      clarityTracker.trackEvent("playback_pause")
     }
 
     private fun seekTo(position: Double) {

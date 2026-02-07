@@ -36,5 +36,7 @@ class CachedBookEntityConverter
             },
         duration = entity.duration.toDouble(),
         libraryId = entity.libraryId ?: "",
+        addedAt = entity.createdAt,
+        updatedAt = entity.updatedAt,
       )
   }

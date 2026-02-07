@@ -74,6 +74,11 @@ class LibraryAudiobookshelfChannel
         ).map { libraryPageResponseConverter.apply(it, libraryId) }
     }
 
+    override suspend fun fetchLibraryMinified(libraryId: String): OperationResult<List<Book>> =
+      dataRepository
+        .fetchLibraryMinified(libraryId)
+        .map { libraryPageResponseConverter.apply(it, libraryId).items }
+
     override suspend fun searchBooks(
       libraryId: String,
       query: String,

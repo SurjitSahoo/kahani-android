@@ -38,7 +38,7 @@
     <string name="the_offline_library_is_empty">Belum ada buku tersimpan</string>
     <string name="audiobookshelf_server_is_required">Server Audiobookshelf diperlukan</string>
     <string name="no_internet_connection">Tidak tersambung ke internet</string>
-    <string name="app_crach_toast">Kerusakan aplikasi tercatat\nLog telah dikirim untuk dianalisis</string>
+    <string name="app_crash_toast">Kerusakan aplikasi tercatat\nLog telah dikirim untuk dianalisis</string>
     <string name="playback_speed_title">Kecepatan pemutaran</string>
     <string name="color_scheme_follow_system">Sistem</string>
     <string name="color_scheme_light">Terang</string>
@@ -150,9 +150,6 @@
     <string name="local_url_hint_ssid_name">Nama jaringan Wi-Fi</string>
     <string name="location_permission_request_hint">Akses lokasi diperlukan agar dapat mendeteksi nama Wi-Fi</string>
     <string name="permission_request_grant_button">Izinkan</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">Hapus cache thumbnail</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">Hapus cache thumbnail untuk membebaskan ruang.</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">Cache thumbnail berhasil dibersihkan</string>
     <string name="settings_screen_delay_autodownload_title">Tunda unduhan otomatis</string>
     <string name="settings_screen_delay_autodownload_description">Jeda singkat sebelum memulai unduhan</string>
     <string name="settings_screen_bypass_ssl_title">Nonaktifkan verifikasi SSL</string>

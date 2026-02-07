@@ -391,12 +391,10 @@ fun PlayerContent(
           horizontalAlignment = Alignment.CenterHorizontally,
           modifier = Modifier.padding(horizontal = 16.dp),
         ) {
-          if (isPlaybackReady) {
-            PlaybackButtonsComposable(
-              viewModel = playerViewModel,
-              settingsViewModel = settingsViewModel,
-            )
-          }
+          PlaybackButtonsComposable(
+            viewModel = playerViewModel,
+            settingsViewModel = settingsViewModel,
+          )
         }
       }
 
@@ -449,36 +447,38 @@ fun PlayerContent(
                   org.grakovne.lissen.content.cache.persistent
                     .CacheState(org.grakovne.lissen.lib.domain.CacheStatus.Idle),
               )
-            val hasDownloadedChapters by cachingModelView.hasDownloadedChapters(it.id).observeAsState(false)
 
-            DownloadsComposable(
-              libraryType = libraryViewModel.fetchPreferredLibraryType(),
-              hasCachedEpisodes = hasDownloadedChapters,
-              isOnline = isOnline,
-              cachingInProgress = cacheProgress.status is org.grakovne.lissen.lib.domain.CacheStatus.Caching,
-              onRequestedDownload = { option ->
-                cachingModelView.cache(
-                  mediaItem = it,
-                  option = option,
-                )
-              },
-              onRequestedDrop = {
-                scope.launch {
-                  cachingModelView.dropCache(it.id)
-                }
-              },
-              onRequestedDropCompleted = {
-                scope.launch {
-                  cachingModelView.dropCompletedChapters(it)
-                }
-              },
-              onRequestedStop = {
-                scope.launch {
-                  cachingModelView.stopCaching(it)
-                }
-              },
-              onDismissRequest = { downloadsExpanded = false },
-            )
+            it.let { book ->
+              DownloadsComposable(
+                book = book,
+                storageType = cachingModelView.getBookStorageType(book),
+                volumes = cachingModelView.getVolumes(book),
+                isOnline = isOnline,
+                cachingInProgress = cacheProgress.status is org.grakovne.lissen.lib.domain.CacheStatus.Caching,
+                onRequestedDownload = { option ->
+                  cachingModelView.cache(
+                    mediaItem = book,
+                    option = option,
+                  )
+                },
+                onRequestedDrop = {
+                  scope.launch {
+                    cachingModelView.dropCache(book.id)
+                  }
+                },
+                onRequestedDropCompleted = {
+                  scope.launch {
+                    cachingModelView.dropCompletedChapters(book)
+                  }
+                },
+                onRequestedStop = {
+                  scope.launch {
+                    cachingModelView.stopCaching(book)
+                  }
+                },
+                onDismissRequest = { downloadsExpanded = false },
+              )
+            }
           }
         }
       }

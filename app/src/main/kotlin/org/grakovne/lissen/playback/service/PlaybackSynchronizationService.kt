@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import org.grakovne.lissen.channel.common.OperationError
 import org.grakovne.lissen.content.LissenMediaProvider
 import org.grakovne.lissen.lib.domain.DetailedItem
@@ -52,6 +53,7 @@ class PlaybackSynchronizationService
     fun startPlaybackSynchronization(item: DetailedItem) {
       serviceScope.coroutineContext.cancelChildren()
       currentItem = item
+      runSync()
     }
 
     fun cancelSynchronization() {
@@ -90,72 +92,84 @@ class PlaybackSynchronizationService
     }
 
     private fun runSync() {
-      val elapsedMs = exoPlayer.currentPosition
-      val overallProgress = getProgress(elapsedMs) ?: return
+      serviceScope.launch {
+        val elapsedMs = exoPlayer.currentPosition
+        val overallProgress = getProgress(elapsedMs) ?: return@launch
+        val item = currentItem ?: return@launch
+        val session = playbackSession
+        val lastChapterIndex = currentChapterIndex
 
-      Timber.d("Trying to sync $overallProgress for ${currentItem?.id}")
+        Timber.d("Trying to sync $overallProgress for ${item.id}")
 
-      serviceScope.launch(Dispatchers.IO) {
-        if (syncMutex.tryLock().not()) {
-          Timber.d("Sync is already running")
-          return@launch
-        }
-
-        try {
-          val currentIndex =
-            currentItem
-              ?.let { calculateChapterIndex(it, overallProgress.currentTotalTime) }
-              ?: return@launch
-
-          if (playbackSession == null || playbackSession?.itemId != currentItem?.id || currentIndex != currentChapterIndex) {
-            openPlaybackSession(overallProgress)
-            currentChapterIndex = currentIndex
+        launch(Dispatchers.IO) {
+          if (syncMutex.tryLock().not()) {
+            Timber.d("Sync is already running")
+            return@launch
           }
 
-          mediaChannel.syncLocalProgress(currentItem?.id ?: return@launch, overallProgress)
-          playbackSession?.let { requestSync(it, overallProgress) }
-        } catch (e: Exception) {
-          Timber.e(e, "Error during sync")
-        } finally {
-          syncMutex.unlock()
+          try {
+            val currentIndex = calculateChapterIndex(item, overallProgress.currentTotalTime)
+
+            var activeSession = session
+            if (activeSession == null || activeSession.itemId != item.id || currentIndex != lastChapterIndex) {
+              activeSession = openPlaybackSession(item, overallProgress)
+              withContext(Dispatchers.Main) {
+                playbackSession = activeSession
+                currentChapterIndex = currentIndex
+              }
+            }
+
+            mediaChannel.syncLocalProgress(item.id, overallProgress)
+            activeSession?.let { requestSync(it, item, overallProgress) }
+          } catch (e: Exception) {
+            Timber.e(e, "Error during sync")
+          } finally {
+            syncMutex.unlock()
+          }
         }
       }
     }
 
     private suspend fun requestSync(
-      it: PlaybackSession,
+      session: PlaybackSession,
+      item: DetailedItem,
       overallProgress: PlaybackProgress,
-    ): Unit? =
-      mediaChannel
-        .syncProgress(
-          sessionId = it.sessionId,
-          itemId = it.itemId,
-          progress = overallProgress,
-        ).foldAsync(
-          onSuccess = {},
-          onFailure = {
-            when (it.code) {
-              OperationError.NotFoundError -> openPlaybackSession(overallProgress)
-              else -> Unit
+    ) = mediaChannel
+      .syncProgress(
+        sessionId = session.sessionId,
+        itemId = session.itemId,
+        progress = overallProgress,
+      ).foldAsync(
+        onSuccess = {},
+        onFailure = {
+          when (it.code) {
+            OperationError.NotFoundError -> {
+              val newSession = openPlaybackSession(item, overallProgress)
+              withContext(Dispatchers.Main) {
+                playbackSession = newSession
+              }
             }
-          },
-        )
+            else -> Unit
+          }
+        },
+      )
 
-    private suspend fun openPlaybackSession(overallProgress: PlaybackProgress) =
-      currentItem
-        ?.let { item ->
-          val chapterIndex = calculateChapterIndex(item, overallProgress.currentTotalTime)
-          mediaChannel
-            .startPlayback(
-              itemId = item.id,
-              deviceId = sharedPreferences.getDeviceId(),
-              supportedMimeTypes = MimeTypeProvider.getSupportedMimeTypes(),
-              chapterId = item.chapters[chapterIndex].id,
-            ).fold(
-              onSuccess = { playbackSession = it },
-              onFailure = {},
-            )
-        }
+    private suspend fun openPlaybackSession(
+      item: DetailedItem,
+      overallProgress: PlaybackProgress,
+    ): PlaybackSession? {
+      val chapterIndex = calculateChapterIndex(item, overallProgress.currentTotalTime)
+      return mediaChannel
+        .startPlayback(
+          itemId = item.id,
+          deviceId = sharedPreferences.getDeviceId(),
+          supportedMimeTypes = MimeTypeProvider.getSupportedMimeTypes(),
+          chapterId = item.chapters[chapterIndex].id,
+        ).fold(
+          onSuccess = { it },
+          onFailure = { null },
+        )
+    }
 
     private fun getProgress(currentElapsedMs: Long): PlaybackProgress? {
       val currentItem =

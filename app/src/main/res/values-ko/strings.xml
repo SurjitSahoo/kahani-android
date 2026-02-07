@@ -30,7 +30,7 @@
     <string name="the_offline_library_is_empty">저장된 책이 없습니다</string>
     <string name="audiobookshelf_server_is_required">Audiobookshelf 서버가 필요합니다</string>
     <string name="no_internet_connection">인터넷 연결이 없습니다</string>
-    <string name="app_crach_toast">애플리케이션 오류가 발생했습니다\n관련 로그가 전달되었습니다</string>
+    <string name="app_crash_toast">애플리케이션 오류가 발생했습니다\n관련 로그가 전달되었습니다</string>
     <string name="playback_speed_title">재생 속도</string>
     <string name="color_scheme_follow_system">시스템</string>
     <string name="color_scheme_light">라이트</string>
@@ -149,9 +149,6 @@
     <string name="local_url_hint_ssid_name">WiFi 네트워크 이름</string>
     <string name="location_permission_request_hint">앱이 WiFi 이름을 감지하려면 위치 접근 권한이 필요합니다.</string>
     <string name="permission_request_grant_button">허용</string>
-    <string name="settings_screen_clear_thumbnail_cache_title">썸네일 캐시 삭제</string>
-    <string name="settings_screen_clear_thumbnail_cache_hint">공간 확보를 위해 썸네일 캐시 삭제</string>
-    <string name="settings_screen_clear_thumbnail_cache_success_toast">썸네일 캐시 삭제됨</string>
     <string name="settings_screen_delay_autodownload_title">자동 다운로드 지연</string>
     <string name="settings_screen_delay_autodownload_description">다운로드를 시작하기 전에 잠시 대기</string>
     <string name="settings_screen_bypass_ssl_title">SSL 인증 비활성화</string>

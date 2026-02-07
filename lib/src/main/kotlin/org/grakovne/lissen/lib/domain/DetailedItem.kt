@@ -5,61 +5,57 @@ import com.squareup.moshi.JsonClass
 import java.io.Serializable
 
 @Keep
-@JsonClass(generateAdapter = true)
 data class DetailedItem(
-  val id: String,
-  val title: String,
-  val subtitle: String?,
-  val author: String?,
-  val narrator: String?,
-  val publisher: String?,
-  val series: List<BookSeries>,
-  val year: String?,
-  val abstract: String?,
-  val files: List<BookFile>,
-  val chapters: List<PlayingChapter>,
-  val progress: MediaProgress?,
-  val libraryId: String?,
-  val libraryType: LibraryType?,
-  val localProvided: Boolean,
-  val createdAt: Long,
-  val updatedAt: Long,
+  val id: String = "",
+  val title: String = "",
+  val subtitle: String? = null,
+  val author: String? = null,
+  val narrator: String? = null,
+  val publisher: String? = null,
+  val series: List<BookSeries> = emptyList(),
+  val year: String? = null,
+  val abstract: String? = null,
+  val files: List<BookFile> = emptyList(),
+  val chapters: List<PlayingChapter> = emptyList(),
+  val progress: MediaProgress? = null,
+  val libraryId: String? = null,
+  val libraryType: LibraryType? = null,
+  val localProvided: Boolean = false,
+  val createdAt: Long = 0,
+  val updatedAt: Long = 0,
 ) : Serializable
 
 @Keep
-@JsonClass(generateAdapter = true)
 data class BookFile(
-  val id: String,
-  val name: String,
-  val duration: Double,
-  val mimeType: String,
+  val id: String = "",
+  val name: String = "",
+  val duration: Double = 0.0,
+  val mimeType: String = "",
+  val size: Long = 0,
 ) : Serializable
 
 @Keep
-@JsonClass(generateAdapter = true)
 data class MediaProgress(
-  val currentTime: Double,
-  val isFinished: Boolean,
-  val lastUpdate: Long,
+  val currentTime: Double = 0.0,
+  val isFinished: Boolean = false,
+  val lastUpdate: Long = 0,
 ) : Serializable
 
 @Keep
-@JsonClass(generateAdapter = true)
 data class PlayingChapter(
-  val available: Boolean,
-  val podcastEpisodeState: BookChapterState?,
-  val duration: Double,
-  val start: Double,
-  val end: Double,
-  val title: String,
-  val id: String,
+  val available: Boolean = false,
+  val podcastEpisodeState: BookChapterState? = null,
+  val duration: Double = 0.0,
+  val start: Double = 0.0,
+  val end: Double = 0.0,
+  val title: String = "",
+  val id: String = "",
 ) : Serializable
 
 @Keep
-@JsonClass(generateAdapter = true)
 data class BookSeries(
-  val serialNumber: String?,
-  val name: String,
+  val serialNumber: String? = null,
+  val name: String = "",
 ) : Serializable
 
 @Keep

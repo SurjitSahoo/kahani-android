@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -30,6 +31,7 @@ import org.grakovne.lissen.lib.domain.TimerOption
 import org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 import org.grakovne.lissen.playback.MediaSessionProvider
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @UnstableApi
@@ -60,11 +62,15 @@ class PlaybackService : MediaSessionService() {
   lateinit var playbackTimer: PlaybackTimer
 
   @Inject
-  lateinit var mediaCache: Cache
+  lateinit var mediaCache: dagger.Lazy<Cache>
 
   private var session: MediaSession? = null
 
-  private var smartRewindApplied = false
+  private var artworkJob: kotlinx.coroutines.Job? = null
+
+  private var playbackJob: kotlinx.coroutines.Job? = null
+
+  private var smartRewindApplied = AtomicBoolean(false)
 
   private val playerServiceScope = MainScope()
 
@@ -112,26 +118,38 @@ class PlaybackService : MediaSessionService() {
       }
 
       ACTION_PLAY -> {
-        playerServiceScope
-          .launch {
-            checkAndApplySmartRewind()
-            exoPlayer.prepare()
-            exoPlayer.setPlaybackSpeed(sharedPreferences.getPlaybackSpeed())
-            exoPlayer.playWhenReady = true
-          }
+        playbackJob?.cancel()
+        playbackJob =
+          playerServiceScope
+            .launch {
+              checkAndApplySmartRewind()
+              if (exoPlayer.playbackState == ExoPlayer.STATE_IDLE) {
+                exoPlayer.prepare()
+              }
+              exoPlayer.setPlaybackSpeed(sharedPreferences.getPlaybackSpeed())
+              exoPlayer.playWhenReady = true
+            }
         return START_STICKY
       }
 
       ACTION_PAUSE -> {
-        pause()
+        playbackJob?.cancel()
+        playbackJob =
+          playerServiceScope
+            .launch {
+              smartRewindApplied.set(false)
+              exoPlayer.playWhenReady = false
+            }
         return START_NOT_STICKY
       }
 
       ACTION_SET_PLAYBACK -> {
         val book = intent.getSerializableExtra(BOOK_EXTRA) as? DetailedItem
         book?.let {
-          playerServiceScope
-            .launch { preparePlayback(it) }
+          playbackJob?.cancel()
+          playbackJob =
+            playerServiceScope
+              .launch { preparePlayback(it) }
         }
         return START_NOT_STICKY
       }
@@ -173,7 +191,8 @@ class PlaybackService : MediaSessionService() {
   @OptIn(UnstableApi::class)
   private suspend fun preparePlayback(book: DetailedItem) {
     exoPlayer.playWhenReady = false
-    smartRewindApplied = false
+    smartRewindApplied.set(false)
+    artworkJob?.cancel()
 
     withContext(Dispatchers.IO) {
       val prepareQueue =
@@ -181,7 +200,7 @@ class PlaybackService : MediaSessionService() {
           val sourceFactory =
             LissenDataSourceFactory(
               baseContext = baseContext,
-              mediaCache = mediaCache,
+              mediaCache = mediaCache.get(),
               requestHeadersProvider = requestHeadersProvider,
               sharedPreferences = sharedPreferences,
               mediaProvider = mediaProvider,
@@ -196,7 +215,7 @@ class PlaybackService : MediaSessionService() {
                     .Builder()
                     .setTitle(file.name)
                     .setArtist(book.title)
-                    .setArtworkUri(fetchCover(book))
+                    .build()
 
                 val mediaItem =
                   MediaItem
@@ -204,7 +223,7 @@ class PlaybackService : MediaSessionService() {
                     .setMediaId(file.id)
                     .setUri(apply(book.id, file.id))
                     .setTag(book)
-                    .setMediaMetadata(mediaData.build())
+                    .setMediaMetadata(mediaData)
                     .build()
 
                 ProgressiveMediaSource
@@ -219,18 +238,40 @@ class PlaybackService : MediaSessionService() {
             val startPosition = calculateSmartRewindPosition(book)
             val currentPosition = book.progress?.currentTime ?: 0.0
 
-            if (startPosition < currentPosition) {
-              Timber.d("Smart rewind applied. Seeking to $startPosition from $currentPosition")
-              smartRewindApplied = true
-            }
-
             seek(book.files, startPosition)
+            smartRewindApplied.set(true)
           }
         }
 
       val prepareSession =
         async {
           playbackSynchronizationService.startPlaybackSynchronization(book)
+        }
+
+      // Fire-and-forget: Update cover in background without blocking playback readiness.
+      artworkJob =
+        launch {
+          val artworkUri = fetchCover(book) ?: return@launch
+
+          withContext(Dispatchers.Main) {
+            for (i in 0 until exoPlayer.mediaItemCount) {
+              val currentItem = exoPlayer.getMediaItemAt(i)
+              val updatedMetadata =
+                currentItem
+                  .mediaMetadata
+                  .buildUpon()
+                  .setArtworkUri(artworkUri)
+                  .build()
+
+              val updatedItem =
+                currentItem
+                  .buildUpon()
+                  .setMediaMetadata(updatedMetadata)
+                  .build()
+
+              exoPlayer.replaceMediaItem(i, updatedItem)
+            }
+          }
         }
 
       awaitAll(prepareSession, prepareQueue)
@@ -247,32 +288,23 @@ class PlaybackService : MediaSessionService() {
   }
 
   private suspend fun checkAndApplySmartRewind() {
-    if (smartRewindApplied) {
+    if (smartRewindApplied.get()) {
       return
     }
 
     val item = exoPlayer.currentMediaItem?.localConfiguration?.tag as? DetailedItem ?: return
 
-    withContext(Dispatchers.IO) {
-      val book =
-        mediaProvider
-          .fetchBook(item.id)
-          .fold(
-            onSuccess = { it },
-            onFailure = { item },
-          )
+    val startPosition = calculateSmartRewindPosition(item)
+    val currentPosition = item.progress?.currentTime ?: 0.0
 
+    if (startPosition < currentPosition) {
       withContext(Dispatchers.Main) {
-        val startPosition = calculateSmartRewindPosition(book)
-        val currentPosition = book.progress?.currentTime ?: 0.0
-
-        if (startPosition < currentPosition) {
-          Timber.d("Smart rewind applied (on resume). Seeking to $startPosition from $currentPosition")
-          seek(book.files, startPosition)
-          smartRewindApplied = true
-        }
+        Timber.d("Smart rewind applied (on resume). Seeking to $startPosition from $currentPosition")
+        seek(item.files, startPosition)
       }
     }
+
+    smartRewindApplied.set(true)
   }
 
   private fun calculateSmartRewindPosition(book: DetailedItem): Double =
@@ -315,16 +347,6 @@ class PlaybackService : MediaSessionService() {
   private fun cancelTimer() {
     playbackTimer.stopTimer()
     Timber.d("Timer canceled.")
-  }
-
-  private fun pause() {
-    smartRewindApplied = false
-    playerServiceScope
-      .launch {
-        exoPlayer.playWhenReady = false
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
-      }
   }
 
   private fun seek(

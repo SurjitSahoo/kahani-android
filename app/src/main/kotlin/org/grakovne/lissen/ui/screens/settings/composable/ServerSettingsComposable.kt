@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.microsoft.clarity.modifiers.clarityMask
 import org.grakovne.lissen.R
 import org.grakovne.lissen.channel.audiobookshelf.HostType
 import org.grakovne.lissen.ui.navigation.AppNavigationService
@@ -87,6 +88,7 @@ fun ServerSettingsComposable(
           color = colorScheme.onSurfaceVariant,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
+          modifier = Modifier.clarityMask(),
         )
       }
     }
@@ -127,6 +129,7 @@ fun ServerSettingsComposable(
             InfoRow(
               label = stringResource(R.string.settings_screen_connected_as_title),
               value = it,
+              modifier = Modifier.clarityMask(),
             )
 
             HorizontalDivider()
@@ -164,8 +167,10 @@ fun ServerSettingsComposable(
 fun InfoRow(
   label: String,
   value: String,
+  modifier: Modifier = Modifier,
 ) {
   ListItem(
+    modifier = modifier,
     headlineContent = {
       Row(
         modifier = Modifier.fillMaxWidth(),
