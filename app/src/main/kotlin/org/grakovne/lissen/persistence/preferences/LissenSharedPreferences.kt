@@ -6,6 +6,8 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Types
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -740,6 +742,7 @@ class LissenSharedPreferences
         return try {
           String(cipher.doFinal(cipherText))
         } catch (ex: Exception) {
+          Firebase.crashlytics.recordException(ex)
           null
         }
       }

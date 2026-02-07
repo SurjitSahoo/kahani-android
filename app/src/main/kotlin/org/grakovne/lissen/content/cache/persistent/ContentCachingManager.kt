@@ -1,6 +1,8 @@
 package org.grakovne.lissen.content.cache.persistent
 
 import android.content.Context
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -268,6 +270,7 @@ class ContentCachingManager
               }
             }
           } catch (ex: Exception) {
+            Firebase.crashlytics.recordException(ex)
             return@withContext CacheState(CacheStatus.Error)
           }
         }
@@ -297,6 +300,7 @@ class ContentCachingManager
                   .withBlur(context, width = 300) // Trigger thumbnail transformation
                   .writeToFile(thumbFile)
               } catch (ex: Exception) {
+                Firebase.crashlytics.recordException(ex)
                 return@fold CacheState(CacheStatus.Error)
               }
             },

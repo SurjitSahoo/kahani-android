@@ -21,7 +21,10 @@ class LissenApplication : Application() {
     }
 
     val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-    Thread.setDefaultUncaughtExceptionHandler(org.grakovne.lissen.common.CrashHandler(this, defaultHandler))
+    Thread.setDefaultUncaughtExceptionHandler(
+      org.grakovne.lissen.common
+        .CrashHandler(this, defaultHandler),
+    )
 
     runningComponents.forEach {
       try {

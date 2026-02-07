@@ -22,6 +22,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -184,6 +186,7 @@ class MediaRepository
 
           override fun onFailure(t: Throwable) {
             Timber.e("Unable to add callback to player")
+            Firebase.crashlytics.recordException(t)
             clarityTracker.trackEvent("playback_error", t.message ?: "Unknown error")
           }
         },
@@ -317,6 +320,7 @@ class MediaRepository
           toneGen.release()
         }, 200)
       } catch (e: Exception) {
+        Firebase.crashlytics.recordException(e)
         Timber.e(e, "Failed to play reset sound")
       }
     }
@@ -356,6 +360,7 @@ class MediaRepository
 
         seekTo(chapterStartsAt)
       } catch (ex: Exception) {
+        Firebase.crashlytics.recordException(ex)
         return
       }
     }
@@ -384,6 +389,7 @@ class MediaRepository
 
         seekTo(absolutePosition)
       } catch (ex: Exception) {
+        Firebase.crashlytics.recordException(ex)
         return
       }
     }
