@@ -67,6 +67,8 @@ class PlaybackService : MediaSessionService() {
 
   private var artworkJob: kotlinx.coroutines.Job? = null
 
+  private var playbackJob: kotlinx.coroutines.Job? = null
+
   private var smartRewindApplied = false
 
   private val playerServiceScope = MainScope()
@@ -115,26 +117,38 @@ class PlaybackService : MediaSessionService() {
       }
 
       ACTION_PLAY -> {
-        playerServiceScope
-          .launch {
-            checkAndApplySmartRewind()
-            exoPlayer.prepare()
-            exoPlayer.setPlaybackSpeed(sharedPreferences.getPlaybackSpeed())
-            exoPlayer.playWhenReady = true
-          }
+        playbackJob?.cancel()
+        playbackJob =
+          playerServiceScope
+            .launch {
+              checkAndApplySmartRewind()
+              if (exoPlayer.playbackState == ExoPlayer.STATE_IDLE) {
+                exoPlayer.prepare()
+              }
+              exoPlayer.setPlaybackSpeed(sharedPreferences.getPlaybackSpeed())
+              exoPlayer.playWhenReady = true
+            }
         return START_STICKY
       }
 
       ACTION_PAUSE -> {
-        pause()
+        playbackJob?.cancel()
+        playbackJob =
+          playerServiceScope
+            .launch {
+              smartRewindApplied = false
+              exoPlayer.playWhenReady = false
+            }
         return START_NOT_STICKY
       }
 
       ACTION_SET_PLAYBACK -> {
         val book = intent.getSerializableExtra(BOOK_EXTRA) as? DetailedItem
         book?.let {
-          playerServiceScope
-            .launch { preparePlayback(it) }
+          playbackJob?.cancel()
+          playbackJob =
+            playerServiceScope
+              .launch { preparePlayback(it) }
         }
         return START_NOT_STICKY
       }
@@ -223,12 +237,8 @@ class PlaybackService : MediaSessionService() {
             val startPosition = calculateSmartRewindPosition(book)
             val currentPosition = book.progress?.currentTime ?: 0.0
 
-            if (startPosition < currentPosition) {
-              Timber.d("Smart rewind applied. Seeking to $startPosition from $currentPosition")
-              smartRewindApplied = true
-            }
-
             seek(book.files, startPosition)
+            smartRewindApplied = true
           }
         }
 
@@ -283,26 +293,17 @@ class PlaybackService : MediaSessionService() {
 
     val item = exoPlayer.currentMediaItem?.localConfiguration?.tag as? DetailedItem ?: return
 
-    withContext(Dispatchers.IO) {
-      val book =
-        mediaProvider
-          .fetchBook(item.id)
-          .fold(
-            onSuccess = { it },
-            onFailure = { item },
-          )
+    val startPosition = calculateSmartRewindPosition(item)
+    val currentPosition = item.progress?.currentTime ?: 0.0
 
+    if (startPosition < currentPosition) {
       withContext(Dispatchers.Main) {
-        val startPosition = calculateSmartRewindPosition(book)
-        val currentPosition = book.progress?.currentTime ?: 0.0
-
-        if (startPosition < currentPosition) {
-          Timber.d("Smart rewind applied (on resume). Seeking to $startPosition from $currentPosition")
-          seek(book.files, startPosition)
-          smartRewindApplied = true
-        }
+        Timber.d("Smart rewind applied (on resume). Seeking to $startPosition from $currentPosition")
+        seek(item.files, startPosition)
       }
     }
+
+    smartRewindApplied = true
   }
 
   private fun calculateSmartRewindPosition(book: DetailedItem): Double =
@@ -345,16 +346,6 @@ class PlaybackService : MediaSessionService() {
   private fun cancelTimer() {
     playbackTimer.stopTimer()
     Timber.d("Timer canceled.")
-  }
-
-  private fun pause() {
-    smartRewindApplied = false
-    playerServiceScope
-      .launch {
-        exoPlayer.playWhenReady = false
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
-      }
   }
 
   private fun seek(

@@ -52,6 +52,7 @@ class PlaybackSynchronizationService
     fun startPlaybackSynchronization(item: DetailedItem) {
       serviceScope.coroutineContext.cancelChildren()
       currentItem = item
+      runSync()
     }
 
     fun cancelSynchronization() {
@@ -90,34 +91,36 @@ class PlaybackSynchronizationService
     }
 
     private fun runSync() {
-      val elapsedMs = exoPlayer.currentPosition
-      val overallProgress = getProgress(elapsedMs) ?: return
+      serviceScope.launch {
+        val elapsedMs = exoPlayer.currentPosition
+        val overallProgress = getProgress(elapsedMs) ?: return@launch
 
-      Timber.d("Trying to sync $overallProgress for ${currentItem?.id}")
+        Timber.d("Trying to sync $overallProgress for ${currentItem?.id}")
 
-      serviceScope.launch(Dispatchers.IO) {
-        if (syncMutex.tryLock().not()) {
-          Timber.d("Sync is already running")
-          return@launch
-        }
-
-        try {
-          val currentIndex =
-            currentItem
-              ?.let { calculateChapterIndex(it, overallProgress.currentTotalTime) }
-              ?: return@launch
-
-          if (playbackSession == null || playbackSession?.itemId != currentItem?.id || currentIndex != currentChapterIndex) {
-            openPlaybackSession(overallProgress)
-            currentChapterIndex = currentIndex
+        launch(Dispatchers.IO) {
+          if (syncMutex.tryLock().not()) {
+            Timber.d("Sync is already running")
+            return@launch
           }
 
-          mediaChannel.syncLocalProgress(currentItem?.id ?: return@launch, overallProgress)
-          playbackSession?.let { requestSync(it, overallProgress) }
-        } catch (e: Exception) {
-          Timber.e(e, "Error during sync")
-        } finally {
-          syncMutex.unlock()
+          try {
+            val currentIndex =
+              currentItem
+                ?.let { calculateChapterIndex(it, overallProgress.currentTotalTime) }
+                ?: return@launch
+
+            if (playbackSession == null || playbackSession?.itemId != currentItem?.id || currentIndex != currentChapterIndex) {
+              openPlaybackSession(overallProgress)
+              currentChapterIndex = currentIndex
+            }
+
+            mediaChannel.syncLocalProgress(currentItem?.id ?: return@launch, overallProgress)
+            playbackSession?.let { requestSync(it, overallProgress) }
+          } catch (e: Exception) {
+            Timber.e(e, "Error during sync")
+          } finally {
+            syncMutex.unlock()
+          }
         }
       }
     }
