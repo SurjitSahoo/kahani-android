@@ -677,7 +677,12 @@ private fun CachedItemVolumeComposable(
                       playerViewModel.clearPlayingBook()
                     }
                   }
-                  viewModel.dropCache(item, volume.chapters.first()) // dropCache by chapter handles file deletion
+                  volume.chapters.forEach { chapter ->
+                    viewModel.dropCache(
+                      item = item,
+                      chapter = chapter,
+                    )
+                  } // dropCache by chapter handles file deletion
                   onItemRemoved()
                 }
               }
@@ -740,7 +745,7 @@ private suspend fun deleteSelectedVolumes(
     book?.let {
       val volumes = viewModel.getVolumes(it)
       val volume = volumes.find { v -> v.id == selection.fileId }
-      volume?.chapters?.firstOrNull()?.let { chapter ->
+      volume?.chapters?.forEach { chapter ->
         playerViewModel.book.value?.let { playingBook ->
           if (playingBook.id == it.id) {
             playerViewModel.clearPlayingBook()

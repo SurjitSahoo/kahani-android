@@ -45,19 +45,20 @@ class UpdateCheckerService
               .header("Accept", "application/vnd.github.v3+json")
               .build()
 
-          val response = client.newCall(request).execute()
-          if (!response.isSuccessful) {
-            Timber.e("Update check failed: ${response.code}")
-            return@withContext
-          }
+          client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+              Timber.e("Update check failed: ${response.code}")
+              return@withContext
+            }
 
-          val json = response.body?.string() ?: return@withContext
-          val releaseNode = JSONObject(json)
-          val tagName = releaseNode.optString("tag_name", "")
-          val htmlUrl = releaseNode.optString("html_url", "")
+            val json = response.body?.string() ?: return@withContext
+            val releaseNode = JSONObject(json)
+            val tagName = releaseNode.optString("tag_name", "")
+            val htmlUrl = releaseNode.optString("html_url", "")
 
-          if (tagName.isNotEmpty() && isNewerVersion(tagName, BuildConfig.VERSION_NAME)) {
-            showUpdateNotification(tagName, htmlUrl)
+            if (tagName.isNotEmpty() && isNewerVersion(tagName, BuildConfig.VERSION_NAME)) {
+              showUpdateNotification(tagName, htmlUrl)
+            }
           }
         } catch (e: Exception) {
           Timber.e(e, "Failed to check for updates")

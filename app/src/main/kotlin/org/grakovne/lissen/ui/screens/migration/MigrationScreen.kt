@@ -90,15 +90,8 @@ fun MigrationScreen(
 
           Spacer(modifier = Modifier.height(Spacing.md))
 
-          TextButton(
-            onClick = { onMigrationComplete() },
-            modifier = Modifier.fillMaxWidth(),
-          ) {
-            Text(
-              text = stringResource(R.string.migration_screen_dismiss_button),
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
+          // Dismiss button is intentionally hidden on error to prevent bypassing failed migration.
+          // Users must retry or clear app data (via system settings) if issues persist.
         }
 
         else -> {

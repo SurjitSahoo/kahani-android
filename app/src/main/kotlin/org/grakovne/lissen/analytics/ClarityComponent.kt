@@ -81,11 +81,19 @@ class ClarityComponent
         val host = preferences.getHost() ?: return
 
         // Combine host and username for a unique identifier across servers
-        val identifier = "$username@$host"
-        clarityTracker.setUser(identifier)
+        val rawIdentifier = "$username@$host"
+        val hashedIdentifier = hashIdentifier(rawIdentifier)
+
+        clarityTracker.setUser(hashedIdentifier)
       } else {
         // Fallback to device ID if not logged in
         clarityTracker.setUser(preferences.getDeviceId())
       }
+    }
+
+    private fun hashIdentifier(input: String): String {
+      val digest = java.security.MessageDigest.getInstance("SHA-256")
+      val hashBytes = digest.digest(input.toByteArray(Charsets.UTF_8))
+      return hashBytes.joinToString("") { "%02x".format(it) }
     }
   }

@@ -65,6 +65,8 @@ class PlaybackService : MediaSessionService() {
 
   private var session: MediaSession? = null
 
+  private var artworkJob: kotlinx.coroutines.Job? = null
+
   private var smartRewindApplied = false
 
   private val playerServiceScope = MainScope()
@@ -175,6 +177,7 @@ class PlaybackService : MediaSessionService() {
   private suspend fun preparePlayback(book: DetailedItem) {
     exoPlayer.playWhenReady = false
     smartRewindApplied = false
+    artworkJob?.cancel()
 
     withContext(Dispatchers.IO) {
       val prepareQueue =
@@ -235,29 +238,30 @@ class PlaybackService : MediaSessionService() {
         }
 
       // Fire-and-forget: Update cover in background without blocking playback readiness.
-      launch {
-        val artworkUri = fetchCover(book) ?: return@launch
+      artworkJob =
+        launch {
+          val artworkUri = fetchCover(book) ?: return@launch
 
-        withContext(Dispatchers.Main) {
-          for (i in 0 until exoPlayer.mediaItemCount) {
-            val currentItem = exoPlayer.getMediaItemAt(i)
-            val updatedMetadata =
-              currentItem
-                .mediaMetadata
-                .buildUpon()
-                .setArtworkUri(artworkUri)
-                .build()
+          withContext(Dispatchers.Main) {
+            for (i in 0 until exoPlayer.mediaItemCount) {
+              val currentItem = exoPlayer.getMediaItemAt(i)
+              val updatedMetadata =
+                currentItem
+                  .mediaMetadata
+                  .buildUpon()
+                  .setArtworkUri(artworkUri)
+                  .build()
 
-            val updatedItem =
-              currentItem
-                .buildUpon()
-                .setMediaMetadata(updatedMetadata)
-                .build()
+              val updatedItem =
+                currentItem
+                  .buildUpon()
+                  .setMediaMetadata(updatedMetadata)
+                  .build()
 
-            exoPlayer.replaceMediaItem(i, updatedItem)
+              exoPlayer.replaceMediaItem(i, updatedItem)
+            }
           }
         }
-      }
 
       awaitAll(prepareSession, prepareQueue)
 

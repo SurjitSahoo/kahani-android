@@ -289,7 +289,7 @@ class LissenMediaProvider
       username: String,
       password: String,
     ): OperationResult<UserAccount> {
-      Timber.d("Authorizing for $username@$host")
+      Timber.d("Authorizing for ***@$host")
       return provideAuthService().authorize(host, username, password) { onPostLogin(host, it) }
     }
 
@@ -298,7 +298,7 @@ class LissenMediaProvider
       onSuccess: () -> Unit,
       onFailure: (OperationError) -> Unit,
     ) {
-      Timber.d("Starting OAuth for $host")
+      Timber.d("Starting OAuth")
 
       return provideAuthService()
         .startOAuth(

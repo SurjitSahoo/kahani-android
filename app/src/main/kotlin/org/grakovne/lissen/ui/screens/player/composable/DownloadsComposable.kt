@@ -45,18 +45,29 @@ import androidx.compose.ui.unit.sp
 import org.grakovne.lissen.R
 import org.grakovne.lissen.content.cache.common.findRelatedFilesByStartTimes
 import org.grakovne.lissen.content.cache.persistent.calculateRequestedChapters
+import org.grakovne.lissen.lib.domain.AllItemsDownloadOption
+import org.grakovne.lissen.lib.domain.BookStorageType
+import org.grakovne.lissen.lib.domain.BookVolume
+import org.grakovne.lissen.lib.domain.CurrentItemDownloadOption
+import org.grakovne.lissen.lib.domain.DetailedItem
+import org.grakovne.lissen.lib.domain.DownloadOption
+import org.grakovne.lissen.lib.domain.LibraryType
+import org.grakovne.lissen.lib.domain.NumberItemDownloadOption
+import org.grakovne.lissen.lib.domain.RemainingItemsDownloadOption
+import org.grakovne.lissen.lib.domain.SpecificFilesDownloadOption
+import org.grakovne.lissen.playback.service.calculateChapterIndex
 import org.grakovne.lissen.ui.effects.WindowBlurEffect
 import org.grakovne.lissen.ui.screens.common.makeText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadsComposable(
-  book: org.grakovne.lissen.lib.domain.DetailedItem,
-  storageType: org.grakovne.lissen.lib.domain.BookStorageType,
-  volumes: List<org.grakovne.lissen.lib.domain.BookVolume>,
+  book: DetailedItem,
+  storageType: BookStorageType,
+  volumes: List<BookVolume>,
   isOnline: Boolean,
   cachingInProgress: Boolean,
-  onRequestedDownload: (org.grakovne.lissen.lib.domain.DownloadOption) -> Unit,
+  onRequestedDownload: (DownloadOption) -> Unit,
   onRequestedStop: () -> Unit,
   onRequestedDrop: () -> Unit,
   onRequestedDropCompleted: () -> Unit,
@@ -65,13 +76,12 @@ fun DownloadsComposable(
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-  val libraryType = book.libraryType ?: org.grakovne.lissen.lib.domain.LibraryType.UNKNOWN
+  val libraryType = book.libraryType ?: LibraryType.UNKNOWN
   val hasCachedContent = volumes.any { it.isDownloaded }
   val isFullBookDownloaded = volumes.all { it.isDownloaded }
 
   val currentChapterIndex =
-    org.grakovne.lissen.playback.service
-      .calculateChapterIndex(book, book.progress?.currentTime ?: 0.0)
+    calculateChapterIndex(book, book.progress?.currentTime ?: 0.0)
   val currentVolume =
     volumes.find { volume ->
       volume.chapters.any { it.id == book.chapters.getOrNull(currentChapterIndex)?.id }
@@ -106,9 +116,9 @@ fun DownloadsComposable(
       ) {
         val title =
           when (libraryType) {
-            org.grakovne.lissen.lib.domain.LibraryType.LIBRARY -> stringResource(R.string.downloads_menu_download_book)
-            org.grakovne.lissen.lib.domain.LibraryType.PODCAST -> stringResource(R.string.downloads_menu_download_podcast)
-            org.grakovne.lissen.lib.domain.LibraryType.UNKNOWN -> stringResource(R.string.downloads_menu_download_unknown)
+            LibraryType.LIBRARY -> stringResource(R.string.downloads_menu_download_book)
+            LibraryType.PODCAST -> stringResource(R.string.downloads_menu_download_podcast)
+            LibraryType.UNKNOWN -> stringResource(R.string.downloads_menu_download_unknown)
           }
 
         Text(
@@ -151,7 +161,7 @@ fun DownloadsComposable(
             ) {
               Column {
                 // Scenario A: Monolith
-                if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.MONOLITH) {
+                if (storageType == BookStorageType.MONOLITH) {
                   val monolithVolume = volumes.firstOrNull()
                   if (monolithVolume != null && !monolithVolume.isDownloaded) {
                     ActionRow(
@@ -166,7 +176,7 @@ fun DownloadsComposable(
                       enabled = isOnline,
                       isSuggested = true,
                       onClick = {
-                        onRequestedDownload(org.grakovne.lissen.lib.domain.AllItemsDownloadOption)
+                        onRequestedDownload(AllItemsDownloadOption)
                         onDismissRequest()
                       },
                     )
@@ -174,7 +184,7 @@ fun DownloadsComposable(
                 }
 
                 // Scenario B: Segmented
-                if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.SEGMENTED) {
+                if (storageType == BookStorageType.SEGMENTED) {
                   if (currentVolume != null && !currentVolume.isDownloaded) {
                     val startIdx = book.chapters.indexOfFirst { it.id == currentVolume.chapters.firstOrNull()?.id }
                     val startChapter = if (startIdx >= 0) startIdx + 1 else null
@@ -209,8 +219,7 @@ fun DownloadsComposable(
                       isSuggested = true,
                       onClick = {
                         onRequestedDownload(
-                          org.grakovne.lissen.lib.domain
-                            .SpecificFilesDownloadOption(listOf(currentVolume.id)),
+                          SpecificFilesDownloadOption(listOf(currentVolume.id)),
                         )
                         onDismissRequest()
                       },
@@ -242,8 +251,7 @@ fun DownloadsComposable(
                       isSuggested = currentVolume?.isDownloaded == true,
                       onClick = {
                         onRequestedDownload(
-                          org.grakovne.lissen.lib.domain
-                            .SpecificFilesDownloadOption(remainingVolumes.map { it.id }),
+                          SpecificFilesDownloadOption(remainingVolumes.map { it.id }),
                         )
                         onDismissRequest()
                       },
@@ -268,7 +276,7 @@ fun DownloadsComposable(
                       trailingIcon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                       enabled = isOnline,
                       onClick = {
-                        onRequestedDownload(org.grakovne.lissen.lib.domain.AllItemsDownloadOption)
+                        onRequestedDownload(AllItemsDownloadOption)
                         onDismissRequest()
                       },
                     )
@@ -276,7 +284,7 @@ fun DownloadsComposable(
                 }
 
                 // Scenario C: Atomic
-                if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.ATOMIC) {
+                if (storageType == BookStorageType.ATOMIC) {
                   AtomicOptions.forEachIndexed { index, option ->
                     val requestedChapters =
                       calculateRequestedChapters(
@@ -294,10 +302,10 @@ fun DownloadsComposable(
 
                     val icon =
                       when (option) {
-                        is org.grakovne.lissen.lib.domain.CurrentItemDownloadOption -> Icons.Default.MusicNote
-                        is org.grakovne.lissen.lib.domain.NumberItemDownloadOption -> Icons.Default.Layers
-                        is org.grakovne.lissen.lib.domain.RemainingItemsDownloadOption -> Icons.AutoMirrored.Filled.QueueMusic
-                        is org.grakovne.lissen.lib.domain.AllItemsDownloadOption -> Icons.Default.Folder
+                        is CurrentItemDownloadOption -> Icons.Default.MusicNote
+                        is NumberItemDownloadOption -> Icons.Default.Layers
+                        is RemainingItemsDownloadOption -> Icons.AutoMirrored.Filled.QueueMusic
+                        is AllItemsDownloadOption -> Icons.Default.Folder
                         else -> Icons.Default.Folder
                       }
 
@@ -369,7 +377,7 @@ fun DownloadsComposable(
                     val showClearCompleted =
                       completedVolumes.isNotEmpty() ||
                         (
-                          storageType == org.grakovne.lissen.lib.domain.BookStorageType.ATOMIC &&
+                          storageType == BookStorageType.ATOMIC &&
                             book.chapters.any { it.available && (book.progress?.currentTime ?: 0.0) >= it.end }
                         )
 
@@ -377,11 +385,11 @@ fun DownloadsComposable(
                       ActionRow(
                         title =
                           when (libraryType) {
-                            org.grakovne.lissen.lib.domain.LibraryType.LIBRARY ->
+                            LibraryType.LIBRARY ->
                               stringResource(
                                 R.string.downloads_menu_download_option_clear_completed_chapters,
                               )
-                            org.grakovne.lissen.lib.domain.LibraryType.PODCAST ->
+                            LibraryType.PODCAST ->
                               stringResource(
                                 R.string.downloads_menu_download_option_clear_completed_episodes,
                               )
@@ -405,15 +413,15 @@ fun DownloadsComposable(
 
                     ActionRow(
                       title =
-                        if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.MONOLITH) {
+                        if (storageType == BookStorageType.MONOLITH) {
                           stringResource(R.string.download_modal_remove_book)
                         } else {
                           when (libraryType) {
-                            org.grakovne.lissen.lib.domain.LibraryType.LIBRARY ->
+                            LibraryType.LIBRARY ->
                               stringResource(
                                 R.string.downloads_menu_download_option_clear_chapters,
                               )
-                            org.grakovne.lissen.lib.domain.LibraryType.PODCAST ->
+                            LibraryType.PODCAST ->
                               stringResource(
                                 R.string.downloads_menu_download_option_clear_episodes,
                               )
@@ -452,11 +460,9 @@ private fun DragHandle() {
 
 private val AtomicOptions =
   listOf(
-    org.grakovne.lissen.lib.domain.CurrentItemDownloadOption,
-    org.grakovne.lissen.lib.domain
-      .NumberItemDownloadOption(5),
-    org.grakovne.lissen.lib.domain
-      .NumberItemDownloadOption(10),
-    org.grakovne.lissen.lib.domain.RemainingItemsDownloadOption,
-    org.grakovne.lissen.lib.domain.AllItemsDownloadOption,
+    CurrentItemDownloadOption,
+    NumberItemDownloadOption(5),
+    NumberItemDownloadOption(10),
+    RemainingItemsDownloadOption,
+    AllItemsDownloadOption,
   )
