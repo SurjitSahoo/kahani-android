@@ -3,6 +3,7 @@ package org.grakovne.lissen.ui.components
 import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
@@ -37,7 +39,59 @@ fun DownloadProgressIcon(
   size: Dp = 24.dp,
   color: Color = LocalContentColor.current,
 ) {
+  val isDark = isSystemInDarkTheme()
+  val successColor =
+    if (isDark) {
+      org.grakovne.lissen.ui.theme.DownloadSuccessDark
+    } else {
+      org.grakovne.lissen.ui.theme.DownloadSuccessLight
+    }
+
+  val shineAlpha by animateFloatAsState(
+    targetValue =
+      if (isFullyDownloaded &&
+        (cacheState.status is CacheStatus.Completed || cacheState.status is CacheStatus.Idle)
+      ) {
+        1f
+      } else {
+        0f
+      },
+    animationSpec = tween(durationMillis = 1000, easing = EaseOutQuart),
+    label = "shineAlpha",
+  )
+
+  val shineScale by animateFloatAsState(
+    targetValue =
+      if (isFullyDownloaded &&
+        (cacheState.status is CacheStatus.Completed || cacheState.status is CacheStatus.Idle)
+      ) {
+        1.5f
+      } else {
+        1f
+      },
+    animationSpec = tween(durationMillis = 1000, easing = EaseOutQuart),
+    label = "shineScale",
+  )
+
   Box(contentAlignment = Alignment.Center) {
+    if (isFullyDownloaded && shineAlpha > 0f) {
+      Icon(
+        imageVector = Icons.Filled.CloudDone,
+        contentDescription = null,
+        modifier =
+          Modifier
+            .size(size)
+            .graphicsLayer {
+              scaleX = shineScale
+              scaleY = shineScale
+              alpha = shineAlpha * (1f - (shineScale - 1f) * 2f).coerceIn(0f, 1f)
+            },
+        tint =
+          successColor
+            .copy(alpha = 0.5f),
+      )
+    }
+
     when (cacheState.status) {
       is CacheStatus.Queued -> {
         val queuedDescription = stringResource(R.string.accessibility_id_download_queued)
@@ -94,7 +148,7 @@ fun DownloadProgressIcon(
             imageVector = Icons.Filled.CloudDone,
             contentDescription = stringResource(R.string.accessibility_id_download_complete),
             modifier = Modifier.size(size),
-            tint = colorScheme.primary,
+            tint = successColor,
           )
         } else {
           Icon(
@@ -112,7 +166,7 @@ fun DownloadProgressIcon(
             imageVector = Icons.Filled.CloudDone,
             contentDescription = stringResource(R.string.accessibility_id_download_complete),
             modifier = Modifier.size(size),
-            tint = colorScheme.primary,
+            tint = successColor,
           )
         } else {
           Icon(

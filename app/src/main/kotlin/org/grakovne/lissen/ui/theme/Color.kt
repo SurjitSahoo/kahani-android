@@ -11,3 +11,6 @@ val MediumBackground = Color(0xFFDADADA)
 
 val SurfaceContainerLight = Color(0xFFEEEEEE)
 val TertiaryContainerDark = Color(0xFF1A1A1A)
+
+val DownloadSuccessLight = Color(0xFF475569)
+val DownloadSuccessDark = Color(0xFF94A3B8)

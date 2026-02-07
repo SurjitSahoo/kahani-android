@@ -38,6 +38,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AvTimer
@@ -86,6 +88,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
@@ -307,31 +311,54 @@ fun BookDetailScreen(
               }
 
               // Title & Author
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = 24.dp),
-              ) {
-                Text(
-                  text = book.title,
-                  style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                  color = colorScheme.onSurface,
-                  textAlign = TextAlign.Center,
-                  modifier = Modifier.weight(1f, fill = false),
-                  maxLines = 2,
-                  overflow = TextOverflow.Ellipsis,
+              val downloadCheckmarkColor =
+                if (isSystemInDarkTheme()) {
+                  org.grakovne.lissen.ui.theme.DownloadSuccessDark
+                } else {
+                  org.grakovne.lissen.ui.theme.DownloadSuccessLight
+                }
+
+              val titleText =
+                buildAnnotatedString {
+                  append(book.title)
+                  if (isFullyDownloaded) {
+                    append(" ")
+                    appendInlineContent("download_checkmark", "[downloaded]")
+                  }
+                }
+
+              val inlineContent =
+                mapOf(
+                  "download_checkmark" to
+                    InlineTextContent(
+                      Placeholder(
+                        width = 18.sp,
+                        height = 18.sp,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                      ),
+                    ) {
+                      Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = stringResource(R.string.accessibility_id_fully_downloaded),
+                        tint = downloadCheckmarkColor,
+                        modifier = Modifier.size(18.dp),
+                      )
+                    },
                 )
 
-                if (isFullyDownloaded) {
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = stringResource(R.string.accessibility_id_fully_downloaded),
-                    tint = colorScheme.primary,
-                    modifier = Modifier.size(20.dp),
-                  )
-                }
-              }
+              Text(
+                text = titleText,
+                inlineContent = inlineContent,
+                style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                color = colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier =
+                  Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth(),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+              )
 
               book.author?.takeIf { it.isNotBlank() }?.let {
                 Text(
