@@ -241,6 +241,7 @@ fun BookDetailScreen(
                 cacheState = cacheProgress,
                 isFullyDownloaded = isFullyDownloaded,
                 color = colorScheme.onSurface,
+                showShine = true,
               )
             }
           },
@@ -311,44 +312,8 @@ fun BookDetailScreen(
               }
 
               // Title & Author
-              val downloadCheckmarkColor =
-                if (isSystemInDarkTheme()) {
-                  org.grakovne.lissen.ui.theme.DownloadSuccessDark
-                } else {
-                  org.grakovne.lissen.ui.theme.DownloadSuccessLight
-                }
-
-              val titleText =
-                buildAnnotatedString {
-                  append(book.title)
-                  if (isFullyDownloaded) {
-                    append(" ")
-                    appendInlineContent("download_checkmark", "[downloaded]")
-                  }
-                }
-
-              val inlineContent =
-                mapOf(
-                  "download_checkmark" to
-                    InlineTextContent(
-                      Placeholder(
-                        width = 18.sp,
-                        height = 18.sp,
-                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                      ),
-                    ) {
-                      Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = stringResource(R.string.accessibility_id_fully_downloaded),
-                        tint = downloadCheckmarkColor,
-                        modifier = Modifier.size(18.dp),
-                      )
-                    },
-                )
-
               Text(
-                text = titleText,
-                inlineContent = inlineContent,
+                text = book.title,
                 style = typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = colorScheme.onSurface,
                 textAlign = TextAlign.Center,

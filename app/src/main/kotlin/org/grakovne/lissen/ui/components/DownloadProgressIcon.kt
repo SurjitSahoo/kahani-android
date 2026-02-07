@@ -1,12 +1,16 @@
 package org.grakovne.lissen.ui.components
 
+import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material3.CircularProgressIndicator
@@ -14,7 +18,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,6 +46,7 @@ fun DownloadProgressIcon(
   isFullyDownloaded: Boolean,
   size: Dp = 24.dp,
   color: Color = LocalContentColor.current,
+  showShine: Boolean = false,
 ) {
   val isDark = isSystemInDarkTheme()
   val successColor =
@@ -47,48 +56,50 @@ fun DownloadProgressIcon(
       org.grakovne.lissen.ui.theme.DownloadSuccessLight
     }
 
+  var triggerShine by remember { mutableStateOf(false) }
+  var wasCaching by remember { mutableStateOf(false) }
+
+  LaunchedEffect(cacheState.status) {
+    if (cacheState.status is CacheStatus.Caching) {
+      wasCaching = true
+    }
+
+    if (wasCaching && (cacheState.status is CacheStatus.Completed || cacheState.status is CacheStatus.Idle) && isFullyDownloaded) {
+      triggerShine = true
+      wasCaching = false
+    }
+  }
+
   val shineAlpha by animateFloatAsState(
-    targetValue =
-      if (isFullyDownloaded &&
-        (cacheState.status is CacheStatus.Completed || cacheState.status is CacheStatus.Idle)
-      ) {
-        1f
-      } else {
-        0f
-      },
-    animationSpec = tween(durationMillis = 1000, easing = EaseOutQuart),
+    targetValue = if (showShine && triggerShine) 1f else 0f,
+    animationSpec = tween(durationMillis = 1500, easing = EaseOutExpo),
     label = "shineAlpha",
+    finishedListener = {
+      if (it == 0f) triggerShine = false
+    },
   )
 
   val shineScale by animateFloatAsState(
-    targetValue =
-      if (isFullyDownloaded &&
-        (cacheState.status is CacheStatus.Completed || cacheState.status is CacheStatus.Idle)
-      ) {
-        1.5f
-      } else {
-        1f
-      },
-    animationSpec = tween(durationMillis = 1000, easing = EaseOutQuart),
+    targetValue = if (showShine && triggerShine) 3.5f else 1f,
+    animationSpec = tween(durationMillis = 1500, easing = EaseOutExpo),
     label = "shineScale",
   )
 
   Box(contentAlignment = Alignment.Center) {
-    if (isFullyDownloaded && shineAlpha > 0f) {
-      Icon(
-        imageVector = Icons.Filled.CloudDone,
-        contentDescription = null,
+    if (showShine && triggerShine && shineAlpha > 0f) {
+      Box(
         modifier =
           Modifier
             .size(size)
-            .graphicsLayer {
-              scaleX = shineScale
-              scaleY = shineScale
-              alpha = shineAlpha * (1f - (shineScale - 1f) * 2f).coerceIn(0f, 1f)
-            },
-        tint =
-          successColor
-            .copy(alpha = 0.5f),
+            .graphicsLayer(
+              scaleX = shineScale,
+              scaleY = shineScale,
+              alpha = shineAlpha * (1f - (shineScale - 1f) / 2.5f).coerceIn(0f, 1f),
+              clip = false,
+            ).background(
+              color = successColor.copy(alpha = 0.6f),
+              shape = CircleShape,
+            ),
       )
     }
 
