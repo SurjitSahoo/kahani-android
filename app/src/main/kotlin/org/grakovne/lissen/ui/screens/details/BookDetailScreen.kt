@@ -146,6 +146,7 @@ fun BookDetailScreen(
   val isOnline by playerViewModel.isOnline.collectAsState(initial = false)
   val preparingBookId by playerViewModel.preparingBookId.observeAsState(null)
   val currentChapterIndex by playerViewModel.currentChapterIndex.observeAsState(-1)
+  val isFetchingDetails by playerViewModel.isFetchingDetails.observeAsState(false)
   val totalPosition by playerViewModel.totalPosition.observeAsState(0.0)
 
   val cacheProgress: CacheState by cachingModelView.getProgress(bookId).collectAsState(initial = CacheState(CacheStatus.Idle))
@@ -249,7 +250,7 @@ fun BookDetailScreen(
       },
       modifier = Modifier.systemBarsPadding(),
     ) { innerPadding ->
-      if (bookDetail == null) {
+      if (bookDetail == null || (isFetchingDetails && bookDetail?.chapters?.isEmpty() == true)) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           CircularProgressIndicator()
         }
