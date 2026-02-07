@@ -89,43 +89,50 @@ class NetworkService
       checkJob?.cancel()
       checkJob =
         scope.launch {
-          delay(500)
-          val isConnectedToInternet = isNetworkAvailable()
-          _networkStatus.emit(isConnectedToInternet)
-
-          if (!isConnectedToInternet) {
-            _isServerAvailable.emit(false)
-            return@launch
-          }
-
-          val hostUrl = preferences.getHost()
-          if (hostUrl.isNullOrBlank()) {
-            _isServerAvailable.emit(false)
-            return@launch
-          }
-
-          try {
-            val url = java.net.URL(hostUrl)
-            val port = if (url.port == -1) url.defaultPort else url.port
-            val address = java.net.InetSocketAddress(url.host, port)
-
-            java.net.Socket().use { socket ->
-              socket.connect(address, 2000)
-            }
-
-            _isServerAvailable.emit(true)
-            initialRetryCount = MAX_INITIAL_RETRIES // Stop retries once connected
-          } catch (e: Exception) {
-            Timber.e(e, "Server reachability check failed for $hostUrl (Attempt ${initialRetryCount + 1})")
-            _isServerAvailable.emit(false)
-
-            if (initialRetryCount < MAX_INITIAL_RETRIES) {
-              initialRetryCount++
-              delay(300L)
-              refreshServerAvailability()
-            }
-          }
+          refreshServerAvailabilitySync()
         }
+    }
+
+    suspend fun refreshServerAvailabilitySync(): Boolean {
+      delay(500)
+      val isConnectedToInternet = isNetworkAvailable()
+      _networkStatus.emit(isConnectedToInternet)
+
+      if (!isConnectedToInternet) {
+        _isServerAvailable.emit(false)
+        return false
+      }
+
+      val hostUrl = preferences.getHost()
+      if (hostUrl.isNullOrBlank()) {
+        _isServerAvailable.emit(false)
+        return false
+      }
+
+      return try {
+        val url = java.net.URL(hostUrl)
+        val port = if (url.port == -1) url.defaultPort else url.port
+        val address = java.net.InetSocketAddress(url.host, port)
+
+        java.net.Socket().use { socket ->
+          socket.connect(address, 2000)
+        }
+
+        _isServerAvailable.emit(true)
+        initialRetryCount = MAX_INITIAL_RETRIES // Stop retries once connected
+        true
+      } catch (e: Exception) {
+        Timber.e(e, "Server reachability check failed for $hostUrl (Attempt ${initialRetryCount + 1})")
+        _isServerAvailable.emit(false)
+
+        if (initialRetryCount < MAX_INITIAL_RETRIES) {
+          initialRetryCount++
+          delay(300L)
+          refreshServerAvailabilitySync()
+        } else {
+          false
+        }
+      }
     }
 
     fun isNetworkAvailable(): Boolean {

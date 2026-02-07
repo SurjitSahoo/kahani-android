@@ -59,11 +59,15 @@ class AuthRepository
           refreshToken = account.refreshToken,
         )
 
-      clarityTracker.setUser(
-        org.grakovne.lissen.common
-          .sha256("${account.username}@$host"),
-      )
-      clarityTracker.trackEvent("login_success")
+      try {
+        clarityTracker.setUser(
+          org.grakovne.lissen.common
+            .sha256("${account.username}@$host"),
+        )
+        clarityTracker.trackEvent("login_success")
+      } catch (e: Exception) {
+        Timber.e(e, "Failed to send login analytics to Clarity")
+      }
 
       // Trigger library fetch
       bookRepository

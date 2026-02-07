@@ -103,7 +103,7 @@ fun LibraryScreen(
 
   val activity = LocalActivity.current
   val recentBooks: List<RecentBook> by libraryViewModel.recentBooks.observeAsState(emptyList())
-  val analyticsConsent by settingsViewModel.analyticsConsent.observeAsState(true)
+  val analyticsConsent by settingsViewModel.analyticsConsent.observeAsState()
 
   var pullRefreshing by remember { mutableStateOf(false) }
   val searchRequested by libraryViewModel.searchRequested.observeAsState(false)

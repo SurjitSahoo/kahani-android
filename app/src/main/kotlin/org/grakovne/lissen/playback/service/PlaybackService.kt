@@ -31,6 +31,7 @@ import org.grakovne.lissen.lib.domain.TimerOption
 import org.grakovne.lissen.persistence.preferences.LissenSharedPreferences
 import org.grakovne.lissen.playback.MediaSessionProvider
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @UnstableApi
@@ -69,7 +70,7 @@ class PlaybackService : MediaSessionService() {
 
   private var playbackJob: kotlinx.coroutines.Job? = null
 
-  private var smartRewindApplied = false
+  private var smartRewindApplied = AtomicBoolean(false)
 
   private val playerServiceScope = MainScope()
 
@@ -136,7 +137,7 @@ class PlaybackService : MediaSessionService() {
         playbackJob =
           playerServiceScope
             .launch {
-              smartRewindApplied = false
+              smartRewindApplied.set(false)
               exoPlayer.playWhenReady = false
             }
         return START_NOT_STICKY
@@ -190,7 +191,7 @@ class PlaybackService : MediaSessionService() {
   @OptIn(UnstableApi::class)
   private suspend fun preparePlayback(book: DetailedItem) {
     exoPlayer.playWhenReady = false
-    smartRewindApplied = false
+    smartRewindApplied.set(false)
     artworkJob?.cancel()
 
     withContext(Dispatchers.IO) {
@@ -238,7 +239,7 @@ class PlaybackService : MediaSessionService() {
             val currentPosition = book.progress?.currentTime ?: 0.0
 
             seek(book.files, startPosition)
-            smartRewindApplied = true
+            smartRewindApplied.set(true)
           }
         }
 
@@ -287,7 +288,7 @@ class PlaybackService : MediaSessionService() {
   }
 
   private suspend fun checkAndApplySmartRewind() {
-    if (smartRewindApplied) {
+    if (smartRewindApplied.get()) {
       return
     }
 
@@ -303,7 +304,7 @@ class PlaybackService : MediaSessionService() {
       }
     }
 
-    smartRewindApplied = true
+    smartRewindApplied.set(true)
   }
 
   private fun calculateSmartRewindPosition(book: DetailedItem): Double =

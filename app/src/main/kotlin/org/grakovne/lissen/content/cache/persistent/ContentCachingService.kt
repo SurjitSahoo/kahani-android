@@ -34,10 +34,12 @@ class ContentCachingService : LifecycleService() {
   @Inject
   lateinit var notificationService: ContentCachingNotificationService
 
-  private val executionStatuses = mutableMapOf<DetailedItem, CacheState>()
-  private val executingCaching = mutableMapOf<DetailedItem, Job>()
+  private val executionStatuses = java.util.concurrent.ConcurrentHashMap<DetailedItem, CacheState>()
+  private val executingCaching = java.util.concurrent.ConcurrentHashMap<DetailedItem, Job>()
 
-  private var lastNotificationUpdate = 0L
+  private val lastNotificationUpdate =
+    java.util.concurrent.atomic
+      .AtomicLong(0L)
   private val notificationUpdateThrottle = 500L
 
   override fun onStartCommand(
@@ -105,26 +107,24 @@ class ContentCachingService : LifecycleService() {
 
         executor
           .run(mediaProvider.providePreferredChannel())
-          .onCompletion {
-            if (executionStatuses.isEmpty() || !inProgress()) {
-              finish()
-            }
-          }.collect { progress ->
+          .collect { progress ->
             executionStatuses[item] = progress
             cacheProgressBus.emit(item, progress)
 
             val isTerminalState =
               progress.status is CacheStatus.Completed || progress.status is CacheStatus.Error || progress.status is CacheStatus.Idle
-            val currentTime = System.currentTimeMillis()
-            val shouldUpdateNotification = isTerminalState || (currentTime - lastNotificationUpdate >= notificationUpdateThrottle)
 
-            if (shouldUpdateNotification && inProgress() && hasErrors().not()) {
+            val currentTime = System.currentTimeMillis()
+            val lastUpdate = lastNotificationUpdate.get()
+            val shouldUpdateNotification = isTerminalState || (currentTime - lastUpdate >= notificationUpdateThrottle)
+
+            if (shouldUpdateNotification && (isTerminalState || (inProgress() && hasErrors().not()))) {
               executionStatuses
                 .entries
                 .map { (item, status) -> item to status }
                 .let { notificationService.updateCachingNotification(it) }
 
-              lastNotificationUpdate = currentTime
+              lastNotificationUpdate.set(currentTime)
             }
 
             if (!inProgress()) {

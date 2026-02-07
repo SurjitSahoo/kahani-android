@@ -15,18 +15,6 @@ val moshi: Moshi =
   Moshi
     .Builder()
     .add(
-      object : JsonAdapter.Factory {
-        override fun create(
-          type: Type,
-          annotations: Set<Annotation>,
-          moshi: Moshi,
-        ): JsonAdapter<*>? {
-          val adapter = moshi.nextAdapter<Any>(this, type, annotations)
-          Timber.d("Moshi Breadcrumb: Created adapter for type: $type. Adapter: ${adapter.javaClass.simpleName}")
-          return adapter
-        }
-      },
-    ).add(
       UUID::class.java,
       object : JsonAdapter<UUID>() {
         @FromJson
@@ -38,6 +26,18 @@ val moshi: Moshi =
           value: UUID?,
         ) {
           writer.value(value?.toString())
+        }
+      },
+    ).add(
+      object : JsonAdapter.Factory {
+        override fun create(
+          type: Type,
+          annotations: Set<Annotation>,
+          moshi: Moshi,
+        ): JsonAdapter<*>? {
+          val adapter = moshi.nextAdapter<Any>(this, type, annotations)
+          Timber.d("Moshi Breadcrumb: Created adapter for type: $type. Adapter: ${adapter.javaClass.simpleName}")
+          return adapter
         }
       },
     ).addLast(KotlinJsonAdapterFactory())

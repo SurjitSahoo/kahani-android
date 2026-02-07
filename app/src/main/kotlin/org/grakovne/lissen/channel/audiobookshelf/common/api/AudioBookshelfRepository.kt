@@ -89,7 +89,7 @@ class AudioBookshelfRepository
       audioBookShelfApiService.makeRequest {
         it.fetchLibraryItems(
           libraryId = libraryId,
-          pageSize = Int.MAX_VALUE,
+          pageSize = 10000,
           pageNumber = 0,
           sort = "addedAt",
           desc = "1",
@@ -120,7 +120,7 @@ class AudioBookshelfRepository
         .makeRequest {
           it.fetchPodcastItems(
             libraryId = libraryId,
-            pageSize = Int.MAX_VALUE,
+            pageSize = 10000,
             pageNumber = 0,
             sort = "addedAt",
             desc = "1",

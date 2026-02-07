@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,11 @@ fun AsyncShimmeringImage(
 ) {
   var isMainLoading by remember(imageRequest) { mutableStateOf(true) }
   var isThumbnailLoaded by remember(thumbnailRequest) { mutableStateOf(false) }
+
+  LaunchedEffect(imageRequest) {
+    isMainLoading = true
+    onLoadingStateChanged(true)
+  }
 
   Box(
     modifier = modifier,

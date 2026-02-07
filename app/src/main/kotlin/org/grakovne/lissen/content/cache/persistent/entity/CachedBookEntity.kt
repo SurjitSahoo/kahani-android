@@ -105,7 +105,6 @@ data class BookChapterEntity(
   val isCached: Boolean,
 ) : Serializable
 
-@Keep
 @Entity(
   tableName = "media_progress",
   foreignKeys = [

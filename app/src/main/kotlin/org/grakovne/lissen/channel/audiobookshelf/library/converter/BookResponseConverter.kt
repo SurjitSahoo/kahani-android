@@ -77,7 +77,6 @@ class BookResponseConverter
             .audioFiles
             ?.sortedBy { it.index }
             ?.map {
-              timber.log.Timber.d("Mapping file ${it.ino} with size ${it.metadata.size}")
               BookFile(
                 id = it.ino,
                 name =

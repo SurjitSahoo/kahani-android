@@ -758,18 +758,26 @@ private suspend fun deleteSelectedVolumes(
   viewModel: CachingModelView,
   playerViewModel: PlayerViewModel,
 ) {
-  selectedIds.forEach { selection ->
-    val book = (0 until cachedItems.itemCount).mapNotNull { cachedItems[it] }.find { it.id == selection.bookId }
-    book?.let {
-      val volumes = viewModel.getVolumes(it)
+  val bookMap =
+    (0 until cachedItems.itemCount)
+      .mapNotNull { cachedItems[it] }
+      .associateBy { it.id }
+
+  val selectionsByBook = selectedIds.groupBy { it.bookId }
+
+  selectionsByBook.forEach { (bookId, selections) ->
+    val book = bookMap[bookId] ?: return@forEach
+    val playingBook = playerViewModel.book.value
+    val volumes = viewModel.getVolumes(book)
+
+    if (playingBook?.id == book.id) {
+      playerViewModel.clearPlayingBook()
+    }
+
+    selections.forEach { selection ->
       val volume = volumes.find { v -> v.id == selection.fileId }
       volume?.chapters?.forEach { chapter ->
-        playerViewModel.book.value?.let { playingBook ->
-          if (playingBook.id == it.id) {
-            playerViewModel.clearPlayingBook()
-          }
-        }
-        viewModel.dropCache(it, chapter)
+        viewModel.dropCache(book, chapter)
       }
     }
   }

@@ -46,10 +46,10 @@ class ClarityTracker
 
       try {
         // Clarity sendCustomEvent takes a string value for the event name/payload
-        Clarity.sendCustomEvent("$eventName: $value")
-        Timber.d("Clarity Event tracked: $eventName with value: $value")
+        Clarity.sendCustomEvent("$eventName: [REDACTED]")
+        Timber.d("Clarity Event tracked: $eventName with value: [REDACTED]")
       } catch (e: Exception) {
-        Timber.e(e, "Failed to track Clarity event: $eventName")
+        Timber.e(e, "Failed to track Clarity event: $eventName with value: [REDACTED]")
       }
     }
   }

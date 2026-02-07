@@ -70,8 +70,17 @@ class UpdateCheckerService
       remoteTag: String,
       localVersion: String,
     ): Boolean {
-      val remote = remoteTag.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
-      val local = localVersion.removePrefix("v").split(".").mapNotNull { it.toIntOrNull() }
+      val remote =
+        remoteTag
+          .removePrefix("v")
+          .split(".")
+          .map { it.takeWhile { char -> char.isDigit() }.toIntOrNull() ?: 0 }
+
+      val local =
+        localVersion
+          .removePrefix("v")
+          .split(".")
+          .map { it.takeWhile { char -> char.isDigit() }.toIntOrNull() ?: 0 }
 
       val length = maxOf(remote.size, local.size)
       for (i in 0 until length) {

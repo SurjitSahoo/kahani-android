@@ -23,6 +23,12 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+enum class VolumeLabelType {
+  FULL_ARCHIVE,
+  VOLUME,
+  PART,
+}
+
 @Singleton
 class LocalCacheRepository
   @Inject
@@ -183,7 +189,10 @@ class LocalCacheRepository
       }
     }
 
-    fun mapChaptersToVolumes(book: DetailedItem): List<org.grakovne.lissen.lib.domain.BookVolume> {
+    fun mapChaptersToVolumes(
+      book: DetailedItem,
+      nameResolver: (VolumeLabelType, Int) -> String,
+    ): List<org.grakovne.lissen.lib.domain.BookVolume> {
       val storageType = getBookStorageType(book)
 
       if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.MONOLITH) {
@@ -191,7 +200,7 @@ class LocalCacheRepository
         return listOf(
           org.grakovne.lissen.lib.domain.BookVolume(
             id = file.id,
-            name = "Full Archive",
+            name = nameResolver(VolumeLabelType.FULL_ARCHIVE, 0),
             size = file.size,
             chapters = book.chapters,
             isDownloaded = storageProperties.provideMediaCachePath(book.id, file.id).exists(),
@@ -206,9 +215,9 @@ class LocalCacheRepository
 
         val name =
           if (storageType == org.grakovne.lissen.lib.domain.BookStorageType.SEGMENTED) {
-            "Volume ${index + 1}"
+            nameResolver(VolumeLabelType.VOLUME, index + 1)
           } else {
-            relatedChapters.firstOrNull()?.title ?: "Part ${index + 1}"
+            relatedChapters.firstOrNull()?.title ?: nameResolver(VolumeLabelType.PART, index + 1)
           }
 
         org.grakovne.lissen.lib.domain.BookVolume(

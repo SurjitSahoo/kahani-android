@@ -309,14 +309,19 @@ class SettingsViewModel
     fun clearMetadataCache(onComplete: () -> Unit) {
       viewModelScope.launch {
         try {
-          bookRepository.clearMetadataCache()
-          cachedCoverProvider.clearCache()
-        } catch (e: Exception) {
-          if (e is kotlinx.coroutines.CancellationException) {
-            throw e
+          try {
+            bookRepository.clearMetadataCache()
+          } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            timber.log.Timber.e(e, "Failed to clear book metadata cache")
           }
 
-          timber.log.Timber.e(e, "Failed to clear metadata cache")
+          try {
+            cachedCoverProvider.clearCache()
+          } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            timber.log.Timber.e(e, "Failed to clear cover cache")
+          }
         } finally {
           onComplete()
         }

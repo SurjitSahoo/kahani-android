@@ -42,18 +42,29 @@ fun String?.makeDownloadOption(): DownloadOption? = when {
   this == "all_items" -> AllItemsDownloadOption
   this == "current_item" -> CurrentItemDownloadOption
   this == "remaining_items" -> RemainingItemsDownloadOption
-  startsWith("number_items_") -> NumberItemDownloadOption(substringAfter("number_items_").toInt())
-  startsWith("specific_files_") -> {
-    val payload = substringAfter("specific_files_")
-
-    val fileIds = when {
-      payload.isEmpty() -> emptyList()
-      else -> payload
-        .split(",")
-        .map { String(Base64.getUrlDecoder().decode(it)) }
+  startsWith("number_items_") -> {
+    try {
+      NumberItemDownloadOption(substringAfter("number_items_").toInt())
+    } catch (e: NumberFormatException) {
+      null
     }
+  }
 
-    SpecificFilesDownloadOption(fileIds)
+  startsWith("specific_files_") -> {
+    try {
+      val payload = substringAfter("specific_files_")
+
+      val fileIds = when {
+        payload.isEmpty() -> emptyList()
+        else -> payload
+          .split(",")
+          .map { String(Base64.getUrlDecoder().decode(it)) }
+      }
+
+      SpecificFilesDownloadOption(fileIds)
+    } catch (e: IllegalArgumentException) {
+      null
+    }
   }
 
   else -> null

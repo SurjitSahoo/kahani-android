@@ -32,8 +32,8 @@ class SearchRequestBuilder(
         }
       }
 
-    val searchClause = "(title LIKE ? OR author LIKE ? OR seriesNames LIKE ?)"
-    val pattern = "%$searchQuery%"
+    val searchClause = "(title LIKE ? ESCAPE '\\' OR author LIKE ? ESCAPE '\\' OR seriesNames LIKE ? ESCAPE '\\')"
+    val pattern = "%${searchQuery.escapeSqlLike()}%"
     args.add(pattern)
     args.add(pattern)
     args.add(pattern)
@@ -72,4 +72,10 @@ class SearchRequestBuilder(
 
     return SimpleSQLiteQuery(sql, args.toTypedArray())
   }
+
+  private fun String.escapeSqlLike() =
+    this
+      .replace("\\", "\\\\")
+      .replace("%", "\\%")
+      .replace("_", "\\_")
 }

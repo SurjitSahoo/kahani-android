@@ -75,7 +75,7 @@ fun DownloadProgressIcon(
     animationSpec = tween(durationMillis = 1500, easing = EaseOutExpo),
     label = "shineAlpha",
     finishedListener = {
-      if (it == 0f) triggerShine = false
+      if (it == 1f) triggerShine = false
     },
   )
 

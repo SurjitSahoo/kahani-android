@@ -41,9 +41,7 @@ fun PlaybackButtonsComposable(
   val book by viewModel.book.observeAsState()
   val chapters = book?.chapters ?: emptyList()
 
-  val isPlaybackReady by viewModel.isPlaybackReady.observeAsState(false)
   val preparingBookId by viewModel.preparingBookId.observeAsState(null)
-  val preparingError by viewModel.preparingError.observeAsState(false)
 
   val seekTime by settingsViewModel.seekTime.observeAsState(SeekTime.Default)
   val showNavButtons by settingsViewModel.showPlayerNavButtons.observeAsState(true)
@@ -98,7 +96,6 @@ fun PlaybackButtonsComposable(
         shadowElevation = 4.dp,
       ) {
         Box(contentAlignment = Alignment.Center) {
-          val isError = preparingError
           val isLoading = preparingBookId != null
 
           if (isLoading) {

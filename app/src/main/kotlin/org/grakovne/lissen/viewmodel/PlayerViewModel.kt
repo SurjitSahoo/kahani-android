@@ -157,9 +157,12 @@ class PlayerViewModel
 
     fun fetchBook(bookId: String) {
       viewModelScope.launch {
-        _isFetchingDetails.postValue(true)
-        mediaRepository.fetchBook(bookId)
-        _isFetchingDetails.postValue(false)
+        try {
+          _isFetchingDetails.postValue(true)
+          mediaRepository.fetchBook(bookId)
+        } finally {
+          _isFetchingDetails.postValue(false)
+        }
       }
     }
 

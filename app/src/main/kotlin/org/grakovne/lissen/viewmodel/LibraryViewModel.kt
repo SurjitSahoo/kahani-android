@@ -233,11 +233,14 @@ class LibraryViewModel
     fun refreshLibrary(forceRefresh: Boolean = false) {
       viewModelScope.launch {
         withContext(Dispatchers.IO) {
-          if (forceRefresh) {
-            networkService.refreshServerAvailability()
-          }
+          val isAvailable =
+            if (forceRefresh) {
+              networkService.refreshServerAvailabilitySync()
+            } else {
+              networkService.isServerAvailable.value
+            }
 
-          val shouldSync = (forceRefresh || networkService.isServerAvailable.value) && !preferences.isForceCache()
+          val shouldSync = (forceRefresh || isAvailable) && !preferences.isForceCache()
 
           if (shouldSync) {
             val libraryId = preferences.getPreferredLibrary()?.id

@@ -167,7 +167,10 @@ class BookRepository
 
       return localResult.fold(
         onSuccess = { OperationResult.Success(it) },
-        onFailure = { OperationResult.Success(PagedItems(emptyList(), pageNumber, 0)) },
+        onFailure = {
+          Timber.e("Failed to fetch books from local cache: ${it.message}")
+          OperationResult.Success(PagedItems(emptyList(), pageNumber, 0))
+        },
       )
     }
 
@@ -178,7 +181,15 @@ class BookRepository
     ): OperationResult<Unit> =
       OperationResult
         .Success(Unit)
-        .also { backgroundScope.launch { syncAllLibraries() } }
+        .also {
+          backgroundScope.launch {
+            try {
+              syncAllLibraries()
+            } catch (e: Exception) {
+              Timber.e(e, "Failed to sync all libraries")
+            }
+          }
+        }
 
     private suspend fun syncAllLibraries() {
       val librariesResult = fetchLibraries()
