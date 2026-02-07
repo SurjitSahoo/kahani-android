@@ -40,6 +40,7 @@ class ContentCachingManager
     private val requestHeadersProvider: RequestHeadersProvider,
     private val preferences: LissenSharedPreferences,
     private val clarityTracker: ClarityTracker,
+    private val localCacheRepository: LocalCacheRepository,
   ) {
     fun cacheMediaItem(
       mediaItem: DetailedItem,
@@ -115,7 +116,7 @@ class ContentCachingManager
             coverCachingResult,
             librariesCachingResult,
           ).all { it.status == CacheStatus.Completed } -> {
-            cacheBookInfo(mediaItem, requestedChapters)
+            localCacheRepository.cacheBookMetadata(mediaItem)
             send(CacheState(CacheStatus.Completed))
             clarityTracker.trackEvent("download_finished")
           }
@@ -306,14 +307,6 @@ class ContentCachingManager
         CacheState(CacheStatus.Completed)
       }
     }
-
-    private suspend fun cacheBookInfo(
-      book: DetailedItem,
-      fetchedChapters: List<PlayingChapter>,
-    ): CacheState =
-      bookRepository
-        .cacheBook(book, fetchedChapters, emptyList())
-        .let { CacheState(CacheStatus.Completed) }
 
     private suspend fun cacheLibraries(channel: MediaChannel): CacheState =
       channel
