@@ -181,10 +181,17 @@ fun LibraryScreen(
     )
 
   val titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-  val titleHeightDp = with(LocalDensity.current) { titleTextStyle.lineHeight.toPx().toDp() }
+  val density = LocalDensity.current
+  val titleHeightDp =
+    remember(titleTextStyle.lineHeight, density) {
+      with(density) { titleTextStyle.lineHeight.toPx().toDp() }
+    }
 
   val playingBook by playerViewModel.book.observeAsState()
+  val onBackgroundColor = MaterialTheme.colorScheme.onBackground
   val context = LocalContext.current
+
+  val scrollbarIgnoreItems = remember { setOf("recent_books", "library_title") }
 
   fun isRecentVisible(): Boolean {
     val hasContent = recentBooks.isEmpty().not()
@@ -224,8 +231,11 @@ fun LibraryScreen(
   }
 
   LaunchedEffect(recentBooks.isNotEmpty()) {
+    val isScrolling = libraryListState.isScrollInProgress
+    val isSearching = libraryViewModel.searchRequested.value == true
     val needsScroll = libraryListState.firstVisibleItemIndex <= 1
-    if (recentBooks.isNotEmpty() && needsScroll) {
+
+    if (recentBooks.isNotEmpty() && needsScroll && !isScrolling && !isSearching) {
       libraryListState.animateScrollToItem(0)
     }
   }
@@ -345,9 +355,9 @@ fun LibraryScreen(
               .imePadding()
               .withScrollbar(
                 state = libraryListState,
-                color = colorScheme.onBackground.copy(alpha = scrollbarAlpha),
+                color = { onBackgroundColor.copy(alpha = scrollbarAlpha) },
                 totalItems = libraryCount,
-                ignoreItems = listOf("recent_books", "library_title"),
+                ignoreItems = scrollbarIgnoreItems,
               ),
           contentPadding = PaddingValues(horizontal = Spacing.md),
         ) {
@@ -443,8 +453,11 @@ fun LibraryScreen(
             }
 
             else ->
-              items(count = library.itemCount, key = { "library_item_$it" }) {
-                val book = library[it] ?: return@items
+              items(
+                count = library.itemCount,
+                key = { index -> library.peek(index)?.id ?: "library_item_$index" },
+              ) { index ->
+                val book = library[index] ?: return@items
 
                 BookComposable(
                   book = book,

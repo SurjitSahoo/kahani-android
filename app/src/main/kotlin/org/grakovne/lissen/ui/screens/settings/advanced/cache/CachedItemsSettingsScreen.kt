@@ -415,13 +415,15 @@ private fun CachedItemsComposable(
     animationSpec = tween(durationMillis = 300),
   )
 
+  val onBackground = colorScheme.onBackground
+
   LazyColumn(
     state = state,
     modifier =
       Modifier
         .withScrollbar(
           state = state,
-          color = colorScheme.onBackground.copy(alpha = scrollbarAlpha),
+          color = { onBackground.copy(alpha = scrollbarAlpha) },
           totalItems = itemsCount,
         ).fillMaxSize(),
   ) {

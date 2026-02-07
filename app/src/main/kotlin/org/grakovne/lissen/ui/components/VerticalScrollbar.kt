@@ -51,9 +51,9 @@ import timber.log.Timber
 
 fun Modifier.withScrollbar(
   state: LazyListState,
-  color: Color,
+  color: () -> Color,
   totalItems: Int?,
-  ignoreItems: List<String> = emptyList(),
+  ignoreItems: Set<String> = emptySet(),
 ): Modifier {
   try {
     return baseScrollbar { atEnd ->
@@ -66,6 +66,10 @@ fun Modifier.withScrollbar(
             val key = it.key
             key is String && ignoreItems.contains(key)
           }
+
+      if (items.isEmpty()) {
+        return@baseScrollbar
+      }
 
       val itemsSize = items.sumOf { it.size }
       val count = totalItems ?: layoutInfo.totalItemsCount
@@ -87,7 +91,7 @@ fun Modifier.withScrollbar(
             ?.let { (itemSize * it.index - it.offset) / totalSize * canvasSize }
             ?: 0f
 
-        drawScrollbarThumb(atEnd, thumbSize, startOffset, color)
+        drawScrollbarThumb(atEnd, thumbSize, startOffset, color())
       }
     }
   } catch (ex: Exception) {
