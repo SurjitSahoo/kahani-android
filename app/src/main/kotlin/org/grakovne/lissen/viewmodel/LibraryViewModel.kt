@@ -73,7 +73,11 @@ class LibraryViewModel
         networkService.isServerAvailable,
         preferences.forceCacheFlow,
       ) { isServerAvailable, isForceCache ->
-        !isServerAvailable || isForceCache
+        val downloadedOnly = !isServerAvailable || isForceCache
+        Timber.d(
+          "Library State Calculation: isServerAvailable=$isServerAvailable, isForceCache=$isForceCache -> downloadedOnly=$downloadedOnly",
+        )
+        downloadedOnly
       }
 
     private var currentLibraryId = ""
@@ -125,9 +129,11 @@ class LibraryViewModel
           .isServerAvailable
           .collect { isAvailable ->
             if (isAvailable) {
-              Timber.d("Server is reachable. Triggering repository sync.")
+              Timber.i("Server Availability Event: Server is now REACHABLE. Triggering repository sync.")
               bookRepository.syncRepositories()
               refreshLibrary()
+            } else {
+              Timber.i("Server Availability Event: Server is now UNREACHABLE.")
             }
           }
       }

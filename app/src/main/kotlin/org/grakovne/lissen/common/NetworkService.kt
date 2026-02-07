@@ -83,6 +83,7 @@ class NetworkService
     }
 
     private var checkJob: Job? = null
+    private var initialRetryCount = 0
 
     fun refreshServerAvailability() {
       checkJob?.cancel()
@@ -113,9 +114,16 @@ class NetworkService
             }
 
             _isServerAvailable.emit(true)
+            initialRetryCount = MAX_INITIAL_RETRIES // Stop retries once connected
           } catch (e: Exception) {
-            Timber.e(e, "Server reachability check failed for $hostUrl")
+            Timber.e(e, "Server reachability check failed for $hostUrl (Attempt ${initialRetryCount + 1})")
             _isServerAvailable.emit(false)
+
+            if (initialRetryCount < MAX_INITIAL_RETRIES) {
+              initialRetryCount++
+              delay(300L)
+              refreshServerAvailability()
+            }
           }
         }
     }
@@ -167,5 +175,9 @@ class NetworkService
 
     override fun onDestroy() {
       scope.cancel()
+    }
+
+    private companion object {
+      private const val MAX_INITIAL_RETRIES = 3
     }
   }
