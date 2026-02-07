@@ -44,6 +44,7 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -118,6 +119,8 @@ fun CachedItemsSettingsScreen(
   val context = LocalContext.current
 
   var pullRefreshing by remember { mutableStateOf(false) }
+  var isDeleting by remember { mutableStateOf(false) }
+
   val cachedItems = viewModel.libraryPager.collectAsLazyPagingItems()
 
   var selectionMode by remember { mutableStateOf(false) }
@@ -224,21 +227,34 @@ fun CachedItemsSettingsScreen(
               onClick = {
                 withHaptic(view) {
                   scope.launch {
+                    isDeleting = true
                     deleteSelectedVolumes(selectedVolumes, cachedItems, viewModel, playerViewModel)
                     selectionMode = false
                     selectedVolumes.clear()
                     refreshContent(false)
+                    isDeleting = false
                   }
                 }
               },
               modifier = Modifier.fillMaxWidth(),
+              enabled = !isDeleting,
               colors =
                 ButtonDefaults.buttonColors(
                   containerColor = colorScheme.error,
                   contentColor = colorScheme.onError,
+                  disabledContainerColor = colorScheme.error.copy(alpha = 0.5f),
+                  disabledContentColor = colorScheme.onError.copy(alpha = 0.5f),
                 ),
             ) {
-              Text(stringResource(R.string.manage_downloads_free_up, formattedSize))
+              if (isDeleting) {
+                CircularProgressIndicator(
+                  modifier = Modifier.size(24.dp),
+                  color = colorScheme.onError,
+                  strokeWidth = 2.dp,
+                )
+              } else {
+                Text(stringResource(R.string.manage_downloads_free_up, formattedSize))
+              }
             }
           }
         }
