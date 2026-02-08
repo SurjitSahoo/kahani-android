@@ -636,22 +636,21 @@ class LissenSharedPreferences
         awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
       }.distinctUntilChanged()
 
-    private fun decrypt(data: String): String? {
-      val decodedData = Base64.decode(data, Base64.DEFAULT)
-      val iv = decodedData.sliceArray(0 until 12)
-      val cipherText = decodedData.sliceArray(12 until decodedData.size)
+    private fun decrypt(data: String): String? =
+      try {
+        val decodedData = Base64.decode(data, Base64.DEFAULT)
+        val iv = decodedData.sliceArray(0 until 12)
+        val cipherText = decodedData.sliceArray(12 until decodedData.size)
 
-      val cipher = Cipher.getInstance(TRANSFORMATION)
-      val spec = GCMParameterSpec(128, iv)
-      cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        val spec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
 
-      return try {
         String(cipher.doFinal(cipherText))
       } catch (ex: Exception) {
         crashReporter.recordException(ex)
         null
       }
-    }
 
     companion object {
       private const val KEY_ALIAS = "secure_key_alias"
