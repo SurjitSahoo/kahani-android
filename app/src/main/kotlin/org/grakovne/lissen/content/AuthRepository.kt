@@ -66,7 +66,7 @@ class AuthRepository
         )
         clarityTracker.trackEvent("login_success")
       } catch (e: Exception) {
-        Timber.e(e, "Failed to send login analytics to Clarity")
+        Timber.e(e, "Failed to send login analytics")
       }
 
       // Trigger library fetch

@@ -62,8 +62,6 @@ android {
     
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     
-    buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
-    
     signingConfigs {
       create("release") {
         val envKeyStore = System.getenv("RELEASE_STORE_FILE")
@@ -82,6 +80,23 @@ android {
         enableV1Signing = true
         enableV2Signing = true
       }
+    }
+  }
+
+  flavorDimensions += "distribution"
+
+  productFlavors {
+    create("foss") {
+      dimension = "distribution"
+      applicationIdSuffix = ".foss"
+      buildConfigField("String", "APP_NAME_SUFFIX", "\" (FOSS)\"")
+      buildConfigField("String", "DISTRIBUTION", "\"foss\"")
+    }
+    create("play") {
+      dimension = "distribution"
+      buildConfigField("String", "APP_NAME_SUFFIX", "\"\"")
+      buildConfigField("String", "DISTRIBUTION", "\"play\"")
+      buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
     }
   }
 
@@ -125,6 +140,15 @@ android {
   }
   buildToolsVersion = "36.0.0"
   
+}
+
+// Disable Google Services and Crashlytics for FOSS flavor tasks
+tasks.configureEach {
+    if (name.contains("Foss", ignoreCase = true)) {
+        if (name.contains("GoogleServices") || name.contains("Crashlytics") || name.contains("UploadCrashlyticsMappingFile")) {
+            enabled = false
+        }
+    }
 }
 
 dependencies {
@@ -188,11 +212,11 @@ dependencies {
   implementation(libs.moshi)
   implementation(libs.moshi.kotlin)
   
-  implementation(libs.microsoft.clarity)
+  "playImplementation"(libs.microsoft.clarity)
   
-  implementation(platform(libs.firebase.bom))
-  implementation(libs.firebase.crashlytics)
-  implementation(libs.firebase.analytics)
+  "playImplementation"(platform(libs.firebase.bom))
+  "playImplementation"(libs.firebase.crashlytics)
+  "playImplementation"(libs.firebase.analytics)
   
   debugImplementation(libs.androidx.ui.tooling)
   debugImplementation(libs.androidx.ui.test.manifest)

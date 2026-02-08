@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.microsoft.clarity.modifiers.clarityMask
 import org.grakovne.lissen.R
+import org.grakovne.lissen.common.maskForAnalytics
 import org.grakovne.lissen.lib.domain.connection.LocalUrl
 
 @Composable
@@ -62,7 +62,7 @@ fun LocalUrlComposable(
             Modifier
               .fillMaxWidth()
               .padding(bottom = 12.dp)
-              .clarityMask(),
+              .maskForAnalytics(),
         )
 
         OutlinedTextField(
@@ -73,7 +73,7 @@ fun LocalUrlComposable(
           label = { Text(stringResource(R.string.hint_server_url_input)) },
           singleLine = true,
           shape = RoundedCornerShape(16.dp),
-          modifier = Modifier.fillMaxWidth().clarityMask(),
+          modifier = Modifier.fillMaxWidth().maskForAnalytics(),
         )
       }
 
