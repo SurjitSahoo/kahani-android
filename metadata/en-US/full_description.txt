@@ -1,3 +1,19 @@
-Listen to your favorite audiobooks through a minimalist app designed for one task
+Kahani (meaning "story") is a modern, offline-first client for Audiobookshelf, designed specifically for a premium audiobook and podcast experience on Android.
 
-Sync your listened books between devices and other Audiobookshelf players and download books to listen to them without the Internet
+Built with Material Design 3 and full Dynamic Color support, Kahani feels like a native part of your device while providing powerful features for power listeners.
+
+✨ KEY FEATURES
+
+• Offline-First: Download entire books or specific chapters to listen anywhere, anytime.
+• Seamless Sync: Your listening progress syncs automatically across all your devices and the server.
+• Visual Excellence: Stunning Material You interface with smooth transitions and adaptive themes.
+• Advanced Playback: Variable playback speed, skip silence, and customizable seek intervals.
+• Chapter Support: Easily browse and navigate through chapters with precise progress tracking.
+• Podcast Ready: Full support for both your audiobook collection and your favorite podcasts.
+• Sleep Timer: Fall asleep without worry using the flexible sleep timer (time-based or end-of-chapter).
+• Home Widget: Control your current story directly from your home screen.
+• Network Aware: Intelligently manages offline/online states and server availability.
+
+Kahani is focused on simplicity, privacy, and the joy of a good story. 
+
+Note: An Audiobookshelf server instance is required to use this application.
