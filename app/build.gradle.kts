@@ -43,7 +43,7 @@ fun gitCommitHash(): String {
 
 android {
   namespace = "org.grakovne.lissen"
-  compileSdk = 36
+  compileSdk = 35
   
   lint {
     disable.add("MissingTranslation")
@@ -54,32 +54,32 @@ android {
     
     applicationId = "com.kahani.app"
     minSdk = 28
-    targetSdk = 36
+    targetSdk = 35
     versionCode = project.property("appVersionCode").toString().toInt()
     versionName = project.property("appVersionName").toString()
     
     buildConfigField("String", "GIT_HASH", "\"$commitHash\"")
     
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    
-    signingConfigs {
-      create("release") {
-        val envKeyStore = System.getenv("RELEASE_STORE_FILE")
-        val propKeyStore = localProperties.getProperty("RELEASE_STORE_FILE")
+  }
 
-        storeFile = when {
-          envKeyStore != null -> file(envKeyStore)
-          propKeyStore != null -> file(propKeyStore)
-          else -> null
-        }
+  signingConfigs {
+    create("release") {
+      val envKeyStore = System.getenv("RELEASE_STORE_FILE")
+      val propKeyStore = localProperties.getProperty("RELEASE_STORE_FILE")
 
-        storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
-        keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
-        keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
-
-        enableV1Signing = true
-        enableV2Signing = true
+      storeFile = when {
+        envKeyStore != null -> file(envKeyStore)
+        propKeyStore != null -> file(propKeyStore)
+        else -> null
       }
+
+      storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
+      keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
+      keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
+
+      enableV1Signing = true
+      enableV2Signing = true
     }
   }
 
@@ -138,7 +138,7 @@ android {
       excludes += "/META-INF/{AL2.0,LGPL2.1,MIT}"
     }
   }
-  buildToolsVersion = "36.0.0"
+  buildToolsVersion = "35.0.0"
   
 }
 
