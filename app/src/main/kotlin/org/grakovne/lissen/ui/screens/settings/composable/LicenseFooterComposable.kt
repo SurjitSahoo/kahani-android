@@ -62,8 +62,8 @@ fun LicenseFooterComposable() {
         text =
           stringResource(
             R.string.settings_screen_footer_app_name_pattern,
-            stringResource(R.string.branding_name),
-            BuildConfig.VERSION_NAME,
+            stringResource(R.string.branding_name) + BuildConfig.APP_NAME_SUFFIX,
+            "v${BuildConfig.VERSION_NAME}",
           ),
         style =
           TextStyle(

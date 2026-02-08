@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -59,6 +60,7 @@ import coil3.ImageLoader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import org.grakovne.lissen.BuildConfig
 import org.grakovne.lissen.R
 import org.grakovne.lissen.common.LibraryOrderingConfiguration
 import org.grakovne.lissen.common.NetworkService
@@ -107,6 +109,7 @@ fun LibraryScreen(
 
   var pullRefreshing by remember { mutableStateOf(false) }
   val searchRequested by libraryViewModel.searchRequested.observeAsState(false)
+  val isInitializing by libraryViewModel.isInitializing.collectAsState(true)
   val preparingError by playerViewModel.preparingError.observeAsState(false)
 
   val preferredLibrary by settingsViewModel.preferredLibrary.observeAsState()
@@ -160,7 +163,7 @@ fun LibraryScreen(
       }
 
       val hasContent = library.itemCount > 0 || recentBooks.isNotEmpty()
-      val isLoading = pullRefreshing || library.loadState.refresh is LoadState.Loading
+      val isLoading = isInitializing || pullRefreshing || library.loadState.refresh is LoadState.Loading
 
       isLoading && !hasContent
     }
@@ -498,7 +501,7 @@ fun LibraryScreen(
     )
   }
 
-  if (analyticsConsent == null) {
+  if (BuildConfig.DISTRIBUTION == "play" && analyticsConsent == null) {
     AnalyticsConsentBottomSheet(
       onAccept = { settingsViewModel.updateAnalyticsConsent(true) },
       onDecline = { settingsViewModel.updateAnalyticsConsent(false) },

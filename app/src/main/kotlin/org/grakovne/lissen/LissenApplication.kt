@@ -15,6 +15,9 @@ class LissenApplication : Application() {
   @Inject
   lateinit var runningComponents: Set<@JvmSuppressWildcards RunningComponent>
 
+  @Inject
+  lateinit var crashReporter: org.grakovne.lissen.common.CrashReporter
+
   override fun onCreate() {
     super.onCreate()
     appContext = applicationContext
@@ -26,9 +29,7 @@ class LissenApplication : Application() {
       }
 
       val isCrashReportingEnabled = preferences.getCrashReportingEnabled()
-      com.google.firebase.crashlytics.FirebaseCrashlytics
-        .getInstance()
-        .setCrashlyticsCollectionEnabled(isCrashReportingEnabled)
+      crashReporter.setCollectionEnabled(isCrashReportingEnabled)
 
       val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
 
@@ -47,9 +48,7 @@ class LissenApplication : Application() {
         it.onCreate()
       } catch (ex: Exception) {
         Timber.e(ex, "Unable to register Running component: ${ex.message}")
-        com.google.firebase.crashlytics.FirebaseCrashlytics
-          .getInstance()
-          .recordException(ex)
+        crashReporter.recordException(ex)
       }
     }
   }

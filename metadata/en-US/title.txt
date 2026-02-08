@@ -1,1 +1,1 @@
-Lissen: Audiobookshelf client
+Kahani: Audiobookshelf client

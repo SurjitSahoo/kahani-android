@@ -61,6 +61,9 @@ class LibraryViewModel
     private val _totalCount = MutableLiveData<Int>()
     val totalCount: LiveData<Int> = _totalCount
 
+    private val _isInitializing = MutableStateFlow(true)
+    val isInitializing: StateFlow<Boolean> = _isInitializing
+
     private val pageConfig =
       PagingConfig(
         pageSize = PAGE_SIZE,
@@ -100,6 +103,8 @@ class LibraryViewModel
         currentLibraryId = preferences.getPreferredLibrary()?.id ?: ""
         currentOrdering = preferences.getLibraryOrdering()
         localCacheUpdatedAt = latestLocalUpdate ?: 0L
+      } else {
+        _isInitializing.value = false
       }
     }
 
@@ -232,34 +237,38 @@ class LibraryViewModel
 
     fun refreshLibrary(forceRefresh: Boolean = false) {
       viewModelScope.launch {
-        withContext(Dispatchers.IO) {
-          val isAvailable =
-            if (forceRefresh) {
-              networkService.refreshServerAvailabilitySync()
-            } else {
-              networkService.isServerAvailable.value
+        try {
+          withContext(Dispatchers.IO) {
+            val isAvailable =
+              if (forceRefresh) {
+                networkService.refreshServerAvailabilitySync()
+              } else {
+                networkService.isServerAvailable.value
+              }
+
+            val shouldSync = (forceRefresh || isAvailable) && !preferences.isForceCache()
+
+            if (shouldSync) {
+              val libraryId = preferences.getPreferredLibrary()?.id
+
+              if (libraryId != null) {
+                bookRepository.syncLibraryPage(
+                  libraryId = libraryId,
+                  pageSize = PAGE_SIZE,
+                  pageNumber = 0,
+                )
+              }
+
+              bookRepository.syncRepositories()
             }
 
-          val shouldSync = (forceRefresh || isAvailable) && !preferences.isForceCache()
-
-          if (shouldSync) {
-            val libraryId = preferences.getPreferredLibrary()?.id
-
-            if (libraryId != null) {
-              bookRepository.syncLibraryPage(
-                libraryId = libraryId,
-                pageSize = PAGE_SIZE,
-                pageNumber = 0,
-              )
+            when (searchRequested.value) {
+              true -> searchPagingSource?.invalidate()
+              else -> defaultPagingSource.value?.invalidate()
             }
-
-            bookRepository.syncRepositories()
           }
-
-          when (searchRequested.value) {
-            true -> searchPagingSource?.invalidate()
-            else -> defaultPagingSource.value?.invalidate()
-          }
+        } finally {
+          _isInitializing.value = false
         }
       }
     }
