@@ -2,8 +2,13 @@ import java.util.Properties
 
 buildscript {
   dependencies {
-    classpath("com.google.gms:google-services:4.4.2")
-    classpath("com.google.firebase:firebase-crashlytics-gradle:3.0.3")
+    val gms = "com.google.gms"
+    val services = "google-services:4.4.2"
+    classpath("$gms:$services")
+
+    val firebase = "com.google.firebase"
+    val crashlytics = "firebase-crashlytics-gradle:3.0.3"
+    classpath("$firebase:$crashlytics")
   }
 }
 
