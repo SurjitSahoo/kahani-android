@@ -20,8 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.microsoft.clarity.modifiers.clarityMask
 import org.grakovne.lissen.R
+import org.grakovne.lissen.common.maskForAnalytics
 import org.grakovne.lissen.lib.domain.connection.ServerRequestHeader
 import org.grakovne.lissen.lib.domain.connection.ServerRequestHeader.Companion.clean
 
@@ -54,7 +54,7 @@ fun CustomHeaderComposable(
           label = { Text(stringResource(R.string.custom_header_hint_name)) },
           singleLine = true,
           shape = RoundedCornerShape(16.dp),
-          modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).clarityMask(),
+          modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).maskForAnalytics(),
         )
 
         OutlinedTextField(
@@ -63,7 +63,7 @@ fun CustomHeaderComposable(
           label = { Text(stringResource(R.string.custom_header_hint_value)) },
           singleLine = true,
           shape = RoundedCornerShape(16.dp),
-          modifier = Modifier.fillMaxWidth().clarityMask(),
+          modifier = Modifier.fillMaxWidth().maskForAnalytics(),
         )
       }
 

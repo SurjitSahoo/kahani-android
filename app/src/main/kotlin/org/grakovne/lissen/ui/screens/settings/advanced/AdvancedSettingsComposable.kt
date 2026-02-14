@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import org.grakovne.lissen.BuildConfig
 import org.grakovne.lissen.R
 import org.grakovne.lissen.ui.navigation.AppNavigationService
 import org.grakovne.lissen.ui.screens.settings.composable.SettingsToggleItem
@@ -110,11 +111,13 @@ fun AdvancedSettingsComposable(
             onclick = { navController.showLocalUrlSettings() },
           )
 
-          SettingsToggleItem(
-            title = stringResource(R.string.settings_screen_crash_report_title),
-            description = stringResource(R.string.settings_screen_crash_report_description),
-            initialState = crashReporting,
-          ) { viewModel.preferCrashReporting(it) }
+          if (BuildConfig.DISTRIBUTION == "play") {
+            SettingsToggleItem(
+              title = stringResource(R.string.settings_screen_crash_report_title),
+              description = stringResource(R.string.settings_screen_crash_report_description),
+              initialState = crashReporting,
+            ) { viewModel.preferCrashReporting(it) }
+          }
         }
       }
     },

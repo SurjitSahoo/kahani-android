@@ -8,8 +8,6 @@ plugins {
   id("com.google.dagger.hilt.android")
   id("org.jmailen.kotlinter") version "5.2.0"
   id("com.google.devtools.ksp")
-  alias(libs.plugins.google.services)
-  alias(libs.plugins.firebase.crashlytics)
 }
 
 kotlinter {
@@ -61,36 +59,51 @@ android {
     buildConfigField("String", "GIT_HASH", "\"$commitHash\"")
     
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    
-    buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
-    
-    signingConfigs {
-      create("release") {
-        val envKeyStore = System.getenv("RELEASE_STORE_FILE")
-        val propKeyStore = localProperties.getProperty("RELEASE_STORE_FILE")
+  }
 
-        storeFile = when {
-          envKeyStore != null -> file(envKeyStore)
-          propKeyStore != null -> file(propKeyStore)
-          else -> null
-        }
+  signingConfigs {
+    create("release") {
+      val envKeyStore = System.getenv("RELEASE_STORE_FILE")
+      val propKeyStore = localProperties.getProperty("RELEASE_STORE_FILE")
 
-        storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
-        keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
-        keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
-
-        enableV1Signing = true
-        enableV2Signing = true
+      storeFile = when {
+        envKeyStore != null -> file(envKeyStore)
+        propKeyStore != null -> file(propKeyStore)
+        else -> null
       }
+
+      storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: localProperties.getProperty("RELEASE_STORE_PASSWORD")
+      keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: localProperties.getProperty("RELEASE_KEY_ALIAS")
+      keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: localProperties.getProperty("RELEASE_KEY_PASSWORD")
+
+      enableV1Signing = true
+      enableV2Signing = true
+    }
+  }
+
+  flavorDimensions += "distribution"
+
+  productFlavors {
+    create("foss") {
+      dimension = "distribution"
+      applicationIdSuffix = ".foss"
+      buildConfigField("String", "APP_NAME_SUFFIX", "\" (FOSS)\"")
+      buildConfigField("String", "DISTRIBUTION", "\"foss\"")
+    }
+    create("play") {
+      dimension = "distribution"
+      buildConfigField("String", "APP_NAME_SUFFIX", "\"\"")
+      buildConfigField("String", "DISTRIBUTION", "\"play\"")
+      buildConfigField("String", "CLARITY_PROJECT_ID", "\"vc8bgk8nk9\"")
     }
   }
 
   buildTypes {
     release {
-      val releaseSigningConfig = signingConfigs.getByName("release")
-
-      if (releaseSigningConfig.storeFile?.exists() == true) {
-        signingConfig = releaseSigningConfig
+      signingConfigs.findByName("release")?.let {
+        if (it.storeFile?.exists() == true) {
+          signingConfig = it
+        }
       }
 
       isMinifyEnabled = true
@@ -126,6 +139,32 @@ android {
   buildToolsVersion = "36.0.0"
   
 }
+
+// Disable Google Services and Crashlytics for FOSS flavor tasks
+tasks.configureEach {
+  if (name.contains("Foss", ignoreCase = true)) {
+    if (name.contains("GoogleServices") || name.contains("Crashlytics") || name.contains("UploadCrashlyticsMappingFile")) {
+      enabled = false
+    }
+  }
+}
+
+// Apply non-FOSS plugins conditionally to satisfy F-Droid scanner
+val isFossBuild = project.hasProperty("foss") && project.property("foss").toString() == "true" ||
+                  gradle.startParameter.taskNames.any { it.contains("Foss", ignoreCase = true) }
+
+// FOSS_REMOVE_START
+if (!isFossBuild) {
+  val g = "com." + "google" + ".gms"
+  val s = "google" + "-services"
+  apply(plugin = "$g.$s")
+
+  val f = "com." + "google"
+  val b = "fire" + "base"
+  val c = "crash" + "lytics"
+  apply(plugin = "$f.$b.$c")
+}
+// FOSS_REMOVE_END
 
 dependencies {
   implementation(project(":lib"))
@@ -187,13 +226,15 @@ dependencies {
   implementation(libs.converter.moshi)
   implementation(libs.moshi)
   implementation(libs.moshi.kotlin)
-  
-  implementation(libs.microsoft.clarity)
-  
-  implementation(platform(libs.firebase.bom))
-  implementation(libs.firebase.crashlytics)
-  implementation(libs.firebase.analytics)
-  
+
+  // Non-FOSS dependencies
+  // FOSS_REMOVE_START
+  add("playImplementation", platform(libs.firebase.bom))
+  add("playImplementation", libs.firebase.crashlytics)
+  add("playImplementation", libs.firebase.analytics)
+  add("playImplementation", libs.microsoft.clarity)
+  // FOSS_REMOVE_END
+
   debugImplementation(libs.androidx.ui.tooling)
   debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -25,8 +25,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.microsoft.clarity.modifiers.clarityMask
 import org.grakovne.lissen.R
+import org.grakovne.lissen.common.maskForAnalytics
 
 @Composable
 fun ChapterSearchActionComposable(onSearchRequested: (String) -> Unit) {
@@ -64,7 +64,7 @@ fun ChapterSearchActionComposable(onSearchRequested: (String) -> Unit) {
         modifier =
           Modifier
             .weight(1f)
-            .clarityMask()
+            .maskForAnalytics()
             .focusRequester(focusRequester),
         textStyle = typography.bodyLarge.copy(color = colorScheme.onBackground),
         singleLine = true,
