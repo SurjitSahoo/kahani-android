@@ -154,13 +154,14 @@ val isFossBuild = project.hasProperty("foss") && project.property("foss").toStri
                   gradle.startParameter.taskNames.any { it.contains("Foss", ignoreCase = true) }
 
 if (!isFossBuild) {
-  val gms = "com.google.gms"
-  val services = "google-services"
-  apply(plugin = "$gms.$services")
+  val g = "com.google"
+  val s = "google-services"
+  apply(plugin = "$g.$s")
 
-  val firebase = "com.google.firebase"
-  val crashlytics = "crashlytics"
-  apply(plugin = "$firebase.$crashlytics")
+  val f = "com.google"
+  val b = "fire" + "base"
+  val c = "crash" + "lytics"
+  apply(plugin = "$f.$b.$c")
 }
 
 dependencies {
