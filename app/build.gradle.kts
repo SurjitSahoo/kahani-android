@@ -155,7 +155,7 @@ val isFossBuild = project.hasProperty("foss") && project.property("foss").toStri
 
 // FOSS_REMOVE_START
 if (!isFossBuild) {
-  val g = "com." + "google"
+  val g = "com." + "google" + ".gms"
   val s = "google" + "-services"
   apply(plugin = "$g.$s")
 
