@@ -14,7 +14,48 @@ class MicrosoftClarityTracker
   constructor(
     @ApplicationContext private val context: Context,
   ) : AnalyticsTracker {
+    private var clarityInitialized = false
+    private val eventQueue = mutableListOf<Pair<String, String?>>()
+    private var pendingUserId: String? = null
+
     override fun trackEvent(
+      name: String,
+      value: String?,
+    ) {
+      if (clarityInitialized) {
+        sendEventToClarity(name, value)
+      } else {
+        eventQueue.add(name to value)
+      }
+    }
+
+    override fun setUser(id: String) {
+      if (clarityInitialized) {
+        Clarity.setCustomUserId(id)
+      } else {
+        pendingUserId = id
+      }
+    }
+
+    override fun updateConsent(accepted: Boolean) {
+      if (accepted) {
+        if (!clarityInitialized) {
+          val config =
+            ClarityConfig(
+              projectId = BuildConfig.CLARITY_PROJECT_ID,
+            )
+          Clarity.initialize(context, config)
+          clarityInitialized = true
+          flushQueues()
+        }
+      } else {
+        if (clarityInitialized) {
+          Clarity.pause()
+        }
+      }
+    }
+
+    private fun sendEventToClarity(
       name: String,
       value: String?,
     ) {
@@ -25,19 +66,14 @@ class MicrosoftClarityTracker
       }
     }
 
-    override fun setUser(id: String) {
-      Clarity.setCustomUserId(id)
-    }
-
-    override fun updateConsent(accepted: Boolean) {
-      if (accepted) {
-        val config =
-          ClarityConfig(
-            projectId = BuildConfig.CLARITY_PROJECT_ID,
-          )
-        Clarity.initialize(context, config)
-      } else {
-        Clarity.pause()
+    private fun flushQueues() {
+      pendingUserId?.let {
+        Clarity.setCustomUserId(it)
+        pendingUserId = null
       }
+      eventQueue.forEach { (name, value) ->
+        sendEventToClarity(name, value)
+      }
+      eventQueue.clear()
     }
   }

@@ -50,7 +50,7 @@ jobs:
           files: app/build/outputs/apk/play/release/app-play-release.apk
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Kahani v${{ steps.get_version.outputs.version }}
-          body: "Update the Changelog"
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:
