@@ -1,18 +1,17 @@
 package org.grakovne.lissen.content.cache.persistent
 
 import android.content.Context
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import org.grakovne.lissen.analytics.ClarityTracker
+import org.grakovne.lissen.analytics.AnalyticsTracker
 import org.grakovne.lissen.channel.audiobookshelf.common.api.RequestHeadersProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.createOkHttpClient
+import org.grakovne.lissen.common.CrashReporter
 import org.grakovne.lissen.content.cache.common.findRelatedFiles
 import org.grakovne.lissen.content.cache.common.findRelatedFilesByStartTimes
 import org.grakovne.lissen.content.cache.common.withBlur
@@ -41,8 +40,9 @@ class ContentCachingManager
     private val properties: OfflineBookStorageProperties,
     private val requestHeadersProvider: RequestHeadersProvider,
     private val preferences: LissenSharedPreferences,
-    private val clarityTracker: ClarityTracker,
+    private val analyticsTracker: AnalyticsTracker,
     private val localCacheRepository: LocalCacheRepository,
+    private val crashReporter: CrashReporter,
   ) {
     fun cacheMediaItem(
       mediaItem: DetailedItem,
@@ -52,7 +52,7 @@ class ContentCachingManager
     ) = channelFlow {
       try {
         send(CacheState(CacheStatus.Queued))
-        clarityTracker.trackEvent("download_started")
+        analyticsTracker.trackEvent("download_started")
 
         val fileStartTimes =
           withContext(Dispatchers.Default) {
@@ -120,7 +120,7 @@ class ContentCachingManager
           ).all { it.status == CacheStatus.Completed } -> {
             localCacheRepository.cacheBookMetadata(mediaItem)
             send(CacheState(CacheStatus.Completed))
-            clarityTracker.trackEvent("download_finished")
+            analyticsTracker.trackEvent("download_finished")
           }
 
           else -> {
@@ -270,7 +270,7 @@ class ContentCachingManager
               }
             }
           } catch (ex: Exception) {
-            Firebase.crashlytics.recordException(ex)
+            crashReporter.recordException(ex)
             return@withContext CacheState(CacheStatus.Error)
           }
         }
@@ -300,7 +300,7 @@ class ContentCachingManager
                   .withBlur(context, width = 300) // Trigger thumbnail transformation
                   .writeToFile(thumbFile)
               } catch (ex: Exception) {
-                Firebase.crashlytics.recordException(ex)
+                crashReporter.recordException(ex)
                 return@fold CacheState(CacheStatus.Error)
               }
             },

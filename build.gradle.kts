@@ -1,3 +1,12 @@
+import java.util.Properties
+
+buildscript {
+  dependencies {
+    classpath("com.google.gms:google-services:4.4.2")
+    classpath("com.google.firebase:firebase-crashlytics-gradle:3.0.3")
+  }
+}
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
@@ -5,6 +14,4 @@ plugins {
     id("com.google.devtools.ksp") version "2.2.21-2.0.4" apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.google.services) apply false
-    alias(libs.plugins.firebase.crashlytics) apply false
 }

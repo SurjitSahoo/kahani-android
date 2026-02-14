@@ -6,8 +6,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.core.content.edit
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
 import com.squareup.moshi.Types
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -16,6 +14,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.grakovne.lissen.channel.common.ChannelCode
 import org.grakovne.lissen.common.ColorScheme
+import org.grakovne.lissen.common.CrashReporter
 import org.grakovne.lissen.common.LibraryOrderingConfiguration
 import org.grakovne.lissen.common.NetworkTypeAutoCache
 import org.grakovne.lissen.common.PlaybackVolumeBoost
@@ -48,6 +47,7 @@ class LissenSharedPreferences
   @Inject
   constructor(
     @ApplicationContext context: Context,
+    private val crashReporter: CrashReporter,
   ) {
     private val sharedPreferences: SharedPreferences =
       context.getSharedPreferences("secure_prefs", Context.MODE_PRIVATE)
@@ -79,20 +79,6 @@ class LissenSharedPreferences
         remove(KEY_TOKEN)
         remove(KEY_ACCESS_TOKEN)
         remove(KEY_REFRESH_TOKEN)
-
-        remove(KEY_SERVER_VERSION)
-
-        remove(CACHE_FORCE_ENABLED)
-
-        remove(KEY_PREFERRED_LIBRARY_ID)
-        remove(KEY_PREFERRED_LIBRARY_NAME)
-        remove(KEY_PREFERRED_LIBRARY_TYPE)
-
-        remove(KEY_CUSTOM_HEADERS)
-        remove(KEY_BYPASS_SSL)
-        remove(KEY_LOCAL_URLS)
-
-        remove(KEY_PLAYING_BOOK)
       }
     }
 
@@ -650,6 +636,22 @@ class LissenSharedPreferences
         awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
       }.distinctUntilChanged()
 
+    private fun decrypt(data: String): String? =
+      try {
+        val decodedData = Base64.decode(data, Base64.DEFAULT)
+        val iv = decodedData.sliceArray(0 until 12)
+        val cipherText = decodedData.sliceArray(12 until decodedData.size)
+
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        val spec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
+
+        String(cipher.doFinal(cipherText))
+      } catch (ex: Exception) {
+        crashReporter.recordException(ex)
+        null
+      }
+
     companion object {
       private const val KEY_ALIAS = "secure_key_alias"
       private const val KEY_HOST = "host"
@@ -728,23 +730,6 @@ class LissenSharedPreferences
         val ivAndCipherText = cipher.iv + cipherText
 
         return Base64.encodeToString(ivAndCipherText, Base64.DEFAULT)
-      }
-
-      private fun decrypt(data: String): String? {
-        val decodedData = Base64.decode(data, Base64.DEFAULT)
-        val iv = decodedData.sliceArray(0 until 12)
-        val cipherText = decodedData.sliceArray(12 until decodedData.size)
-
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        val spec = GCMParameterSpec(128, iv)
-        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
-
-        return try {
-          String(cipher.doFinal(cipherText))
-        } catch (ex: Exception) {
-          Firebase.crashlytics.recordException(ex)
-          null
-        }
       }
     }
   }

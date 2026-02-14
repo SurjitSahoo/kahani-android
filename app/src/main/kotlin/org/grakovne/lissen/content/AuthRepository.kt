@@ -1,6 +1,6 @@
 package org.grakovne.lissen.content
 
-import org.grakovne.lissen.analytics.ClarityTracker
+import org.grakovne.lissen.analytics.AnalyticsTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.ChannelAuthService
 import org.grakovne.lissen.channel.common.OperationError
@@ -20,7 +20,7 @@ class AuthRepository
     private val preferences: LissenSharedPreferences,
     private val audiobookshelfChannelProvider: AudiobookshelfChannelProvider,
     private val bookRepository: BookRepository,
-    private val clarityTracker: ClarityTracker,
+    private val analyticsTracker: AnalyticsTracker,
   ) {
     suspend fun authorize(
       host: String,
@@ -60,13 +60,13 @@ class AuthRepository
         )
 
       try {
-        clarityTracker.setUser(
+        analyticsTracker.setUser(
           org.grakovne.lissen.common
             .sha256("${account.username}@$host"),
         )
-        clarityTracker.trackEvent("login_success")
+        analyticsTracker.trackEvent("login_success")
       } catch (e: Exception) {
-        Timber.e(e, "Failed to send login analytics to Clarity")
+        Timber.e(e, "Failed to send login analytics")
       }
 
       // Trigger library fetch

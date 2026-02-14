@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import org.grakovne.lissen.analytics.ClarityTracker
+import org.grakovne.lissen.analytics.AnalyticsTracker
 import org.grakovne.lissen.channel.audiobookshelf.AudiobookshelfChannelProvider
 import org.grakovne.lissen.channel.common.MediaChannel
 import org.grakovne.lissen.channel.common.OperationError
@@ -42,7 +42,7 @@ class BookRepository
     private val localCacheRepository: LocalCacheRepository,
     private val cachedCoverProvider: CachedCoverProvider,
     private val networkService: NetworkService,
-    private val clarityTracker: ClarityTracker,
+    private val analyticsTracker: AnalyticsTracker,
   ) {
     private val backgroundScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -84,7 +84,7 @@ class BookRepository
       Timber.d("Syncing Progress for $itemId. $progress")
 
       localCacheRepository.syncProgress(itemId, progress)
-      clarityTracker.trackEvent("sync_progress")
+      analyticsTracker.trackEvent("sync_progress")
 
       val channelSyncResult =
         providePreferredChannel()
