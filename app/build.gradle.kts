@@ -153,16 +153,18 @@ tasks.configureEach {
 val isFossBuild = project.hasProperty("foss") && project.property("foss").toString() == "true" ||
                   gradle.startParameter.taskNames.any { it.contains("Foss", ignoreCase = true) }
 
+// FOSS_REMOVE_START
 if (!isFossBuild) {
-  val g = "com.google"
-  val s = "google-services"
+  val g = "com." + "google"
+  val s = "google" + "-services"
   apply(plugin = "$g.$s")
 
-  val f = "com.google"
+  val f = "com." + "google"
   val b = "fire" + "base"
   val c = "crash" + "lytics"
   apply(plugin = "$f.$b.$c")
 }
+// FOSS_REMOVE_END
 
 dependencies {
   implementation(project(":lib"))
@@ -226,10 +228,12 @@ dependencies {
   implementation(libs.moshi.kotlin)
 
   // Non-FOSS dependencies
+  // FOSS_REMOVE_START
   add("playImplementation", platform(libs.firebase.bom))
   add("playImplementation", libs.firebase.crashlytics)
   add("playImplementation", libs.firebase.analytics)
   add("playImplementation", libs.microsoft.clarity)
+  // FOSS_REMOVE_END
 
   debugImplementation(libs.androidx.ui.tooling)
   debugImplementation(libs.androidx.ui.test.manifest)

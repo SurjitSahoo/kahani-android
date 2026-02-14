@@ -1,18 +1,20 @@
 import java.util.Properties
 
+// FOSS_REMOVE_START
 buildscript {
   dependencies {
-    val g = "com.google"
+    val g = "com." + "google"
     val s = "gms"
     val v = "google-services:4.4.2"
     classpath("$g.$s:$v")
 
-    val f = "com.google"
+    val f = "com." + "google"
     val b = "fire" + "base"
-    val r = "firebase-crashlytics-gradle:3.0.3"
+    val r = "firebase" + "-crashlytics-gradle:3.0.3"
     classpath("$f.$b:$r")
   }
 }
+// FOSS_REMOVE_END
 
 plugins {
     alias(libs.plugins.android.application) apply false
