@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,7 +48,11 @@ fun LicenseFooterComposable() {
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.Center,
-      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.sm),
+      modifier =
+        Modifier
+          .fillMaxWidth()
+          .padding(horizontal = Spacing.sm)
+          .offset(x = (-4).dp),
     ) {
       Icon(
         painter = painterResource(id = R.drawable.ic_notification_silhouette),
@@ -76,24 +81,13 @@ fun LicenseFooterComposable() {
 
     Spacer(modifier = Modifier.height(Spacing.sm))
 
-    // Original author copyright
-    Text(
-      text = stringResource(R.string.settings_screen_footer_copyright_original),
-      style =
-        TextStyle(
-          textAlign = TextAlign.Center,
-          fontSize = 10.sp,
-          color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-        ),
-    )
-
     // Fork contributor copyright
     Text(
       text = stringResource(R.string.settings_screen_footer_copyright_fork),
       style =
         TextStyle(
           textAlign = TextAlign.Center,
-          fontSize = 10.sp,
+          fontSize = 11.sp,
           color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         ),
     )

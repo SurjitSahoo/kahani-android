@@ -207,7 +207,7 @@
     <string name="playback_preferences">Playback preferences</string>
     <string name="settings_screen_footer_app_name_pattern">%1$s %2$s</string>
     <string name="settings_screen_footer_copyright_original">© 2024–2026 Max Grakov</string>
-    <string name="settings_screen_footer_copyright_fork">© 2026 Surjit Sahoo</string>
+    <string name="settings_screen_footer_copyright_fork">© 2025–2026 Surjit Sahoo</string>
     <string name="settings_screen_footer_license">MIT License</string>
     <string name="donate_title">Donate to support us</string>
     <string name="donate_subtitle">Help keep this project alive</string>
